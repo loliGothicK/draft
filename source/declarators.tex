@@ -420,11 +420,8 @@ void h(int *(C[10]));           // \tcode{void h(int *(*_fp)(C _parm[10]));}
 \indextext{declarator!meaning~of|(}
 
 \pnum
-A list of declarators appears after an optional (Clause~\ref{dcl.dcl})
-\grammarterm{decl-specifier-seq}
-(\ref{dcl.spec}).
 \indextext{declaration!type}%
-Each declarator contains exactly one
+A declarator contains exactly one
 \grammarterm{declarator-id};
 it names the identifier that is declared.
 An
@@ -467,7 +464,6 @@ A
 \tcode{static},
 \tcode{thread_local},
 \tcode{extern},
-\tcode{register},
 \tcode{mutable},
 \tcode{friend},
 \tcode{inline},
@@ -678,7 +674,7 @@ See also~\ref{expr.ass} and~\ref{dcl.init}.
 \pnum
 \enternote
 Forming a pointer to reference type is ill-formed; see~\ref{dcl.ref}.
-Forming a pointer to function type is ill-formed if the function type has
+Forming a function pointer type is ill-formed if the function type has
 \grammarterm{cv-qualifier}{s} or a \grammarterm{ref-qualifier};
 see~\ref{dcl.fct}.
 Since the address of a bit-field (\ref{class.bit}) cannot be taken,
@@ -728,10 +724,10 @@ The type of
 is ``lvalue reference to \tcode{int}'',
 not ``lvalue reference to \tcode{const int}''.
 \exitexample
-\indextext{\idxcode{void\&}}%
 \enternote
 A reference can be thought of as a name of an object.
 \exitnote
+\indextext{\idxcode{void\&}}%
 A declarator that specifies the type
 ``reference to \textit{cv} \tcode{void}''
 is ill-formed.
@@ -1105,7 +1101,7 @@ or from another array.
 
 \pnum
 When several ``array of'' specifications are adjacent, a multidimensional
-array is created;
+array type is created;
 only the first of
 the constant expressions that specify the bounds
 of the arrays may be omitted.
@@ -1321,11 +1317,18 @@ the type of the
 \grammarterm{declarator-id}
 in
 \tcode{D}
-is ``\nonterminal{derived-declarator-type-list} function of
-(\nonterminal{parameter-declaration-clause} )
-\nonterminal{cv-qualifier-seq\opt} \nonterminal{ref-qualifier\opt} returning
-\tcode{T}''.
-The optional \grammarterm{attribute-specifier-seq} appertains to the function type.
+is
+``\grammarterm{derived-declarator-type-list}
+\tcode{noexcept}\opt
+function of
+(\grammarterm{parameter-declaration-clause} )
+\grammarterm{cv-qualifier-seq\opt} \grammarterm{ref-qualifier\opt}
+returning \tcode{T}'',
+where the optional \tcode{noexcept} is present
+if and only if
+the \grammarterm{exception-specification} is non-throwing.
+The optional \grammarterm{attribute-specifier-seq}
+appertains to the function type.
 
 \pnum
 In a declaration
@@ -1340,15 +1343,31 @@ has the form
 \hspace*{\bnfindentinc}ref-qualifier\opt exception-specification\opt attribute-specifier-seq\opt trailing-return-type
 \end{ncsimplebnf}
 
-and the type of the contained \grammarterm{declarator-id} in the declaration \tcode{T}
-\tcode{D1} is ``\grammarterm{derived-declarator-type-list} \tcode{T}'', \tcode{T} shall
-be the single \grammarterm{type-specifier} \tcode{auto}. The type of the
-\grammarterm{declarator-id} in \tcode{D} is
-``\grammarterm{derived-declarator-type-list} function of
-(\grammarterm{parameter-declaration-clause}) \grammarterm{cv-qualifier-seq}\opt
-\grammarterm{ref-qualifier}\opt returning \tcode{U}'', where \tcode{U}
-is the type specified by the \grammarterm{trailing-return-type}. The
-optional \grammarterm{attribute-specifier-seq} appertains to the function type.
+and the type of the contained
+\grammarterm{declarator-id}
+in the declaration
+\tcode{T}
+\tcode{D1}
+is
+``\grammarterm{derived-declarator-type-list} \tcode{T}'',
+\tcode{T} shall be the single \grammarterm{type-specifier} \tcode{auto}.
+The type of the
+\grammarterm{declarator-id}
+in
+\tcode{D}
+is
+``\grammarterm{derived-declarator-type-list}
+\tcode{noexcept}\opt
+function of
+(\grammarterm{parameter-declaration-clause})
+\grammarterm{cv-qualifier-seq}\opt \grammarterm{ref-qualifier}\opt
+returning \tcode{U}'',
+where \tcode{U} is the type specified by
+the \grammarterm{trailing-return-type}, and
+where the optional \tcode{noexcept} is present if and only if
+the \grammarterm{exception-specification} is non-throwing.
+The optional \grammarterm{attribute-specifier-seq}
+appertains to the function type.
 
 \pnum
 \indextext{type!function}%
@@ -1458,19 +1477,12 @@ determined from its own
 \grammarterm{decl-specifier-seq}
 and
 \grammarterm{declarator}.
-After determining the type of each parameter, any parameter of type ``array of
-\indextext{array}%
-\indextext{type!array}%
-\tcode{T}''
-\indextext{function}%
-\indextext{type!function}%
-or ``function returning
-\tcode{T}''
-is adjusted to be ``pointer to
-\tcode{T}''
-or ``pointer to function returning
-\tcode{T}'',
-respectively.
+After determining the type of each parameter, any parameter
+\indextext{array!parameter~of~type}%
+of type ``array of \tcode{T}'' or
+\indextext{function!parameter~of~type}%
+of function type \tcode{T}
+is adjusted to be ``pointer to \tcode{T}''.
 After producing the list of parameter types,
 any top-level
 \grammarterm{cv-qualifier}{s}
@@ -1534,8 +1546,9 @@ struct S {
 \exitexample
 
 \pnum
-The return type, the parameter-type-list, the \grammarterm{ref-qualifier}, and the
-\grammarterm{cv-qualifier-seq},
+The return type, the parameter-type-list, the \grammarterm{ref-qualifier},
+the \grammarterm{cv-qualifier-seq}, and
+whether the function has a non-throwing \grammarterm{exception-specification},
 but not the default arguments (\ref{dcl.fct.default})
 or the exception specification (\ref{except.spec}),
 are part of the function type.
@@ -2082,8 +2095,7 @@ in a
 shall have the form
 
 \begin{ncsimplebnf}
-\terminal{D1 (} parameter-declaration-clause \terminal{)} cv-qualifier-seq\opt\br   
-    \hspace*{\bnfindentinc}ref-qualifier\opt exception-specification\opt attribute-specifier-seq\opt trailing-return-type\opt
+\terminal{D1} parameters-and-qualifiers trailing-return-type\opt
 \end{ncsimplebnf}
 
 as described in~\ref{dcl.fct}.
@@ -2296,7 +2308,9 @@ than to declare it, is ill-formed. \enternote This includes calling the function
 implicitly or explicitly and forming a pointer or pointer-to-member to the
 function. It applies even for references in expressions that are not
 potentially-evaluated. If a function is overloaded, it is referenced only if the
-function is selected by overload resolution. \exitnote
+function is selected by overload resolution. The implicit
+odr-use~(\ref{basic.def.odr}) of a virtual function does not, by itself,
+constitute a reference. \exitnote
 
 \pnum
 \enterexample One can enforce non-default initialization and non-integral
@@ -2345,7 +2359,7 @@ moveonly q(*p); // error, deleted copy constructor
 \exitexample
 
 \pnum
-A deleted function is implicitly inline. \enternote The
+A deleted function is implicitly an inline function~(\ref{dcl.fct.spec}). \enternote The
 one-definition rule~(\ref{basic.def.odr}) applies to deleted definitions. \exitnote
 A deleted definition of a function shall be the first declaration of the function or,
 for an explicit specialization of a function template, the first declaration of that
@@ -2404,6 +2418,12 @@ the initialization of return values (\ref{stmt.return}).
     \terminal{\{} \terminal{\}}
 \end{bnf}
 
+\begin{bnf}
+\nontermdef{expr-or-braced-init-list}\br
+    expression\br
+    braced-init-list
+\end{bnf}
+
 \pnum
 Except for objects declared with the \tcode{constexpr} specifier, for which see~\ref{dcl.constexpr},
 an \grammarterm{initializer} in the definition of a variable can consist of
@@ -2440,6 +2460,7 @@ linkage that has an \grammarterm{initializer} is ill-formed.
 \indextext{initialization!static object@\tcode{static} object}%
 \indextext{initialization!default}%
 \indextext{variable!indeterminate uninitialized}%
+\indextext{initialization!zero-initialization}%
 \indextext{zero-initialization}%
 To
 \grammarterm{zero-initialize}
@@ -2609,7 +2630,7 @@ is obtained, the object has an \term{indeterminate value}, and if
 no initialization is performed for the object, that object retains an
 indeterminate value until that value is replaced~(\ref{expr.ass}).
 \enternote Objects with static or thread storage duration are zero-initialized,
-see~\ref{basic.start.init}. \exitnote
+see~\ref{basic.start.static}. \exitnote
 If an indeterminate value is produced by an evaluation, the behavior is
 undefined except in the following cases:
 
@@ -2935,8 +2956,8 @@ is ill-formed.
 \pnum
 If there are fewer \grammarterm{initializer-clause}{s} in the list than there
 are members in the aggregate, then each member not explicitly initialized
-shall be initialized from its \grammarterm{brace-or-equal-initializer} or,
-if there is no \grammarterm{brace-or-equal-initializer}, from an empty
+shall be initialized from its default member initializer~(\ref{class.mem}) or,
+if there is no default member initializer, from an empty
 initializer list~(\ref{dcl.init.list}).
 \enterexample
 
@@ -2966,9 +2987,9 @@ X b[2] = { { 1, 2, 3 }, { 4, 5, 6 } };
 \exitexample
 
 \pnum
-If a reference member is initialized from its \grammarterm{brace-or-equal-initializer}
+If a reference member is initialized from its default member initializer
 and a potentially-evaluated subexpression thereof is an aggregate
-initialization that would use that \grammarterm{brace-or-equal-initializer},
+initialization that would use that default member initializer,
 the program is ill-formed.
 \enterexample
 \begin{codeblock}
@@ -3187,7 +3208,11 @@ Initialization of these aggregate objects is described in~\ref{class.expl.init}.
 \exitnote
 
 \pnum
-\enternote Whether the initialization of aggregates with static storage duration is static or dynamic is specified in~\ref{basic.start.init} and~\ref{stmt.dcl}. \exitnote
+\enternote
+Whether the initialization of aggregates with static storage duration
+is static or dynamic is specified
+in~\ref{basic.start.static}, \ref{basic.start.dynamic}, and~\ref{stmt.dcl}.
+\exitnote
 
 \pnum
 \indextext{initialization!\idxcode{union}}%
@@ -3274,19 +3299,13 @@ explicitly initialized shall be zero-initialized~(\ref{dcl.init}).
 \indextext{initialization!reference}
 
 \pnum
-A variable declared to be a
-\tcode{T\&} or \tcode{T\&\&},
-that is, ``reference to type
-\tcode{T}''
-(\ref{dcl.ref}),
-shall be initialized by an object, or function, of type
-\tcode{T}
-or by an object that can be converted into a
-\tcode{T}.
+A variable whose declared type is
+``reference to type \tcode{T}'' (\ref{dcl.ref})
+shall be initialized.
 \enterexample
 
 \begin{codeblock}
-int g(int);
+int g(int) noexcept;
 void f() {
   int i;
   int& r = i;                   // \tcode{r} refers to \tcode{i}
@@ -3305,8 +3324,9 @@ void f() {
 \pnum
 A reference cannot be changed to refer to another object after initialization.
 \indextext{assignment!reference}%
-Note that initialization of a reference is treated very differently from assignment
-to it.
+\enternote
+Assignment to a reference assigns to the object referred to by the reference (\ref{expr.ass}).
+\exitnote
 \indextext{argument~passing!reference~and}%
 Argument passing (\ref{expr.call})
 \indextext{\idxcode{return}!reference~and}%
@@ -3332,19 +3352,16 @@ Given types ``\nonterminal{cv1} \tcode{T1}'' and ``\nonterminal{cv2} \tcode{T2}'
 ``\nonterminal{cv1} \tcode{T1}'' is \nonterminal{reference-related} to
 \indextext{reference-related}%
 ``\nonterminal{cv2} \tcode{T2}'' if
-\tcode{T1}
-is the same type as
-\tcode{T2},
-or
-\tcode{T1}
-is a base class of
-\tcode{T2}.
+\tcode{T1} is the same type as \tcode{T2}, or
+\tcode{T1} is a base class of \tcode{T2}.
 ``\nonterminal{cv1} \tcode{T1}'' is \nonterminal{reference-compatible}
 \indextext{reference-compatible}%
 with ``\nonterminal{cv2} \tcode{T2}'' if
-\tcode{T1}
-is reference-related to
-\tcode{T2}
+\begin{itemize}
+\item \tcode{T1} is reference-related to \tcode{T2}, or
+\item T2 is ``\tcode{noexcept} function'' and T1 is ``function'',
+where the function types are otherwise the same,
+\end{itemize}
 and
 \textit{cv1}
 is the same cv-qualification as, or greater cv-qualification than,
@@ -3814,7 +3831,7 @@ void f() {
 
 struct A {
   std::initializer_list<int> i4;
-  A() : i4{ 1, 2, 3 } {}  // creates an \tcode{A} with a dangling reference
+  A() : i4{ 1, 2, 3 } {}  // ill-formed, would create a dangling reference
 };
 \end{codeblock}
 
@@ -3824,9 +3841,9 @@ is a parameter in a function call, so the array created for
 For \tcode{i3}, the \tcode{initializer_list} object is a variable,
 so the array persists for the lifetime of the variable.
 For \tcode{i4}, the \tcode{initializer_list} object is initialized in
-a constructor's \grammarterm{ctor-initializer}, so the array persists
-only until the constructor exits, and so any use of the elements of
-\tcode{i4} after the constructor exits produces undefined behavior.
+the constructor's \grammarterm{ctor-initializer} as if by binding
+a temporary array to a reference member, so the program is
+ill-formed~(\ref{class.base.init}).
 \exitexample
 \enternote
 The implementation is free to allocate the array in read-only memory if an explicit array with the same initializer could be so allocated. \exitnote

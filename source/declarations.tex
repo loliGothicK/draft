@@ -20,6 +20,7 @@ the form
 \begin{bnf}
 \nontermdef{declaration}\br
     block-declaration\br
+    nodeclspec-function-declaration\br
     function-definition\br
     template-declaration\br
     explicit-instantiation\br
@@ -43,14 +44,19 @@ the form
 \end{bnf}
 
 \begin{bnf}
+\nontermdef{nodeclspec-function-declaration}\br
+    attribute-specifier-seq\opt declarator \terminal{;}
+\end{bnf}
+
+\begin{bnf}
 \nontermdef{alias-declaration}\br
     \terminal{using} identifier attribute-specifier-seq\opt \terminal{=} type-id \terminal{;}
 \end{bnf}
 
 \begin{bnf}
 \nontermdef{simple-declaration}\br
-    decl-specifier-seq\opt init-declarator-list\opt \terminal{;}\br
-    attribute-specifier-seq decl-specifier-seq\opt init-declarator-list \terminal{;}
+    decl-specifier-seq init-declarator-list\opt \terminal{;}\br
+    attribute-specifier-seq decl-specifier-seq init-declarator-list \terminal{;}
 \end{bnf}
 
 \begin{bnf}
@@ -80,8 +86,9 @@ the form
 \exitnote
 
 \pnum
-The
-\grammarterm{simple-declaration}
+A
+\grammarterm{simple-declaration} or
+\grammarterm{nodeclspec-function-declaration} of the form
 
 \begin{ncsimplebnf}
 attribute-specifier-seq\opt decl-specifier-seq\opt init-declarator-list\opt \terminal{;}
@@ -93,8 +100,8 @@ Attributes are described in~\ref{dcl.attr}.
 a \grammarterm{decl-specifier-seq}, are described in~\ref{dcl.spec}.
 \grammarterm{declarator}{s}, the components of an
 \grammarterm{init-declarator-list}, are described in Clause~\ref{dcl.decl}.
-The \grammarterm{attribute-specifier-seq} in a
-\grammarterm{simple-declaration} appertains to each of the entities declared by
+The \grammarterm{attribute-specifier-seq}
+appertains to each of the entities declared by
 the \grammarterm{declarator}{s}
 of the \grammarterm{init-declarator-list}.
 \enternote In the declaration for an entity, attributes appertaining to that
@@ -206,9 +213,15 @@ definition causes the appropriate amount of storage to be reserved and
 any appropriate initialization~(\ref{dcl.init}) to be done.
 
 \pnum
-Only in function declarations for constructors, destructors, and type
-conversions can the \grammarterm{decl-specifier-seq} be omitted.\footnote{The
+A \grammarterm{nodeclspec-function-declaration} shall declare a
+constructor, destructor, or conversion function.  \footnote{The
 ``implicit int'' rule of C is no longer supported.}
+\enternote
+A \grammarterm{nodeclspec-function-declaration} can only be used in a
+\grammarterm{template-declaration}~(Clause~\ref{temp}),
+\grammarterm{explicit-instantiation}~(\ref{temp.explicit}), or
+\grammarterm{explicit-specialization}~(\ref{temp.expl.spec}).
+\exitnote
 
 \rSec1[dcl.spec]{Specifiers}%
 \indextext{specifier|(}
@@ -294,7 +307,6 @@ void k(unsigned int Pc);        // \tcode{void k(unsigned int)}
 \rSec2[dcl.stc]{Storage class specifiers}%
 \indextext{specifier!storage~class}%
 \indextext{declaration!storage~class}%
-\indextext{\idxcode{register}}%
 \indextext{\idxcode{static}}%
 \indextext{\idxcode{thread_local}}%
 \indextext{\idxcode{extern}}%
@@ -305,7 +317,6 @@ The storage class specifiers are
 
 \begin{bnf}
 \nontermdef{storage-class-specifier}\br
-    \terminal{register}\br
     \terminal{static}\br
     \terminal{thread_local}\br
     \terminal{extern}\br
@@ -323,7 +334,7 @@ the \grammarterm{init-declarator-list} of the declaration shall not be
 empty (except for an anonymous union declared in a named namespace or in the
 global namespace, which shall be declared
 \indextext{specifier!\idxcode{static}}%
-\tcode{static}~(\ref{class.union})). The
+\tcode{static}~(\ref{class.union.anon})). The
 \grammarterm{storage-class-specifier} applies to the name declared by each
 \grammarterm{init-declarator} in the list and not to any names declared by
 other specifiers. A \grammarterm{storage-class-specifier}
@@ -333,21 +344,10 @@ specified in an explicit specialization~(\ref{temp.expl.spec}) or an
 explicit instantiation~(\ref{temp.explicit}) directive.
 
 \pnum
-\indextext{restriction!\idxcode{register}}%
-The \tcode{register} specifier shall be applied only to names of variables
-declared in a block~(\ref{stmt.block}) or to function
-parameters~(\ref{dcl.fct.def}). It specifies that the named variable has
-automatic storage duration~(\ref{basic.stc.auto}). A variable declared
-without a \grammarterm{storage-class-specifier} at block scope or declared
-as a function parameter has automatic storage duration by default.
-
-\pnum
-\indextext{declaration!\idxcode{register}}%
-A \tcode{register} specifier is a hint to the implementation that the
-variable so declared will be heavily used.
 \enternote
-The hint can be ignored and in most implementations it will be ignored
-if the address of the variable is taken. This use is deprecated (see~\ref{depr.register}).
+A variable declared without a \grammarterm{storage-class-specifier}
+at block scope or declared as a function parameter
+has automatic storage duration by default~(\ref{basic.stc.auto}).
 \exitnote
 
 \pnum
@@ -364,7 +364,7 @@ When \tcode{thread_local} is applied to a variable of block scope the
 \pnum
 \indextext{restriction!\idxcode{static}}%
 The \tcode{static} specifier can be applied only to names of variables and
-functions and to anonymous unions~(\ref{class.union}). There can be no
+functions and to anonymous unions~(\ref{class.union.anon}). There can be no
 \tcode{static} function declarations within a block, nor any
 \tcode{static} function parameters. A \tcode{static} specifier used in
 the declaration of a variable declares the variable to have static storage
@@ -784,17 +784,21 @@ function to be a \defnx{constexpr function}{specifier!\idxcode{constexpr}!functi
 a constructor declaration declares that constructor to be a
 \defnx{constexpr constructor}{specifier!\idxcode{constexpr}!constructor}.
 \tcode{constexpr} functions and \tcode{constexpr} constructors are
-implicitly \tcode{inline}~(\ref{dcl.fct.spec}).
+implicitly inline functions~(\ref{dcl.fct.spec}).
 
 \pnum
 \indextext{specifier!\idxcode{constexpr}!function}
 \indextext{constexpr function}
 The definition of a \tcode{constexpr} function shall satisfy the following
-constraints:
+requirements:
 
 \begin{itemize}
 \item
 it shall not be virtual~(\ref{class.virtual});
+
+\item
+for a defaulted copy/move assignment, the class of which it is a member
+shall not have a mutable subobject that is a variant member;
 
 \item
 its return type shall be a literal type;
@@ -852,11 +856,15 @@ constexpr int g(int x, int n) { // OK
 \pnum
 \indextext{specifier!\idxcode{constexpr}!constructor}%
 The definition of a \tcode{constexpr} constructor shall satisfy the
-following constraints:
+following requirements:
 
 \begin{itemize}
 \item
 the class shall not have any virtual base classes;
+
+\item
+for a defaulted copy/move constructor, the class shall not have a
+mutable subobject that is a variant member;
 
 \item
 each of the parameter types shall be a literal type;
@@ -866,12 +874,12 @@ its \grammarterm{function-body} shall not be a \grammarterm{function-try-block};
 \end{itemize}
 
 In addition, either its \grammarterm{function-body} shall be
-\tcode{= delete}, or it shall satisfy the following constraints:
+\tcode{= delete}, or it shall satisfy the following requirements:
 
 \begin{itemize}
 \item
 either its \grammarterm{function-body} shall be \tcode{= default}, or the \grammarterm{compound-statement} of its \grammarterm{function-body}
-shall satisfy the constraints for a \grammarterm{function-body} of a
+shall satisfy the requirements for a \grammarterm{function-body} of a
 \tcode{constexpr} function;
 
 \item
@@ -906,12 +914,12 @@ private:
 \exitexample
 
 \pnum
-For a non-template, non-defaulted
-\tcode{constexpr} function or a non-template, non-defaulted, non-inheriting
-\tcode{constexpr} constructor, if no argument values exist such that
+For a \tcode{constexpr} function or \tcode{constexpr} constructor
+that is neither defaulted nor a template,
+if no argument values exist such that
 an invocation of the function or constructor could be an evaluated subexpression of a core
 constant expression~(\ref{expr.const}), or,
-for a constructor, a constant initializer for some object~(\ref{basic.start.init}),
+for a constructor, a constant initializer for some object~(\ref{basic.start.static}),
 the program is ill-formed; no diagnostic required.
 \enterexample
 \begin{codeblock}
@@ -1993,7 +2001,7 @@ this range.}
 
 \pnum
 Two enumeration types are \defn{layout-compatible} if they have the same
-\term{underlying type}.
+underlying type.
 
 \pnum
 The value of an enumerator or an object of an unscoped enumeration type is
@@ -2486,7 +2494,7 @@ namespace CWVLN = CWVLN;
 \indextext{using-declaration|(}
 
 \pnum
-A \grammarterm{using-declaration} introduces a name into the declarative
+A \grammarterm{using-declaration} introduces a set of declarations into the declarative
 region in which the \grammarterm{using-declaration} appears.
 
 \begin{bnf}
@@ -2494,18 +2502,23 @@ region in which the \grammarterm{using-declaration} appears.
     \terminal{using typename\opt} nested-name-specifier unqualified-id \terminal{;}\br
 \end{bnf}
 
-The member name specified in a \grammarterm{using-declaration} is declared
-in the declarative region in which the \grammarterm{using-declaration}
-appears. \enternote Only the specified name is so declared; specifying
-an enumeration name in a \grammarterm{using-declaration} does not declare
-its enumerators in the \grammarterm{using-declaration}'s declarative
-region.
+The set of declarations introduced by the \grammarterm{using-declaration} is found by
+performing qualified name lookup~(\ref{basic.lookup.qual}, \ref{class.member.lookup})
+for the name in the \grammarterm{using-declaration},
+excluding functions that are hidden as described below.
+If the \grammarterm{using-declaration} does not name a constructor,
+the \grammarterm{unqualified-id} is declared in the declarative region
+in which the \grammarterm{using-declaration} appears
+as a synonym for each declaration introduced by the \grammarterm{using-declaration}.
+\enternote Only the specified name is so declared;
+specifying an enumeration name in a \grammarterm{using-declaration}
+does not declare its enumerators
+in the \grammarterm{using-declaration}{'s} declarative region.
 \exitnote
-If a \grammarterm{using-declaration} names a constructor~(\ref{class.qual}), it
-implicitly declares a set of constructors in the class in which the
-\grammarterm{using-declaration} appears~(\ref{class.inhctor}); otherwise the
-name specified in a \grammarterm{using-declaration} is a synonym for a set of
-declarations in another namespace or class.
+\indextext{inheritance!\idxgram{using-declaration}~and}%
+If the \grammarterm{using-declaration} names a constructor,
+it declares that the class \term{inherits} the set of constructor declarations
+introduced by the \grammarterm{using-declaration} from the nominated base class.
 
 \pnum
 Every \grammarterm{using-declaration} is a \grammarterm{declaration} and a
@@ -2534,8 +2547,7 @@ In a \grammarterm{using-declaration} used as a
 shall name a base class of the class being defined. If such a
 \grammarterm{using-declaration} names a constructor, the
 \grammarterm{nested-name-specifier} shall name a direct base class of the class
-being defined; otherwise it introduces the set of declarations found by
-member name lookup~(\ref{class.member.lookup},~\ref{class.qual}).
+being defined.
 \enterexample
 
 \begin{codeblock}
@@ -2561,16 +2573,14 @@ for conversion functions are not found by name lookup, they are not
 considered when a \grammarterm{using-declaration} specifies a conversion
 function~(\ref{temp.mem}).
 \exitnote
-If an assignment operator brought from a base class into a derived class
-scope has the signature of a copy/move assignment
-operator for the derived
-class~(\ref{class.copy}), the \grammarterm{using-declaration} does not by
-itself suppress the implicit declaration of the derived class
-assignment operator; the copy/move assignment
-operator from the base
-class is hidden or overridden by the implicitly-declared
-copy/move assignment
-operator of the derived class, as described below.
+If a constructor or assignment operator brought from a base class into a derived class
+has the signature of a copy/move constructor or assignment operator
+for the derived class~(\ref{class.copy}),
+the \grammarterm{using-declaration} does not by itself
+suppress the implicit declaration of the derived class member;
+the member from the base class is hidden or overridden
+by the implicitly-declared copy/move constructor or assignment operator
+of the derived class, as described below.
 
 \pnum
 A \grammarterm{using-declaration} shall not name a \grammarterm{template-id}.
@@ -2595,7 +2605,7 @@ A \grammarterm{using-declaration} shall not name a namespace.
 A \grammarterm{using-declaration} shall not name a scoped enumerator.
 
 \pnum
-A \grammarterm{using-declaration} for a class member shall be a
+A \grammarterm{using-declaration} that names a class member shall be a
 \grammarterm{member-declaration}.
 \enterexample
 
@@ -2656,11 +2666,6 @@ namespace A1 {
   using A::i;       // OK: double declaration
 }
 
-void f() {
-  using A::i;
-  using A::i;       // error: double declaration
-}
-
 struct B {
   int i;
 };
@@ -2673,8 +2678,11 @@ struct X : B {
 \exitexample
 
 \pnum
-Members added to the namespace after the \grammarterm{using-declaration}
-are not considered when a use of the name is made. \enternote Thus, additional
+\enternote
+For a \grammarterm{using-declaration} that names a namespace,
+members added to the namespace after the \grammarterm{using-declaration}
+are not in the set of introduced declarations, so they are not
+considered when a use of the name is made. Thus, additional
 overloads added after the \grammarterm{using-declaration} are ignored, but
 default function arguments~(\ref{dcl.fct.default}), default template
 arguments~(\ref{temp.param}), and template specializations~(\ref{temp.class.spec},
@@ -2792,13 +2800,14 @@ void h() {
 
 \pnum
 \indextext{name hiding!using-declaration and}%
-When a \grammarterm{using-declaration} brings names from a base class into
-a derived class scope, member functions and member function templates in
+When a \grammarterm{using-declaration} brings declarations from a base class into
+a derived class, member functions and member function templates in
 the derived class override and/or hide member functions and member
 function templates with the same name,
 parameter-type-list~(\ref{dcl.fct}), cv-qualification, and \grammarterm{ref-qualifier} (if any) in a base
 class (rather than conflicting).
-\enternote For \grammarterm{using-declaration}{s} that name a constructor, see~\ref{class.inhctor}. \exitnote
+Such hidden or overridden declarations are excluded from the set of
+declarations introduced by the \grammarterm{using-declaration}.
 \enterexample
 
 \begin{codeblock}
@@ -2827,25 +2836,55 @@ void k(D* p)
   p->g(1);          // calls \tcode{B::g(int)}
   p->g('a');        // calls \tcode{D::g(char)}
 }
+
+struct B1 {
+  B1(int);
+};
+
+struct B2 {
+  B2(int);
+};
+
+struct D1 : B1, B2 {
+  using B1::B1;
+  using B2::B2;
+};
+D1 d1(0);    // ill-formed: ambiguous
+
+struct D2 : B1, B2 {
+  using B1::B1;
+  using B2::B2;
+  D2(int);   // OK: \tcode{D2::D2(int)} hides \tcode{B1::B1(int)} and \tcode{B2::B2(int)}
+};
+D2 d2(0);    // calls \tcode{D2::D2(int)}
 \end{codeblock}
 \exitexample
 
 \pnum
 \indextext{overloading!using-declaration and}%
-For the purpose of overload resolution, the functions which are
-introduced by a \grammarterm{using-declaration} into a derived class will
-be treated as though they were members of the derived class. In
+For the purpose of overload resolution, the functions that are
+introduced by a \grammarterm{using-declaration} into a derived class
+are treated as though they were members of the derived class. In
 particular, the implicit \tcode{this} parameter shall be treated as if
 it were a pointer to the derived class rather than to the base class.
 This has no effect on the type of the function, and in all other
 respects the function remains a member of the base class.
+Likewise, constructors that are introduced by a \grammarterm{using-declaration}
+are treated as though they were constructors of the derived class
+when looking up the constructors of the derived class~(\ref{class.qual})
+or forming a set of overload candidates~(\ref{over.match.ctor}, \ref{over.match.copy}, \ref{over.match.list}).
+If such a constructor is selected to perform the initialization
+of an object of class type, all subobjects other than the base class
+from which the constructor originated
+are implicitly initialized~(\ref{class.inhctor.init}).
 
 \pnum
 \indextext{access control!using-declaration and}%
-The access rules for inheriting constructors are specified
-in~\ref{class.inhctor}; otherwise all instances of the name mentioned in a
-\grammarterm{using-declaration}
-shall be accessible. In particular, if a derived class uses a
+In a \grammarterm{using-declaration} that does not name a constructor,
+all members of the set of introduced declarations shall be accessible.
+In a \grammarterm{using-declaration} that names a constructor,
+no access check is performed.
+In particular, if a derived class uses a
 \grammarterm{using-declaration} to access a member of a base class, the
 member name shall be accessible. If the name is that of an overloaded
 member function, then all functions named shall be accessible. The base
@@ -2876,11 +2915,13 @@ int f(D* d) {
 \exitnote
 
 \pnum
-The alias created by the \grammarterm{using-declaration} has the usual
+A synonym created by a \grammarterm{using-declaration} has the usual
 accessibility for a \grammarterm{member-declaration}.
-\enternote A \grammarterm{using-declaration} that names a constructor does not
-create aliases; see~\ref{class.inhctor} for the pertinent accessibility rules.
-\exitnote
+A \grammarterm{using-declaration} that names a constructor does not
+create a synonym; instead, the additional constructors
+are accessible if they would be accessible
+when used to construct an object of the corresponding base class,
+and the accessibility of the \grammarterm{using-declaration} is ignored.
 \enterexample
 
 \begin{codeblock}
@@ -3443,20 +3484,20 @@ such as types, variables, names, blocks, or translation units.
 
 \begin{bnf}
 \nontermdef{attribute-argument-clause}\br
-    \terminal{(} balanced-token-seq \terminal{)}
+    \terminal{(} balanced-token-seq\opt \terminal{)}
 \end{bnf}
 
 \begin{bnf}
 \nontermdef{balanced-token-seq}\br
-    balanced-token\opt\br
+    balanced-token\br
     balanced-token-seq balanced-token
 \end{bnf}
 
 \begin{bnf}
 \nontermdef{balanced-token}\br
-    \terminal{(} balanced-token-seq \terminal{)}\br
-    \terminal{[} balanced-token-seq \terminal{]}\br
-    \terminal{\{} balanced-token-seq \terminal{\}}\br
+    \terminal{(} balanced-token-seq\opt \terminal{)}\br
+    \terminal{[} balanced-token-seq\opt \terminal{]}\br
+    \terminal{\{} balanced-token-seq\opt \terminal{\}}\br
     \textnormal{any \grammarterm{token} other than a parenthesis, a bracket, or a brace}
 \end{bnf}
 
@@ -3525,8 +3566,7 @@ void f() {
 An \grammarterm{alignment-specifier}
 may be applied to a variable
 or to a class data member, but it shall not be applied to a bit-field, a function
-parameter, an \grammarterm{exception-declaration}~(\ref{except.handle}), or a variable
-declared with the \tcode{register} storage class specifier.
+parameter, or an \grammarterm{exception-declaration}~(\ref{except.handle}).
 An \grammarterm{alignment-specifier} may also be applied to the declaration or
 definition of a class (in an
 \grammarterm{elaborated-type-specifier}~(\ref{dcl.type.elab}) or
@@ -3543,22 +3583,10 @@ When the \grammarterm{alignment-specifier} is of the form
 \begin{itemize}
 \item the \grammarterm{constant-expression} shall be an integral constant expression
 
-\item if the constant expression evaluates to a fundamental alignment,
-the alignment requirement of the declared entity shall be the specified
-fundamental alignment
-
-\item if the constant expression evaluates to an extended alignment and
-the implementation supports that alignment in the context of the declaration,
-the alignment of the declared entity shall be that alignment
-
-\item if the constant expression evaluates to an extended alignment and
+\item if the constant expression does not evaluate to an alignment
+value~(\ref{basic.align}), or evaluates to an extended alignment and
 the implementation does not support that alignment in the context of the
-declaration, the program is ill-formed
-
-\item if the constant expression evaluates to zero, the alignment specifier
-shall have no effect
-
-\item otherwise, the program is ill-formed.
+declaration, the program is ill-formed.
 \end{itemize}
 
 \pnum
@@ -3567,8 +3595,9 @@ When the \grammarterm{alignment-specifier}{} is of the form
 effect as \tcode{alignas(\brk{}alignof(}\grammarterm{type-id}\tcode{))}~(\ref{expr.alignof}).
 
 \pnum
-When multiple \grammarterm{alignment-specifier}{s} are specified for an entity, the
-alignment requirement shall be set to the strictest specified alignment.
+The alignment requirement of an entity is the strictest non-zero alignment
+specified by its \grammarterm{alignment-specifier}{s}, if any;
+otherwise, the \grammarterm{alignment-specifier}{s} have no effect.
 
 \pnum
 The combined effect of all \grammarterm{alignment-specifier}{s} in a declaration shall not

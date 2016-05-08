@@ -183,6 +183,9 @@ catch (...) {
 \end{codeblock}
 \exitexample
 
+\pnum
+In this section, ``before'' and ``after'' refer to the
+``sequenced before'' relation~(\ref{intro.execution}).
 
 \rSec1[except.throw]{Throwing an exception}%
 \indextext{exception handling!throwing}%
@@ -295,9 +298,11 @@ appropriate library functions; see~\ref{propagation} and~\ref{futures}. \exitnot
 \indextext{exception handling!exception object!constructor}%
 \indextext{exception handling!exception object!destructor}%
 When the thrown object is a class object, the constructor selected for
-the copy-initialization and the
-destructor shall be accessible, even if the copy/move operation is
+the copy-initialization as well as the constructor selected for
+a copy-initialization considering the thrown object as an lvalue
+shall be non-deleted and accessible, even if the copy/move operation is
 elided~(\ref{class.copy}).
+The destructor is potentially invoked~(\ref{class.dtor}).
 
 \pnum
 \indextext{exception handling!rethrow}%
@@ -341,7 +346,6 @@ int main() {
 
 \rSec1[except.ctor]{Constructors and destructors}%
 \indextext{exception handling!constructors and destructors}%
-\indextext{stack unwinding!see exception handling, constructors and destructors}%
 \indextext{constructor!exception~handling|see{exception handling, constructors and destructors}}%
 \indextext{destructor!exception~handling|see{exception handling, constructors and destructors}}
 
@@ -379,7 +383,7 @@ handler of the \grammarterm{function-try-block} of the constructor or destructor
 if any.
 
 \pnum
-Similarly, if the non-delegating constructor for an object has
+Similarly, if the principal constructor for an object has
 completed execution and a delegating constructor for that object exits with
 an exception, the object's destructor is invoked.
 Such destruction is sequenced before entering a handler of the
@@ -427,16 +431,13 @@ or
 \tcode{void*}.
 
 \pnum
-A handler of type ``array of
-\tcode{T}''
-or ``function returning
-\tcode{T}''
-is adjusted to be of type ``pointer to
-\tcode{T}''
-or ``pointer to function
-returning
-\tcode{T}'',
-respectively.
+A handler of type
+\indextext{array!handler~of~type}%
+``array of \tcode{T}'' or
+\indextext{function!handler~of~type}%
+function type \tcode{T}
+is adjusted to be of type
+``pointer to \tcode{T}''.
 
 \pnum
 \indextext{exception handling!handler!match|(}%
@@ -449,53 +450,28 @@ of type
 if
 \begin{itemize}
 \item%
-The
-\term{handler}
-is of type
-\textit{cv}
-\tcode{T}
-or
-\textit{cv}
-\tcode{T\&}
-and
-\tcode{E}
-and
-\tcode{T}
-are the same type (ignoring the top-level
-\grammarterm{cv-qualifiers}),
-or
+The \term{handler} is of type \textit{cv} \tcode{T} or
+\textit{cv} \tcode{T\&} and
+\tcode{E} and \tcode{T}
+are the same type (ignoring the top-level \grammarterm{cv-qualifiers}), or
 \item%
-the
-\term{handler}
-is of type
-\textit{cv}
-\tcode{T}
-or
-\textit{cv}
-\tcode{T\&}
-and
-\tcode{T}
-is an unambiguous public base class of
-\tcode{E},
-or
+the \term{handler} is of type \textit{cv} \tcode{T} or
+\textit{cv} \tcode{T\&} and
+\tcode{T} is an unambiguous public base class of \tcode{E}, or
 \item%
-the
-\term{handler}
-is of type
-\textit{cv}
-\tcode{T} or \tcode{const T\&} where \tcode{T} is a pointer type
-and
-\tcode{E}
-is a pointer type that can be
-converted to \tcode{T}
-by either or both of
+the \term{handler} is of type \textit{cv} \tcode{T} or
+\tcode{const T\&} where \tcode{T} is a pointer type and
+\tcode{E} is a pointer type that can be converted to \tcode{T}
+by one or more of
 \begin{itemize}
 
 \item%
 a standard pointer conversion~(\ref{conv.ptr}) not involving conversions
 to pointers to private or protected or ambiguous classes
 \item%
-a qualification conversion, or
+a function pointer conversion~(\ref{conv.fctptr})
+\item%
+a qualification conversion~(\ref{conv.qual}, or
 
 \end{itemize}
 
@@ -724,26 +700,6 @@ A \tcode{(} token that follows \tcode{noexcept} is part of the
 initializer~(\ref{dcl.init}).
 
 \pnum
-An
-\grammarterm{exception-specification}
-shall appear only on a function declarator for a function type,
-pointer to function type, reference to function type, or pointer to
-member function type that is the top-level type of a declaration or
-definition, or on such a type appearing as a parameter or return type
-in a function declarator.
-An
-\grammarterm{exception-specification}
-shall not appear in a typedef declaration or \grammarterm{alias-declaration}.
-\enterexample
-\begin{codeblock}
-void f() throw(int);                    // OK
-void (*fp)() throw (int);               // OK
-void g(void pfa() throw(int));          // OK
-typedef int (*pf)() throw(int);         // ill-formed
-\end{codeblock}
-
-\exitexample
-
 \indextext{exception specification!incomplete type and}%
 A type denoted
 in a \grammarterm{dynamic-exception-specification}
@@ -753,12 +709,15 @@ in a \grammarterm{dynamic-exception-specification}
 shall not denote a pointer or reference to an incomplete type, other than
 ``pointer to \cv\ \tcode{void}''.
 A type
-\cv\ \tcode{T},
-``array of \tcode{T}'', or
-``function returning \tcode{T}''
+\cv\ \tcode{T}
 denoted in a \grammarterm{dynamic-exception-specification}
-is adjusted to type \tcode{T},
-``pointer to \tcode{T}'', or ``pointer to function returning \tcode{T}'', respectively.
+is adjusted to type \tcode{T}.
+A type
+``array of \tcode{T}'', or
+function type \tcode{T}
+denoted in a \grammarterm{dynamic-exception-specification}
+is adjusted to type
+``pointer to \tcode{T}''.
 A \grammarterm{dynamic-exception-specification}
 denotes an exception specification
 that is the set of adjusted types specified thereby.
@@ -845,32 +804,6 @@ allows only
 and
 \tcode{double}.
 \exitexample
-A similar restriction applies to assignment to and
-initialization of pointers to functions, pointers
-to member functions, and references to functions:
-the target entity shall allow at least the exceptions
-allowed by the source value in the assignment or
-initialization.
-\enterexample
-\begin{codeblock}
-class A { /* ... */ };
-void (*pf1)();      // no exception specification
-void (*pf2)() throw(A);
-
-void f() {
-  pf1 = pf2;        // OK: \tcode{pf1} is less restrictive
-  pf2 = pf1;        // error: \tcode{pf2} is more restrictive
-}
-\end{codeblock}
-\exitexample
-
-\pnum
-In such an assignment or initialization,
-\grammarterm{exception-specification}{s}
-on return types and parameter types shall be compatible.
-In other assignments or initializations,
-\grammarterm{exception-specification}{s}
-shall be compatible.
 
 \pnum
 An
@@ -1013,6 +946,11 @@ whose \grammarterm{cast-expression} is an \grammarterm{id-expression},
 \placeholder{S} is the set of potential exceptions of the entity selected by the
 contained \grammarterm{id-expression} (after overload resolution, if applicable).
 \item
+Otherwise, if the \grammarterm{postfix-expression} has type
+``\tcode{noexcept} function'' or
+``pointer to \tcode{noexcept} function'',
+\placeholder{S} is the empty set.
+\item
 Otherwise, \placeholder{S} contains the pseudo-type ``any''.
 \end{itemize}
 
@@ -1022,19 +960,29 @@ an allocation function in a \grammarterm{new-expression}, or a destructor
 if \tcode{e} is a full-expression~(\ref{intro.execution})),
 \placeholder{S} is the set of potential exceptions of the function.
 \item
-if \tcode{e} is a \grammarterm{throw-expression}~(\ref{expr.throw}),
+If \tcode{e} initializes an object of type \tcode{D} using an inherited
+constructor for a class of type \tcode{B}~(\ref{class.inhctor.init}),
+\placeholder{S} also contains the sets of potential exceptions
+of the implied constructor invocations for subobjects of \tcode{D}
+that are not subobjects of \tcode{B} (including default argument expressions
+used in such invocations) as selected by overload resolution,
+and the sets of potential exceptions of
+the initialization of non-static data members from
+\grammarterm{brace-or-equal-initializers}~(\ref{class.base.init}).
+\item
+If \tcode{e} is a \grammarterm{throw-expression}~(\ref{expr.throw}),
 \placeholder{S} consists of the type of the exception object that would be
 initialized by the operand, if present, or the pseudo-type ``any'' otherwise.
 \item
-if \tcode{e} is a \tcode{dynamic_cast} expression that casts to a reference type and
+If \tcode{e} is a \tcode{dynamic_cast} expression that casts to a reference type and
 requires a run-time check~(\ref{expr.dynamic.cast}),
 \placeholder{S} consists of the type \tcode{std::bad_cast}.
 \item
-if \tcode{e} is a \tcode{typeid} expression applied to a glvalue expression whose
+If \tcode{e} is a \tcode{typeid} expression applied to a glvalue expression whose
 type is a polymorphic class type (\ref{expr.typeid}),
 \placeholder{S} consists of the type \tcode{std::bad_typeid}.
 \item
-if \tcode{e} is a \grammarterm{new-expression} with a non-constant
+If \tcode{e} is a \grammarterm{new-expression} with a non-constant
 \grammarterm{expression} in the \grammarterm{noptr-new-declarator}~(\ref{expr.new}),
 \placeholder{S} consists of the type \tcode{std::bad_array_new_length}.
 \end{itemize}
@@ -1064,10 +1012,13 @@ for \tcode{new D}, the set consists of ``any'' and \tcode{double}.
 \exitexample
 
 \pnum
-Given a member function \tcode{f} of some class \tcode{X}, where \tcode{f} is
-an inheriting constructor~(\ref{class.inhctor}) or an implicitly-declared special
-member function,
-the \defn{set of potential exceptions of the implicitly-declared member function} \tcode{f}
+A function with an implied non-throwing exception specification,
+where the function's type is declared to be \tcode{T},
+is instead considered to be of type ``\tcode{noexcept} \tcode{T}''.
+
+\pnum
+Given an implicitly-declared special member function \tcode{f} of some class \tcode{X},
+the \defn{set of potential exceptions of the implicitly-declared special member function} \tcode{f}
 consists of all the members from the following sets:
 
 \begin{itemize}
@@ -1114,11 +1065,11 @@ and for \tcode{X}'s virtual and direct base classes.
 \end{itemize}
 
 \pnum
-An inheriting constructor~(\ref{class.inhctor}) and an implicitly-declared
-special member function (Clause~\ref{special}) are considered to have an
+An implicitly-declared special member function (Clause~\ref{special})
+is considered to have an
 implicit exception specification, as follows, where
 \placeholder{S} is the set of potential exceptions of the
-implicitly-declared member function:
+implicitly-declared special member function:
 \begin{itemize}
 \item
 if \placeholder{S} contains the pseudo-type ``any'',
@@ -1128,9 +1079,6 @@ otherwise, the implicit exception specification
 contains all the types in \placeholder{S}.
 \end{itemize}
 
-\enternote An instantiation of an inheriting constructor template has
-an implied exception specification as if it were a non-template
-inheriting constructor.\exitnote
 \enterexample
 \begin{codeblock}
 struct A {
@@ -1259,7 +1207,7 @@ terminates by throwing an exception, or
 
 \item%
 when initialization of a non-local
-variable with static or thread storage duration~(\ref{basic.start.init})
+variable with static or thread storage duration~(\ref{basic.start.dynamic})
 exits via an exception, or
 
 \item%

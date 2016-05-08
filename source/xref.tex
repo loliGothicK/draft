@@ -89,6 +89,7 @@ array.overview\quad\ref{array.overview}\\
 array.size\quad\ref{array.size}\\
 array.special\quad\ref{array.special}\\
 array.swap\quad\ref{array.swap}\\
+array.syn\quad\ref{array.syn}\\
 array.tuple\quad\ref{array.tuple}\\
 array.zero\quad\ref{array.zero}\\
 assertions\quad\ref{assertions}\\
@@ -156,8 +157,9 @@ basic.scope.pdecl\quad\ref{basic.scope.pdecl}\\
 basic.scope.proto\quad\ref{basic.scope.proto}\\
 basic.scope.temp\quad\ref{basic.scope.temp}\\
 basic.start\quad\ref{basic.start}\\
-basic.start.init\quad\ref{basic.start.init}\\
+basic.start.dynamic\quad\ref{basic.start.dynamic}\\
 basic.start.main\quad\ref{basic.start.main}\\
+basic.start.static\quad\ref{basic.start.static}\\
 basic.start.term\quad\ref{basic.start.term}\\
 basic.stc\quad\ref{basic.stc}\\
 basic.stc.auto\quad\ref{basic.stc.auto}\\
@@ -232,7 +234,7 @@ class.free\quad\ref{class.free}\\
 class.friend\quad\ref{class.friend}\\
 class.gslice\quad\ref{class.gslice}\\
 class.gslice.overview\quad\ref{class.gslice.overview}\\
-class.inhctor\quad\ref{class.inhctor}\\
+class.inhctor.init\quad\ref{class.inhctor.init}\\
 class.init\quad\ref{class.init}\\
 class.local\quad\ref{class.local}\\
 class.mem\quad\ref{class.mem}\\
@@ -254,6 +256,7 @@ class.static.mfct\quad\ref{class.static.mfct}\\
 class.temporary\quad\ref{class.temporary}\\
 class.this\quad\ref{class.this}\\
 class.union\quad\ref{class.union}\\
+class.union.anon\quad\ref{class.union.anon}\\
 class.virtual\quad\ref{class.virtual}\\
 classification\quad\ref{classification}\\
 cmplx.over\quad\ref{cmplx.over}\\
@@ -287,6 +290,7 @@ conv\quad\ref{conv}\\
 conv.array\quad\ref{conv.array}\\
 conv.bool\quad\ref{conv.bool}\\
 conv.double\quad\ref{conv.double}\\
+conv.fctptr\quad\ref{conv.fctptr}\\
 conv.fpint\quad\ref{conv.fpint}\\
 conv.fpprom\quad\ref{conv.fpprom}\\
 conv.func\quad\ref{conv.func}\\
@@ -378,6 +382,7 @@ defns.character.container\quad\ref{defns.character.container}\\
 defns.comparison\quad\ref{defns.comparison}\\
 defns.component\quad\ref{defns.component}\\
 defns.cond.supp\quad\ref{defns.cond.supp}\\
+defns.const.subexpr\quad\ref{defns.const.subexpr}\\
 defns.deadlock\quad\ref{defns.deadlock}\\
 defns.default.behavior.func\quad\ref{defns.default.behavior.func}\\
 defns.default.behavior.impl\quad\ref{defns.default.behavior.impl}\\
@@ -431,15 +436,12 @@ depr\quad\ref{depr}\\
 depr.c.headers\quad\ref{depr.c.headers}\\
 depr.except.spec\quad\ref{depr.except.spec}\\
 depr.impldec\quad\ref{depr.impldec}\\
-depr.incr.bool\quad\ref{depr.incr.bool}\\
-depr.ios.members\quad\ref{depr.ios.members}\\
 depr.istrstream\quad\ref{depr.istrstream}\\
 depr.istrstream.cons\quad\ref{depr.istrstream.cons}\\
 depr.istrstream.members\quad\ref{depr.istrstream.members}\\
 depr.ostrstream\quad\ref{depr.ostrstream}\\
 depr.ostrstream.cons\quad\ref{depr.ostrstream.cons}\\
 depr.ostrstream.members\quad\ref{depr.ostrstream.members}\\
-depr.register\quad\ref{depr.register}\\
 depr.str.strstreams\quad\ref{depr.str.strstreams}\\
 depr.strstream\quad\ref{depr.strstream}\\
 depr.strstream.cons\quad\ref{depr.strstream.cons}\\
@@ -456,6 +458,7 @@ deque.cons\quad\ref{deque.cons}\\
 deque.modifiers\quad\ref{deque.modifiers}\\
 deque.overview\quad\ref{deque.overview}\\
 deque.special\quad\ref{deque.special}\\
+deque.syn\quad\ref{deque.syn}\\
 derivation\quad\ref{derivation}\\
 derived.classes\quad\ref{derived.classes}\\
 description\quad\ref{description}\\
@@ -487,9 +490,15 @@ diff.cpp03.utilities\quad\ref{diff.cpp03.utilities}\\
 diff.cpp11\quad\ref{diff.cpp11}\\
 diff.cpp11.basic\quad\ref{diff.cpp11.basic}\\
 diff.cpp11.dcl.dcl\quad\ref{diff.cpp11.dcl.dcl}\\
+diff.cpp11.dcl.decl\quad\ref{diff.cpp11.dcl.decl}\\
+diff.cpp11.expr\quad\ref{diff.cpp11.expr}\\
 diff.cpp11.input.output\quad\ref{diff.cpp11.input.output}\\
 diff.cpp11.lex\quad\ref{diff.cpp11.lex}\\
+diff.cpp11.library\quad\ref{diff.cpp11.library}\\
+diff.cpp11.special\quad\ref{diff.cpp11.special}\\
 diff.cpp14\quad\ref{diff.cpp14}\\
+diff.cpp14.dcl.dcl\quad\ref{diff.cpp14.dcl.dcl}\\
+diff.cpp14.decl\quad\ref{diff.cpp14.decl}\\
 diff.cpp14.depr\quad\ref{diff.cpp14.depr}\\
 diff.cpp14.lex\quad\ref{diff.cpp14.lex}\\
 diff.dcl\quad\ref{diff.dcl}\\
@@ -526,6 +535,7 @@ except.throw\quad\ref{except.throw}\\
 except.uncaught\quad\ref{except.uncaught}\\
 except.unexpected\quad\ref{except.unexpected}\\
 exception\quad\ref{exception}\\
+exception.syn\quad\ref{exception.syn}\\
 exception.terminate\quad\ref{exception.terminate}\\
 exception.unexpected\quad\ref{exception.unexpected}\\
 expr\quad\ref{expr}\\
@@ -606,6 +616,7 @@ forwardlist.modifiers\quad\ref{forwardlist.modifiers}\\
 forwardlist.ops\quad\ref{forwardlist.ops}\\
 forwardlist.overview\quad\ref{forwardlist.overview}\\
 forwardlist.spec\quad\ref{forwardlist.spec}\\
+forward_list.syn\quad\ref{forward_list.syn}\\
 fpos\quad\ref{fpos}\\
 fpos.members\quad\ref{fpos.members}\\
 fpos.operations\quad\ref{fpos.operations}\\
@@ -694,6 +705,7 @@ includes\quad\ref{includes}\\
 indirect.array.assign\quad\ref{indirect.array.assign}\\
 indirect.array.comp.assign\quad\ref{indirect.array.comp.assign}\\
 indirect.array.fill\quad\ref{indirect.array.fill}\\
+initializer_list.syn\quad\ref{initializer_list.syn}\\
 inner.product\quad\ref{inner.product}\\
 input.iterators\quad\ref{input.iterators}\\
 input.output\quad\ref{input.output}\\
@@ -835,6 +847,7 @@ list.modifiers\quad\ref{list.modifiers}\\
 list.ops\quad\ref{list.ops}\\
 list.overview\quad\ref{list.overview}\\
 list.special\quad\ref{list.special}\\
+list.syn\quad\ref{list.syn}\\
 locale\quad\ref{locale}\\
 locale.categories\quad\ref{locale.categories}\\
 locale.category\quad\ref{locale.category}\\
@@ -911,6 +924,7 @@ memory.general\quad\ref{memory.general}\\
 memory.syn\quad\ref{memory.syn}\\
 meta\quad\ref{meta}\\
 meta.help\quad\ref{meta.help}\\
+meta.logical\quad\ref{meta.logical}\\
 meta.rel\quad\ref{meta.rel}\\
 meta.rqmts\quad\ref{meta.rqmts}\\
 meta.trans\quad\ref{meta.trans}\\
@@ -975,6 +989,7 @@ new.delete.dataraces\quad\ref{new.delete.dataraces}\\
 new.delete.placement\quad\ref{new.delete.placement}\\
 new.delete.single\quad\ref{new.delete.single}\\
 new.handler\quad\ref{new.handler}\\
+new.syn\quad\ref{new.syn}\\
 nullablepointer.requirements\quad\ref{nullablepointer.requirements}\\
 numarray\quad\ref{numarray}\\
 numeric.iota\quad\ref{numeric.iota}\\
@@ -1281,6 +1296,7 @@ std.exceptions\quad\ref{std.exceptions}\\
 std.ios.manip\quad\ref{std.ios.manip}\\
 std.iterator.tags\quad\ref{std.iterator.tags}\\
 std.manip\quad\ref{std.manip}\\
+stdexcept.syn\quad\ref{stdexcept.syn}\\
 stmt.ambig\quad\ref{stmt.ambig}\\
 stmt.block\quad\ref{stmt.block}\\
 stmt.break\quad\ref{stmt.break}\\
@@ -1418,6 +1434,7 @@ syserr.hash\quad\ref{syserr.hash}\\
 syserr.syserr\quad\ref{syserr.syserr}\\
 syserr.syserr.members\quad\ref{syserr.syserr.members}\\
 syserr.syserr.overview\quad\ref{syserr.syserr.overview}\\
+system_error.syn\quad\ref{system_error.syn}\\
 \par \textbf{T}\par
 temp\quad\ref{temp}\\
 temp.alias\quad\ref{temp.alias}\\
@@ -1546,6 +1563,7 @@ time.clock.req\quad\ref{time.clock.req}\\
 time.clock.steady\quad\ref{time.clock.steady}\\
 time.clock.system\quad\ref{time.clock.system}\\
 time.duration\quad\ref{time.duration}\\
+time.duration.alg\quad\ref{time.duration.alg}\\
 time.duration.arithmetic\quad\ref{time.duration.arithmetic}\\
 time.duration.cast\quad\ref{time.duration.cast}\\
 time.duration.comparisons\quad\ref{time.duration.comparisons}\\
@@ -1588,6 +1606,7 @@ type.index.members\quad\ref{type.index.members}\\
 type.index.overview\quad\ref{type.index.overview}\\
 type.index.synopsis\quad\ref{type.index.synopsis}\\
 type.info\quad\ref{type.info}\\
+typeinfo.syn\quad\ref{typeinfo.syn}\\
 \par \textbf{U}\par
 uncaught.exceptions\quad\ref{uncaught.exceptions}\\
 underflow.error\quad\ref{underflow.error}\\
@@ -1676,6 +1695,7 @@ utilities\quad\ref{utilities}\\
 utilities.general\quad\ref{utilities.general}\\
 utility\quad\ref{utility}\\
 utility.arg.requirements\quad\ref{utility.arg.requirements}\\
+utility.as_const\quad\ref{utility.as_const}\\
 utility.exchange\quad\ref{utility.exchange}\\
 utility.requirements\quad\ref{utility.requirements}\\
 utility.swap\quad\ref{utility.swap}\\
@@ -1703,6 +1723,7 @@ vector.data\quad\ref{vector.data}\\
 vector.modifiers\quad\ref{vector.modifiers}\\
 vector.overview\quad\ref{vector.overview}\\
 vector.special\quad\ref{vector.special}\\
+vector.syn\quad\ref{vector.syn}\\
 \par \textbf{W}\par
 wide.stream.objects\quad\ref{wide.stream.objects}\\
 \par \textbf{X}\par

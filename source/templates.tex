@@ -117,13 +117,14 @@ distinct from all specializations in other translation
 units.
 A template, a template explicit specialization~(\ref{temp.expl.spec}), and a class
 template partial specialization shall not have C linkage. Use of a linkage specification
-other than C or C++ with any of these constructs is conditionally-supported, with
+other than \tcode{"C"} or \tcode{"C++"} with any of these constructs is
+conditionally-supported, with
 \impldef{semantics of linkage specification on templates} semantics.
-Template definitions shall obey the one definition rule~(\ref{basic.def.odr}).
+Template definitions shall obey the one-definition rule~(\ref{basic.def.odr}).
 \enternote
 Default arguments for function templates and for member functions of
 class templates are considered definitions for the purpose of template
-instantiation~(\ref{temp.decls}) and must also obey the one definition rule.
+instantiation~(\ref{temp.decls}) and must also obey the one-definition rule.
 \exitnote
 
 \pnum
@@ -329,16 +330,11 @@ template<double& rd> class Z;   // OK
 \pnum
 A non-type
 \grammarterm{template-parameter}
-of type ``array of
-\tcode{T}''
-or ``function returning
-\tcode{T}''
-is adjusted to be of type
-``pointer to
-\tcode{T}''
-or ``pointer to function returning
-\tcode{T}'',
-respectively.
+\indextext{array!template parameter~of~type}%
+of type ``array of \tcode{T}'' or
+\indextext{function!template parameter~of~type}%
+of function type \tcode{T}
+is adjusted to be of type ``pointer to \tcode{T}''.
 \enterexample
 
 \begin{codeblock}
@@ -2166,11 +2162,11 @@ specialization~(\ref{temp.class.spec.mfunc}).
 \pnum
 \enterexample
 \begin{codeblock}
-template<class T1, class T2, int I> class A             { };    // \#1
-template<class T, int I>            class A<T, T*, I>   { };    // \#2
-template<class T1, class T2, int I> class A<T1*, T2, I> { };    // \#3
-template<class T>                   class A<int, T*, 5> { };    // \#4
-template<class T1, class T2, int I> class A<T1, T2*, I> { };    // \#5
+template<class T1, class T2, int I> class A             { };
+template<class T, int I>            class A<T, T*, I>   { };
+template<class T1, class T2, int I> class A<T1*, T2, I> { };
+template<class T>                   class A<int, T*, 5> { };
+template<class T1, class T2, int I> class A<T1, T2*, I> { };
 \end{codeblock}
 
 The first declaration declares the primary (unspecialized) class template.
@@ -2345,6 +2341,12 @@ deduced from the actual template argument list~(\ref{temp.deduct}).
 \enterexample
 
 \begin{codeblock}
+template<class T1, class T2, int I> class A             { };    // \#1
+template<class T, int I>            class A<T, T*, I>   { };    // \#2
+template<class T1, class T2, int I> class A<T1*, T2, I> { };    // \#3
+template<class T>                   class A<int, T*, 5> { };    // \#4
+template<class T1, class T2, int I> class A<T1, T2*, I> { };    // \#5
+
 A<int, int, 1>   a1;            // uses \#1
 A<int, int*, 1>  a2;            // uses \#2, \tcode{T} is \tcode{int}, \tcode{I} is \tcode{1}
 A<int, char*, 5> a3;            // uses \#4, \tcode{T} is \tcode{char}
@@ -2563,8 +2565,8 @@ void h(int* p) {
 \exitexample
 
 \pnum
-Such specializations are distinct functions and do not violate the one
-definition rule~(\ref{basic.def.odr}).
+Such specializations are distinct functions and do not violate the one-definition
+rule~(\ref{basic.def.odr}).
 
 \pnum
 The signature of a function template
@@ -2615,7 +2617,7 @@ For example, a template type parameter can be used in the
 Two expressions involving template parameters are considered
 \term{equivalent}
 if two function definitions containing the expressions would satisfy
-the one definition rule~(\ref{basic.def.odr}), except that the tokens used
+the one-definition rule~(\ref{basic.def.odr}), except that the tokens used
 to name the template parameters may differ as long as a token used to
 name a template parameter in one expression is replaced by another token
 that names the same template parameter in the other expression. For
@@ -3098,25 +3100,25 @@ template<class T> struct A {
 \indextext{checking!point~of error}%
 Knowing which names are type names allows the syntax of every template
 to be checked.
-No diagnostic shall be issued for a template
-for which a valid specialization can be generated.
-If no valid specialization can be generated
-for a template,
-and that template is not instantiated, the template is ill-formed,
-no diagnostic required.
-If every valid specialization of a variadic template requires an empty template
-parameter pack, the template is ill-formed, no diagnostic required.
-If a hypothetical instantiation of a template
+The program is ill-formed, no diagnostic required, if:
+\begin{itemize}
+\item
+no valid specialization can be generated for a template
+and that template is not instantiated, or
+\item
+every valid specialization of a variadic template requires an empty template
+parameter pack, or
+\item
+a hypothetical instantiation of a template
 immediately following its definition
 would be ill-formed
-due to a construct that does not depend on a template parameter,
-the program is ill-formed; no diagnostic is required.
-If the interpretation of such a construct
+due to a construct that does not depend on a template parameter, or
+\item
+the interpretation of such a construct
 in the hypothetical instantiation
 is different from
 the interpretation of the corresponding construct
-in any actual instantiation of the template,
-the program is ill-formed; no diagnostic is required.
+in any actual instantiation of the template.
 \enternote
 This can happen in situations including the following:
 \begin{itemize}
@@ -3144,6 +3146,9 @@ was not defined when the template was defined or it names an explicit
 specialization that was not declared when the template was defined.
 \end{itemize}
 \exitnote
+\end{itemize}
+Otherwise, no diagnostic shall be issued for a template
+for which a valid specialization can be generated.
 \enternote
 If a template is instantiated, errors will be diagnosed according
 to the other rules in this Standard.
@@ -3491,11 +3496,13 @@ and/or
 value of
 template parameters (as determined by the template arguments) and this determines
 the context for name lookup for certain names.
-Expressions may be
+An expressions may be
 \grammarterm{type-dependent}
-(on the type of a template parameter) or
+(that is, its type may depend on a template parameter) or
 \grammarterm{value-dependent}
-(on the value of a non-type template parameter).
+(that is, its value when evaluated as a constant expression~(\ref{expr.const})
+may depend on a template parameter)
+as described in this subclause.
 In an expression of the form:
 
 \begin{ncbnftab}
@@ -3526,7 +3533,7 @@ in the
 is type-dependent~(\ref{temp.dep.expr}), or
 
 \item
-if the \grammarterm{unqualified-id}
+the \grammarterm{unqualified-id}
 is a \grammarterm{template-id} in which any of the template arguments depends
 on a template parameter.
 \end{itemize}
@@ -3903,7 +3910,7 @@ a
 \grammarterm{simple-template-id}
 in which either the template name is a template parameter or any of the
 template arguments is a dependent type or an expression that is type-dependent
-or value-dependent, or
+or value-dependent or is a pack expansion, or
 \item denoted by \tcode{decltype(}\grammarterm{expression}{}\tcode{)},
 where \grammarterm{expression} is type-dependent~(\ref{temp.dep.expr}).
 \end{itemize}
@@ -4285,7 +4292,7 @@ within a translation unit.
 A specialization for any template may have points of instantiation in multiple
 translation units.
 If two different points of instantiation give a template specialization
-different meanings according to the one definition rule~(\ref{basic.def.odr}),
+different meanings according to the one-definition rule~(\ref{basic.def.odr}),
 the program is ill-formed, no diagnostic required.
 
 \rSec3[temp.dep.candidate]{Candidate functions}
@@ -5395,7 +5402,7 @@ shall be provided instead of the
 \tcode{template<>}
 preceding the explicit specialization declaration of the member.
 The types of the
-\grammarterm{template-parameters}
+\grammarterm{template-parameter}{s}
 in the
 \grammarterm{template-parameter-list}
 shall be the same as those specified in the primary template definition.
@@ -6036,11 +6043,11 @@ int i2 = f<1>(0);            // ambiguous; not narrowing
 Template argument deduction is done by comparing each function
 template parameter type (call it
 \tcode{P})
+that contains \grammarterm{template-parameter}{s} that participate in template argument deduction
 with the type of the corresponding argument of the call (call it
 \tcode{A})
 as described below.
-If \tcode{P} is a dependent type,
-removing references and cv-qualifiers from \tcode{P} gives
+If removing references and cv-qualifiers from \tcode{P} gives
 \tcode{std::initializer_list<P$'$>}
 or \tcode{P$'$[N]}
 for some \tcode{P$'$} and \tcode{N} and the
@@ -6194,7 +6201,8 @@ The transformed \tcode{A}
 can be another pointer or pointer to member type that can be converted
 to the deduced
 \tcode{A}
-via a qualification conversion~(\ref{conv.qual}).
+via a function pointer conversion~(\ref{conv.fctptr}) and/or
+qualification conversion~(\ref{conv.qual}).
 
 \item
 If
@@ -6218,12 +6226,6 @@ derived class pointed to by the deduced
 \tcode{A}.
 \end{itemize}
 
-\enternote as specified in~\ref{temp.arg.explicit}, implicit conversions will be
-performed on a function argument to convert it to the type of the corresponding
-function parameter if the parameter contains no \grammarterm{template-parameter}{s}
-that participate in template argument deduction. Such conversions are also
-allowed, in addition to the ones described in the preceding list. \exitnote
-
 \pnum
 These alternatives are considered only if type deduction would
 otherwise fail.
@@ -6244,7 +6246,7 @@ must be explicitly specified.
 \pnum
 When
 \tcode{P}
-is a function type, pointer to function type, or pointer to member
+is a function type, function pointer type, or pointer to member
 function type:
 \begin{itemize}
 \item
@@ -6293,6 +6295,35 @@ int i = f(1, g);    // calls \tcode{f(int, int (*)(int))}
 \end{codeblock}
 \exitexample
 \end{itemize}
+
+\pnum
+If deduction succeeds for all parameters that contain
+\grammarterm{template-parameter}{s} that participate in template argument
+deduction, and all template arguments are explicitly specified, deduced,
+or obtained from default template arguments, remaining parameters are then
+compared with the corresponding arguments. For each remaining parameter
+\tcode{P} with a type that was non-dependent before substitution of any
+explicitly-specified template arguments, if the corresponding argument
+\tcode{A} cannot be implicitly converted to \tcode{P}, deduction fails.
+\enternote
+Parameters with dependent types in which no \grammarterm{template-parameter}{s}
+participate in template argument deduction, and parameters that became
+non-dependent due to substitution of explicitly-specified template arguments,
+will be checked during overload resolution.
+\exitnote
+\enterexample
+\begin{codeblock}
+  template <class T> struct Z {
+    typedef typename T::x xx;
+  };
+  template <class T> typename Z<T>::xx f(void *, T); // \#1
+  template <class T> void f(int, T);                 // \#2
+  struct A {} a;
+  int main() {
+    f(1, a);                                         // OK, deduction fails for \#1 because there is no conversion from int to void*
+  }
+\end{codeblock}
+\exitexample
 
 \rSec3[temp.deduct.funcaddr]{Deducing template arguments taking the address of a function template}
 
@@ -6381,25 +6412,25 @@ values that will make the deduced
 \tcode{A}
 identical to
 \tcode{A}.
-However, there are two cases that allow a difference:
+However, there are four cases that allow a difference:
 
 \begin{itemize}
 \item
-If the original
-\tcode{A}
-is a reference type,
-\tcode{A}
-can be more cv-qualified
-than the deduced
-\tcode{A}
+If the original \tcode{A} is a reference type,
+\tcode{A} can be more cv-qualified than the deduced \tcode{A}
 (i.e., the type referred to by the reference)
 \item
-The deduced
-\tcode{A}
+If the original \tcode{A} is a function pointer type,
+\tcode{A} can be ``pointer to function''
+even if the deduced \tcode{A} is ``pointer to noexcept function''.
+\item
+If the original \tcode{A} is a pointer to member function type,
+\tcode{A} can be ``pointer to member of type function''
+even if the deduced \tcode{A} is ``pointer to member of type noexcept function''.
+\item
+The deduced \tcode{A}
 can be another pointer or pointer to member type that
-can be converted to
-\tcode{A}
-via a qualification conversion.
+can be converted to \tcode{A} via a qualification conversion.
 \end{itemize}
 
 \pnum
@@ -6492,6 +6523,9 @@ argument template are used as the types of
 \tcode{P}
 and
 \tcode{A}.
+If a particular \tcode{P} contains no \grammarterm{template-parameter}{s}
+that participate in template argument deduction, that \tcode{P} is not
+used to determine the ordering.
 
 \pnum
 Before the partial ordering is done, certain transformations are performed
@@ -6723,6 +6757,12 @@ participate in type deduction, but instead uses the values of template
 arguments that were either deduced elsewhere or explicitly specified.
 If a template parameter is used only in non-deduced contexts and is not
 explicitly specified, template argument deduction fails.
+\enternote
+Under \ref{temp.deduct.call} and \ref{temp.deduct.partial},
+if \tcode{P} contains no \grammarterm{template-parameter}{s} that appear
+in deduced contexts, no deduction is done, and so \tcode{P} and \tcode{A}
+need not have the same form.
+\exitnote
 
 \pnum
 The non-deduced contexts are:
@@ -7296,8 +7336,9 @@ the
 are used to synthesize the declaration of
 a single function template specialization which is
 added to the candidate functions set to be used in overload resolution.
-If, for a given function template, argument deduction fails, no such function
-is added to the set of candidate functions for that template.
+If, for a given function template, argument deduction fails or
+the synthesized function template specialization would be ill-formed,
+no such function is added to the set of candidate functions for that template.
 The complete set of candidate functions includes all the synthesized
 declarations and all of the non-template overloaded functions of
 the same name.

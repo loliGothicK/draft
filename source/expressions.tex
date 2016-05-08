@@ -36,15 +36,14 @@ obey the rules for syntax specified in Clause~\ref{expr}, but the
 requirements of operand type, value category, and evaluation order are replaced
 by the rules for function call. Relations between operators, such as
 \tcode{++a} meaning \tcode{a+=1}, are not guaranteed for overloaded
-operators~(\ref{over.oper}), and are not guaranteed for operands of type
-\tcode{bool}.
+operators~(\ref{over.oper}).
 \exitnote 
 
 \pnum
 Clause~\ref{expr} defines the effects of operators when applied to types
 for which they have not been overloaded. Operator overloading shall not
-modify the rules for the \term{built-in operators}, that
-is, for operators applied to types for which they are defined by this
+modify the rules for the \defnx{built-in operators}{operators!built-in},
+that is, for operators applied to types for which they are defined by this
 Standard. However, these built-in operators participate in overload
 resolution, and as part of that process user-defined conversions will be
 considered where necessary to convert the operands to types appropriate
@@ -238,7 +237,7 @@ conversions as described in~\ref{expr.cast},~\ref{expr.static.cast}
 and~\ref{expr.ass}.}
 
 \pnum
-The \term{cv-combined type} of two types \tcode{T1} and \tcode{T2}
+The \defnx{cv-combined type}{type!cv-combined} of two types \tcode{T1} and \tcode{T2}
 is a type \tcode{T3}
 similar to \tcode{T1} whose cv-qualification signature~(\ref{conv.qual}) is:
 \begin{itemize}
@@ -255,7 +254,8 @@ if the resulting \cv$_{3,j}$ is different from
 \enternote Given similar types \tcode{T1} and \tcode{T2}, this
 construction ensures that
 both can be converted to \tcode{T3}. \exitnote
-The \term{composite pointer type} of
+\indextext{pointer!composite pointer type}%
+The \defn{composite pointer type} of
 two operands \tcode{p1} and
 \tcode{p2} having types \tcode{T1} and \tcode{T2}, respectively, where at least one is a
 pointer or pointer to member type or
@@ -275,6 +275,11 @@ if \tcode{T1} or \tcode{T2} is ``pointer to \cvqual{cv1} \tcode{void}'' and the
 other type is ``pointer to \cvqual{cv2} T'', ``pointer to \cvqual{cv12}
 \tcode{void}'', where \cvqual{cv12} is the union of \cvqual{cv1}
 and \cvqual{cv2};
+
+\item
+if \tcode{T1} or \tcode{T2} is ``pointer to \tcode{noexcept} function'' and the
+other type is ``pointer to function'', where the function types are otherwise the same,
+``pointer to function'';
 
 \item
 if \tcode{T1} is ``pointer to \cvqual{cv1} \tcode{C1}'' and \tcode{T2} is ``pointer to
@@ -389,7 +394,7 @@ template auto A::f(int t) -> decltype(t + g());
 Otherwise, if a \grammarterm{member-declarator} declares a non-static data
 member~(\ref{class.mem}) of a class \tcode{X}, the expression \tcode{this} is
 a prvalue of type ``pointer to \tcode{X}'' within the
-optional \grammarterm{brace-or-equal-initializer}. It shall not appear elsewhere
+optional default member initializer~(\ref{class.mem}). It shall not appear elsewhere
 in the \grammarterm{member-declarator}.
 
 \pnum
@@ -398,7 +403,7 @@ The expression \tcode{this} shall not appear in any other context.
 \begin{codeblock}
 class Outer {
   int a[sizeof(*this)];               // error: not inside a member function
-  unsigned int sz = sizeof(*this);    // OK: in \grammarterm{brace-or-equal-initializer}
+  unsigned int sz = sizeof(*this);    // OK: in default member initializer
 
   void f() {
     int b[sizeof(*this)];             // OK
@@ -744,13 +749,17 @@ the \grammarterm{lambda-declarator} are looked up in the context in which the
 \pnum
 The closure type for a non-generic \grammarterm{lambda-expression} with no
 \grammarterm{lambda-capture}
-has a public non-virtual non-explicit const conversion function to pointer to
+has a conversion function to pointer to
 function with \Cpp language linkage~(\ref{dcl.link}) having
-the same parameter and return types as the closure type's function call operator. The
+the same parameter and return types as the closure type's function call operator.
+The conversion is to ``pointer to \tcode{noexcept} function''
+if the function call operator
+has a non-throwing exception specification.
+The
 value returned by this conversion function shall be the address of a function that, when
 invoked, has the same effect as invoking the closure type's function call operator.
 For a generic lambda with no \grammarterm{lambda-capture}, the closure type has a
-public non-virtual non-explicit const conversion function template to
+conversion function template to
 pointer to function. The conversion function template has the same invented
 \grammarterm{template-parameter-list}, and the pointer to function has the same
 parameter types, as the function call operator template.  The return type of
@@ -820,6 +829,9 @@ int (*GL_int)(int) = GL;  // OK: through conversion function template
 GL_int(3);                // OK: same as \tcode{GL(3)}
 \end{codeblock}
 \exitexample
+The conversion function or conversion function template is public,
+non-virtual, non-explicit, const, and has a non-throwing exception
+specification~(\ref{except.spec}).
 
 \pnum
 The \grammarterm{lambda-expression}'s \grammarterm{compound-statement} yields the
@@ -924,7 +936,8 @@ A \grammarterm{lambda-expression} with an associated
 a variable with automatic storage duration (this excludes any \grammarterm{id-expression}
 that has been found to refer to an \grammarterm{init-capture}{'s} associated
 \indextext{implicit capture!definition of}%
-non-static data member), is said to \term{implicitly capture} the entity (i.e.,
+non-static data member), is said to \defnx{implicitly capture}{capture!implicit}
+the entity (i.e.,
 \tcode{this} or a variable) if the \grammarterm{compound-statement}:
 \begin{itemize}
 \item odr-uses~(\ref{basic.def.odr}) the entity, or
@@ -1019,7 +1032,7 @@ void f2() {
 \exitexample
 
 \pnum
-An entity is \indexdefn{captured!by copy}\term{captured by copy} if it is implicitly captured and the
+An entity is \defnx{captured by copy}{captured!by~copy} if it is implicitly captured and the
 \grammarterm{capture-default} is \tcode{=} or if it is explicitly captured with a
 capture that is not of the form \tcode{\&} \grammarterm{identifier} or
 \tcode{\&} \grammarterm{identifier} \grammarterm{initializer}.
@@ -1032,7 +1045,7 @@ function, the corresponding data member is also a reference to a function. \exit
 A member of an anonymous union shall not be captured by copy.
 
 \pnum
-An entity is \indexdefn{captured!by reference}\term{captured by reference} if it is implicitly or explicitly
+An entity is \defnx{captured by reference}{captured!by~reference} if it is implicitly or explicitly
 captured but not captured by copy. It is unspecified whether additional unnamed
 non-static data members are declared in the closure type for entities captured by
 reference. A member of an anonymous union shall not be captured by reference.
@@ -1247,8 +1260,7 @@ Postfix expressions group left-to-right.
 \begin{bnf}
 \nontermdef{postfix-expression}\br
     primary-expression\br
-    postfix-expression \terminal{[} expression \terminal{]}\br
-    postfix-expression \terminal{[} braced-init-list \terminal{]}\br
+    postfix-expression \terminal{[} expr-or-braced-init-list \terminal{]}\br
     postfix-expression \terminal{(} expression-list\opt \terminal{)}\br
     simple-type-specifier \terminal{(} expression-list\opt \terminal{)}\br
     typename-specifier \terminal{(} expression-list\opt \terminal{)}\br
@@ -1326,12 +1338,12 @@ A function call is a postfix expression followed by parentheses
 containing a possibly empty, comma-separated list of
 \grammarterm{initializer-clause}{s} which
 constitute the arguments to the function. The postfix expression shall
-have function type or pointer to function type.
+have function type or function pointer type.
 For a call to a non-member function or to a static member function,
 the postfix expression shall be either an lvalue that refers to a
 function (in which case the function-to-pointer standard
 conversion~(\ref{conv.func}) is suppressed on the postfix expression),
-or it shall have pointer to function type. Calling a function through an
+or it shall have function pointer type. Calling a function through an
 expression whose function type has a language linkage that is different
 from the language linkage of the function type of the called function's
 definition is undefined~(\ref{dcl.link}). For a call to a non-static
@@ -1355,7 +1367,7 @@ function is non-virtual, or if the \grammarterm{id-expression} in the class
 member access expression is a \grammarterm{qualified-id}, that function is
 called. Otherwise, its final overrider~(\ref{class.virtual}) in the dynamic type
 of the object expression is called; such a call is referred to as a
-\term{virtual function call}.
+\defnx{virtual function call}{function!virtual function~call}.
 \enternote 
 the dynamic type is the type of the object referred to by the
 current value of the object expression. \ref{class.cdtor}~describes the
@@ -1489,8 +1501,8 @@ non-trivial destructor, with no corresponding parameter, is conditionally-suppor
 integral or enumeration type that is subject to the integral
 promotions~(\ref{conv.prom}), or a floating point type that is subject to the floating
 point promotion~(\ref{conv.fpprom}), the value of the argument is converted to the
-promoted type before the call. These promotions are referred to as the \term{default
-argument promotions}.
+promoted type before the call. These promotions are referred to as
+the \defnx{default argument promotions}{promotion!default argument promotion}.
 
 \pnum
 \indextext{evaluation!order~of argument}%
@@ -1752,15 +1764,9 @@ operand.
 the value obtained is a copy of the original value
 \exitnote 
 The operand shall be a modifiable lvalue. The type of the operand shall
-be an arithmetic type or a pointer to a complete object type. The value
-of the operand object is modified by adding \tcode{1} to it,
-\indextext{increment!\idxcode{bool}}%
-\indextext{deprecated~features}%
-unless the object is of type \tcode{bool}, in which case it is set to
-\tcode{true}.
-\enternote 
-this use is deprecated, see Annex~\ref{depr}.
-\exitnote 
+be an arithmetic type other than \cv\ \tcode{bool},
+or a pointer to a complete object type. The value
+of the operand object is modified by adding \tcode{1} to it.
 The
 \indextext{value computation}%
 value computation of the \tcode{++} expression is sequenced before the
@@ -1787,8 +1793,7 @@ and~\ref{expr.ass}.
 \indextext{\idxcode{\dcr}|see{operator, decrement}}%
 \indextext{postfix~\tcode{\dcr}}%
 The operand of postfix \tcode{\dcr} is decremented analogously to the
-postfix \tcode{++} operator, except that the operand shall not be of
-type \tcode{bool}.
+postfix \tcode{++} operator.
 \enternote 
 For prefix increment and decrement, see~\ref{expr.pre.incr}.
 \exitnote 
@@ -2105,8 +2110,9 @@ The inverse of any standard conversion sequence (Clause~\ref{conv}) not containi
 lvalue-to-rvalue~(\ref{conv.lval}),
 array-to-pointer~(\ref{conv.array}),
 function-to-pointer~(\ref{conv.func}),
-null pointer~(\ref{conv.ptr}), null member pointer~(\ref{conv.mem}), or
-boolean~(\ref{conv.bool})
+null pointer~(\ref{conv.ptr}), null member pointer~(\ref{conv.mem}),
+boolean~(\ref{conv.bool}), or
+function pointer~(\ref{conv.fctptr})
 conversion, can be performed explicitly using \tcode{static_cast}. A
 program is ill-formed if it uses \tcode{static_cast} to perform the
 inverse of an ill-formed standard conversion sequence.
@@ -2369,8 +2375,8 @@ type. \enternote That is, for lvalues, a reference cast
 \tcode{reinterpret_cast<T\&\&>(x)}). \exitnote No
 temporary is created, no copy is made, and
 constructors~(\ref{class.ctor}) or conversion
-functions~(\ref{class.conv}) are not called.\footnote{\indextext{type~pun}This
-is sometimes referred to as a \term{type pun}.}
+functions~(\ref{class.conv}) are not called.\footnote{This
+is sometimes referred to as a \defnx{type pun}{type~pun}.}
 
 \rSec2[expr.const.cast]{Const cast}
 
@@ -2536,9 +2542,8 @@ Expressions with unary operators group right-to-left.
 \pnum
 \indextext{expression!unary~operator}%
 \indextext{operator!unary}%
-The unary \tcode{*} operator performs \term{indirection}:
+The unary \tcode{*} operator performs \defn{indirection}:
 \indextext{dereferencing|seealso{indirection}}%
-\indextext{indirection}%
 the expression to which it is applied shall be a pointer to an object
 type, or a pointer to a function type and the result is an lvalue
 referring to the object or function to which the expression points. If
@@ -2676,13 +2681,11 @@ unambiguously parsed as a destructor name.
 The operand of prefix \tcode{++}
 \indextext{operator!increment}%
 \indextext{prefix~\tcode{++}}%
-is modified by adding \tcode{1},
-\indextext{increment!\idxcode{bool}}%
+is modified by adding \tcode{1}.
 \indextext{prefix~\tcode{\dcr}}%
-\indextext{deprecated~features}%
-or set to \tcode{true} if it is \tcode{bool} (this use is deprecated).
 The operand shall be a modifiable lvalue. The type of the operand shall
-be an arithmetic type or a pointer to a completely-defined object type.
+be an arithmetic type other than \cv\ \tcode{bool},
+or a pointer to a completely-defined object type.
 The result is the updated operand; it is an lvalue, and it is a
 bit-field if the operand is a bit-field. If \tcode{x} is not of type
 \tcode{bool}, the expression \tcode{++x} is equivalent to \tcode{x+=1}
@@ -2695,8 +2698,8 @@ operators~(\ref{expr.ass}) for information on conversions.
 \pnum
 The operand of prefix
 \indextext{operator!decrement}%
-\tcode{\dcr} is modified by subtracting \tcode{1}. The operand shall not
-be of type \tcode{bool}. The requirements on the operand of prefix
+\tcode{\dcr} is modified by subtracting \tcode{1}.
+The requirements on the operand of prefix
 \tcode{\dcr} and the properties of its result are otherwise the same as
 those of prefix \tcode{++}.
 \enternote 
@@ -2798,7 +2801,7 @@ The result of \tcode{sizeof} and \tcode{sizeof...} is a constant of type
 \indextext{\idxcode{new}}%
 The \grammarterm{new-expression} attempts to create an object of the
 \grammarterm{type-id}~(\ref{dcl.name}) or \grammarterm{new-type-id} to which
-it is applied. The type of that object is the \term{allocated type}.
+it is applied. The type of that object is the \defnx{allocated type}{type!allocated}.
 \indextext{type!incomplete}%
 This type shall be a complete object type, but not an abstract class
 type or array
@@ -4053,8 +4056,10 @@ same type after the specified conversions have been applied.
 \indextext{comparison!pointer}%
 \indextext{comparison!pointer~to function}%
 \pnum
-If at least one of the operands is a pointer, pointer
-conversions~(\ref{conv.ptr}) and qualification conversions~(\ref{conv.qual})
+If at least one of the operands is a pointer,
+pointer conversions~(\ref{conv.ptr}),
+function pointer conversions~(\ref{conv.fctptr}), and
+qualification conversions~(\ref{conv.qual})
 are performed on both operands to bring them to their composite pointer type
 (Clause~\ref{expr}). Comparing pointers is defined as follows:
 
@@ -4401,9 +4406,11 @@ operand.
 the usual arithmetic conversions are performed to bring them to a common
 type, and the result is of that type.
 
-\item One or both of the second and third operands have pointer type; pointer
-conversions~(\ref{conv.ptr}) and qualification
-conversions~(\ref{conv.qual}) are performed to bring them to their
+\item One or both of the second and third operands have pointer type;
+pointer conversions~(\ref{conv.ptr}),
+function pointer conversions~(\ref{conv.fctptr}), and
+qualification conversions~(\ref{conv.qual})
+are performed to bring them to their
 composite pointer type (Clause~\ref{expr}). The result is of the composite
 pointer type.
 
@@ -4436,9 +4443,9 @@ A \grammarterm{throw-expression} is of type \tcode{void}.
 Evaluating a \grammarterm{throw-expression} with an operand throws an
 exception~(\ref{except.throw}); the type of the exception object is determined by removing
 any top-level \grammarterm{cv-qualifiers} from the static type of the
-operand and adjusting the type from ``array of \tcode{T}'' or ``function
-returning \tcode{T}'' to ``pointer to \tcode{T}'' or ``pointer to function returning
-\tcode{T}'', respectively.
+operand and adjusting the type
+from ``array of \tcode{T}'' or function type \tcode{T}
+to ``pointer to \tcode{T}''.
 
 \pnum
 \indextext{exception handling!rethrow}%
@@ -4649,7 +4656,8 @@ Certain contexts require expressions that satisfy additional
 requirements as detailed in this sub-clause; other contexts have different
 semantics depending on whether or not an expression satisfies these requirements.
 Expressions that satisfy these requirements are called 
-\term{constant expressions}. \enternote Constant expressions can be evaluated
+\indexdefn{expression!constant}%
+\defn{constant expression}{s}. \enternote Constant expressions can be evaluated
 during translation.\exitnote
 
 \begin{bnf}
@@ -4658,7 +4666,8 @@ during translation.\exitnote
 \end{bnf}
 
 \pnum
-A \grammarterm{conditional-expression} \tcode{e} is a \term{core constant expression}
+A \grammarterm{conditional-expression} \tcode{e} is a
+\defnx{core constant expression}{expression!core~constant}
 unless the evaluation of \tcode{e}, following the rules of the abstract
 machine~(\ref{intro.execution}), would evaluate one of the following expressions:
 
@@ -4835,7 +4844,8 @@ constexpr int y = h(1);             // OK: initializes \tcode{y} with the value 
 \exitexample
 
 \pnum
-An \term{integral constant expression} is an expression of integral or
+An \defnx{integral constant expression}{expression!integral~constant}
+is an expression of integral or
 unscoped enumeration type, implicitly converted to a prvalue, where the converted expression is a core constant expression.
 \enternote
 Such expressions may be
@@ -4846,7 +4856,8 @@ and as alignments~(\ref{dcl.align}).
 \exitnote
 
 \pnum
-A \term{converted constant expression} of type \tcode{T} is an
+A \defnx{converted constant expression}{expression!converted~constant}
+of type \tcode{T} is an
 expression, implicitly converted to type \tcode{T}, where
 the converted expression is a constant expression and the
 implicit conversion sequence contains only
@@ -4859,8 +4870,9 @@ implicit conversion sequence contains only
 \item qualification conversions~(\ref{conv.qual}),
 \item integral promotions~(\ref{conv.prom}),
 \item integral conversions~(\ref{conv.integral}) other than narrowing conversions~(\ref{dcl.init.list}),
-\item null pointer conversions~(\ref{conv.ptr}) from \tcode{std::nullptr_t}, and
-\item null member pointer conversions~(\ref{conv.mem}) from \tcode{std::nullptr_t},
+\item null pointer conversions~(\ref{conv.ptr}) from \tcode{std::nullptr_t},
+\item null member pointer conversions~(\ref{conv.mem}) from \tcode{std::nullptr_t}, and
+\item function pointer conversions~(\ref{conv.fctptr}),
 \end{itemize}
 
 and where the reference binding (if any) binds directly.
@@ -4874,6 +4886,7 @@ arguments~(\ref{temp.arg}).
 \exitnote
 
 \pnum
+\indextext{expression!constant}%
 A \term{constant expression} is either
 a glvalue core constant expression whose value refers to
 an entity that is a permitted result of a constant expression (as defined below), or
@@ -4892,8 +4905,9 @@ object and its subobjects:
   the address of a function,
   or a null pointer value.
 \end{itemize}
-\indextext{constant expression!permitted result of}%
-An entity is a \term{permitted result of a constant expression} if it is an
+An entity is a
+\defnx{permitted result of a constant expression}{constant expression!permitted result~of}
+if it is an
 object with static storage duration that is either not a temporary object or is
 a temporary object whose value satisfies the above constraints, or it is a
 function.

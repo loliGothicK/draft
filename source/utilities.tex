@@ -73,6 +73,10 @@ namespace std {
     !is_nothrow_move_constructible<T>::value && is_copy_constructible<T>::value,
     const T&, T&&> move_if_noexcept(T& x) noexcept;
 
+  // \ref{utility.as_const}, as_const:
+  template <class T> constexpr add_const_t<T>& as_const(T& t) noexcept;
+  template <class T> void as_const(const T&&) = delete;
+
   // \ref{declval}, declval:
   template <class T>
     add_rvalue_reference_t<T> declval() noexcept;  // as unevaluated operand
@@ -82,19 +86,19 @@ namespace std {
 
   // \ref{pairs.spec}, pair specialized algorithms:
   template <class T1, class T2>
-    constexpr bool operator==(const pair<T1,T2>&, const pair<T1,T2>&);
+    constexpr bool operator==(const pair<T1, T2>&, const pair<T1, T2>&);
   template <class T1, class T2>
-    constexpr bool operator< (const pair<T1,T2>&, const pair<T1,T2>&);
+    constexpr bool operator< (const pair<T1, T2>&, const pair<T1, T2>&);
   template <class T1, class T2>
-    constexpr bool operator!=(const pair<T1,T2>&, const pair<T1,T2>&);
+    constexpr bool operator!=(const pair<T1, T2>&, const pair<T1, T2>&);
   template <class T1, class T2>
-    constexpr bool operator> (const pair<T1,T2>&, const pair<T1,T2>&);
+    constexpr bool operator> (const pair<T1, T2>&, const pair<T1, T2>&);
   template <class T1, class T2>
-    constexpr bool operator>=(const pair<T1,T2>&, const pair<T1,T2>&);
+    constexpr bool operator>=(const pair<T1, T2>&, const pair<T1, T2>&);
   template <class T1, class T2>
-    constexpr bool operator<=(const pair<T1,T2>&, const pair<T1,T2>&);
+    constexpr bool operator<=(const pair<T1, T2>&, const pair<T1, T2>&);
   template <class T1, class T2>
-    void swap(pair<T1,T2>& x, pair<T1,T2>& y) noexcept(noexcept(x.swap(y)));
+    void swap(pair<T1, T2>& x, pair<T1, T2>& y) noexcept(noexcept(x.swap(y)));
   template <class T1, class T2>
     constexpr @\seebelow@ make_pair(T1&&, T2&&);
 
@@ -102,9 +106,9 @@ namespace std {
   template <class T> class tuple_size;
   template <size_t I, class T> class tuple_element;
 
-  template <class T1, class T2> struct tuple_size<pair<T1, T2> >;
-  template <class T1, class T2> struct tuple_element<0, pair<T1, T2> >;
-  template <class T1, class T2> struct tuple_element<1, pair<T1, T2> >;
+  template <class T1, class T2> struct tuple_size<pair<T1, T2>>;
+  template <class T1, class T2> struct tuple_element<0, pair<T1, T2>>;
+  template <class T1, class T2> struct tuple_element<1, pair<T1, T2>>;
 
   template<size_t I, class T1, class T2>
     constexpr tuple_element_t<I, pair<T1, T2>>&
@@ -115,6 +119,9 @@ namespace std {
   template<size_t I, class T1, class T2>
     constexpr const tuple_element_t<I, pair<T1, T2>>&
       get(const pair<T1, T2>&) noexcept;
+  template<size_t I, class T1, class T2>
+    constexpr const tuple_element_t<I, pair<T1, T2>>&&
+      get(const pair<T1, T2>&&) noexcept;
   template <class T, class U>
     constexpr T& get(pair<T, U>& p) noexcept;
   template <class T, class U>
@@ -122,11 +129,15 @@ namespace std {
   template <class T, class U>
     constexpr T&& get(pair<T, U>&& p) noexcept;
   template <class T, class U>
+    constexpr const T&& get(const pair<T, U>&& p) noexcept;
+  template <class T, class U>
     constexpr T& get(pair<U, T>& p) noexcept;
   template <class T, class U>
     constexpr const T& get(const pair<U, T>& p) noexcept;
   template <class T, class U>
     constexpr T&& get(pair<U, T>&& p) noexcept;
+  template <class T, class U>
+    constexpr const T&& get(const pair<U, T>&& p) noexcept;
 
   // \ref{pair.piecewise}, pair piecewise construction
   struct piecewise_construct_t { };
@@ -399,6 +410,18 @@ template <class T> constexpr conditional_t<
 \returns \tcode{std::move(x)}
 \end{itemdescr}
 
+\rSec2[utility.as_const]{Function template \tcode{as_const}}
+
+\indexlibrary{\idxcode{as_const}}%
+\begin{itemdecl}
+template <class T> constexpr add_const_t<T>& as_const(T& t) noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{t}.
+\end{itemdescr}
+
 \rSec2[declval]{Function template \tcode{declval}}
 
 \pnum
@@ -498,12 +521,16 @@ constexpr pair();
 
 \begin{itemdescr}
 \pnum
-\requires \tcode{is_default_constructible<first_type>::value} is \tcode{true}
-and \tcode{is_default_construct-}\\\tcode{ible<second_type>::value} is \tcode{true}.
-
-\pnum
 \effects
 Value-initializes \tcode{first} and \tcode{second}.
+
+\pnum
+\remarks
+This constructor shall not participate in overload resolution unless
+\tcode{is_default_constructible<first_type>::value} is \tcode{true} and
+\tcode{is_default_constructible<second_type>::value} is \tcode{true}.
+\enternote This behaviour can be implemented by a constructor template
+with default template arguments. \exitnote
 \end{itemdescr}
 
 \indexlibrary{\idxcode{pair}!\idxcode{pair}}
@@ -851,7 +878,7 @@ struct tuple_size<pair<T1, T2>>
 
 \indexlibrary{\idxcode{tuple_element}}%
 \begin{itemdecl}
-tuple_element<0, pair<T1, T2> >::type
+tuple_element<0, pair<T1, T2>>::type
 \end{itemdecl}
 \begin{itemdescr}
 \pnum\textit{Value:} the type \tcode{T1}.
@@ -859,7 +886,7 @@ tuple_element<0, pair<T1, T2> >::type
 
 \indexlibrary{\idxcode{tuple_element}}%
 \begin{itemdecl}
-tuple_element<1, pair<T1, T2> >::type
+tuple_element<1, pair<T1, T2>>::type
 \end{itemdecl}
 \begin{itemdescr}
 \pnum\textit{Value:} the type T2.
@@ -874,26 +901,18 @@ template<size_t I, class T1, class T2>
 template<size_t I, class T1, class T2>
   constexpr const tuple_element_t<I, pair<T1, T2>>&
     get(const pair<T1, T2>& p) noexcept;
-\end{itemdecl}
-\begin{itemdescr}
-
-\pnum\returns If \tcode{I == 0} returns \tcode{p.first};
-if \tcode{I == 1} returns \tcode{p.second}; otherwise the program is ill-formed.
-\end{itemdescr}
-
-\indexlibrary{\idxcode{pair}!\idxcode{get}}%
-\indexlibrary{\idxcode{get}!\idxcode{pair}}%
-\begin{itemdecl}
 template<size_t I, class T1, class T2>
   constexpr tuple_element_t<I, pair<T1, T2>>&&
     get(pair<T1, T2>&& p) noexcept;
+template<size_t I, class T1, class T2>
+  constexpr const tuple_element_t<I, pair<T1, T2>>&&
+    get(const pair<T1, T2>&& p) noexcept;
 \end{itemdecl}
 \begin{itemdescr}
 
 \pnum
-\returns If \tcode{I == 0} returns \tcode{std::forward<T1\&\&>(p.first)};
-if \tcode{I == 1} returns
-\tcode{std::forward<T2\&\&>(\brk{}p.second)};
+\returns If \tcode{I == 0} returns a reference to \tcode{p.first};
+if \tcode{I == 1} returns a reference to \tcode{p.second};
 otherwise the program is ill-formed.
 \end{itemdescr}
 
@@ -904,28 +923,17 @@ template <class T, class U>
   constexpr T& get(pair<T, U>& p) noexcept;
 template <class T, class U>
   constexpr const T& get(const pair<T, U>& p) noexcept;
-\end{itemdecl}
-\begin{itemdescr}
-
-\pnum
-\requires \tcode{T} and \tcode{U} are distinct types. Otherwise, the program is ill-formed.
-
-\pnum
-\returns \tcode{get<0>(p);}
-\end{itemdescr}
-
-\indexlibrary{\idxcode{pair}!\idxcode{get}}%
-\indexlibrary{\idxcode{get}!\idxcode{pair}}%
-\begin{itemdecl}
 template <class T, class U>
   constexpr T&& get(pair<T, U>&& p) noexcept;
+template <class T, class U>
+  constexpr const T&& get(const pair<T, U>&& p) noexcept;
 \end{itemdecl}
 \begin{itemdescr}
 \pnum
 \requires \tcode{T} and \tcode{U} are distinct types. Otherwise, the program is ill-formed.
 
 \pnum
-\returns \tcode{get<0>(std::move(p));}
+\returns A reference to \tcode{p.first}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{pair}!\idxcode{get}}%
@@ -935,21 +943,10 @@ template <class T, class U>
   constexpr T& get(pair<U, T>& p) noexcept;
 template <class T, class U>
   constexpr const T& get(const pair<U, T>& p) noexcept;
-\end{itemdecl}
-\begin{itemdescr}
-
-\pnum
-\requires \tcode{T} and \tcode{U} are distinct types. Otherwise, the program is ill-formed.
-
-\pnum
-\returns \tcode{get<1>(p);}
-\end{itemdescr}
-
-\indexlibrary{\idxcode{pair}!\idxcode{get}}%
-\indexlibrary{\idxcode{get}!\idxcode{pair}}%
-\begin{itemdecl}
 template <class T, class U>
   constexpr T&& get(pair<U, T>&& p) noexcept;
+template <class T, class U>
+  constexpr const T&& get(const pair<U, T>&& p) noexcept;
 \end{itemdecl}
 \begin{itemdescr}
 
@@ -957,7 +954,7 @@ template <class T, class U>
 \requires \tcode{T} and \tcode{U} are distinct types. Otherwise, the program is ill-formed.
 
 \pnum
-\returns \tcode{get<1>(std::move(p));}
+\returns A reference to \tcode{p.second}.
 \end{itemdescr}
 
 \rSec2[pair.piecewise]{Piecewise construction}
@@ -1003,7 +1000,7 @@ namespace std {
   const @\unspec@ ignore;
 
   template <class... Types>
-    constexpr tuple<@\textit{VTypes}@...> make_tuple(Types&&...);
+    constexpr tuple<@\placeholder{VTypes}@...> make_tuple(Types&&...);
   template <class... Types>
     constexpr tuple<Types&&...> forward_as_tuple(Types&&...) noexcept;
 
@@ -1011,7 +1008,7 @@ namespace std {
     constexpr tuple<Types&...> tie(Types&...) noexcept;
 
   template <class... Tuples>
-    constexpr tuple<@\textit{Ctypes}@...> tuple_cat(Tuples&&...);
+    constexpr tuple<@\placeholder{Ctypes}@...> tuple_cat(Tuples&&...);
 
   // \ref{tuple.helper}, tuple helper classes:
   template <class T> class tuple_size;  // undefined
@@ -1019,14 +1016,14 @@ namespace std {
   template <class T> class tuple_size<volatile T>;
   template <class T> class tuple_size<const volatile T>;
 
-  template <class... Types> class tuple_size<tuple<Types...> >;
+  template <class... Types> class tuple_size<tuple<Types...>>;
 
   template <size_t I, class T> class tuple_element;    // undefined
   template <size_t I, class T> class tuple_element<I, const T>;
   template <size_t I, class T> class tuple_element<I, volatile T>;
   template <size_t I, class T> class tuple_element<I, const volatile T>;
 
-  template <size_t I, class... Types> class tuple_element<I, tuple<Types...> >;
+  template <size_t I, class... Types> class tuple_element<I, tuple<Types...>>;
 
   template <size_t I, class T>
     using tuple_element_t = typename tuple_element<I, T>::type;
@@ -1041,12 +1038,17 @@ namespace std {
   template <size_t I, class... Types>
     constexpr const tuple_element_t<I, tuple<Types...>>&
       get(const tuple<Types...>&) noexcept;
+  template <size_t I, class... Types>
+    constexpr const tuple_element_t<I, tuple<Types...>>&&
+      get(const tuple<Types...>&&) noexcept;
   template <class T, class... Types>
     constexpr T& get(tuple<Types...>& t) noexcept;
   template <class T, class... Types>
     constexpr T&& get(tuple<Types...>&& t) noexcept;
   template <class T, class... Types>
     constexpr const T& get(const tuple<Types...>& t) noexcept;
+  template <class T, class... Types>
+    constexpr const T&& get(const tuple<Types...>&& t) noexcept;
 
   // \ref{tuple.rel}, relational operators:
   template<class... TTypes, class... UTypes>
@@ -1069,6 +1071,10 @@ namespace std {
   // \ref{tuple.special}, specialized algorithms:
   template <class... Types>
     void swap(tuple<Types...>& x, tuple<Types...>& y) noexcept(@\seebelow@);
+
+  // \ref{tuple.helper}, tuple helper classes
+  template <class T> constexpr size_t tuple_size_v
+    = tuple_size<T>::value;
 }
 \end{codeblock}
 
@@ -1167,10 +1173,14 @@ constexpr tuple();
 
 \begin{itemdescr}
 \pnum
-\requires \tcode{is_default_constructible<$T_i$>::value} is true for all $i$.
+\effects  Value initializes each element.
 
 \pnum
-\effects  Value initializes each element.
+\remarks
+This constructor shall not participate in overload resolution unless
+\tcode{is_default_constructible<$T_i$>::value} is \tcode{true} for all $i$.
+\enternote This behaviour can be implemented by a constructor template
+with default template arguments. \exitnote
 \end{itemdescr}
 
 \indexlibrary{\idxcode{tuple}!constructor}%
@@ -1455,7 +1465,7 @@ template <class... UTypes>
 \tcode{sizeof...(Types)} \tcode{==}\\\tcode{sizeof...(UTypes)}.
 
 \pnum
-\effects For all $i$, assigns \tcode{std::forward<$U_i$>(get<$i$)>(u))} to
+\effects For all $i$, assigns \tcode{std::forward<$U_i$>(get<$i$>(u))} to
 \tcode{get<$i$>(*this)}.
 
 \pnum
@@ -1551,7 +1561,7 @@ in a template parameter pack named \tcode{UTypes}, where indexing is zero-based.
 \indexlibrary{\idxcode{tuple}!\idxcode{make_tuple}}%
 \begin{itemdecl}
 template<class... Types>
-  constexpr tuple<@\textit{VTypes}@...> make_tuple(Types&&... t);
+  constexpr tuple<@\placeholder{VTypes}@...> make_tuple(Types&&... t);
 \end{itemdecl}
 
 \begin{itemdescr} \pnum Let \tcode{$U_i$} be \tcode{decay_t<$T_i$>} for each
@@ -1629,7 +1639,7 @@ tie(i, ignore, s) = make_tuple(42, 3.14, "C++");
 \indexlibrary{\idxcode{tuple_cat}}
 \begin{itemdecl}
 template <class... Tuples>
-  constexpr tuple<@\textit{CTypes}@...> tuple_cat(Tuples&&... tpls);
+  constexpr tuple<@\placeholder{CTypes}@...> tuple_cat(Tuples&&... tpls);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -1650,7 +1660,7 @@ deduced as an lvalue reference type, then
 \tcode{is_constructible<$A_{ik}$, $cv_i A_{ik}$\&\&>::value == true}.
 
 \pnum
-\remarks The types in \tcode{\textit{Ctypes}} shall be equal to the ordered
+\remarks The types in \tcode{\placeholder{Ctypes}} shall be equal to the ordered
 sequence of the extended types
 \tcode{$Args_0$..., $Args_1$...,} ... \tcode{$Args_{n-1}$...}, where $n$ is
 equal to \tcode{sizeof...(Tuples)}. Let \tcode{$e_i$...} be the $i^{th}$
@@ -1686,14 +1696,14 @@ for some \tcode{N}.
 \indexlibrary{\idxcode{tuple_size}}%
 \begin{itemdecl}
 template <class... Types>
-class tuple_size<tuple<Types...> >
+class tuple_size<tuple<Types...>>
   : public integral_constant<size_t, sizeof...(Types)> { };
 \end{itemdecl}
 
 \indexlibrary{\idxcode{tuple_element}}%
 \begin{itemdecl}
 template <size_t I, class... Types>
-class tuple_element<I, tuple<Types...> > {
+class tuple_element<I, tuple<Types...>> {
 public:
   typedef TI type;
 };
@@ -1765,7 +1775,13 @@ the three templates are available when either of the headers \tcode{<array>} or
 \indexlibrary{\idxcode{get}!\idxcode{tuple}}%
 \begin{itemdecl}
 template <size_t I, class... Types>
-  constexpr tuple_element_t<I, tuple<Types...> >& get(tuple<Types...>& t) noexcept;
+  constexpr tuple_element_t<I, tuple<Types...>>& get(tuple<Types...>& t) noexcept;
+template <size_t I, class... Types>
+  constexpr tuple_element_t<I, tuple<Types...>>&& get(tuple<Types...>&& t) noexcept; // Note A
+template <size_t I, class... Types>
+  constexpr tuple_element_t<I, tuple<Types...>> const& get(const tuple<Types...>& t) noexcept; // Note B
+template <size_t I, class... Types>
+  constexpr const tuple_element_t<I, tuple<Types...>>&& get(const tuple<Types...>&& t) noexcept; 
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -1776,51 +1792,25 @@ The program is ill-formed if \tcode{I} is out of bounds.
 \pnum
 \returns  A reference to the \tcode{I}th element of \tcode{t}, where
 indexing is zero-based.
-\end{itemdescr}
-
-\indexlibrary{\idxcode{tuple}!\idxcode{get}}%
-\indexlibrary{\idxcode{get}!\idxcode{tuple}}%
-\begin{itemdecl}
-template <size_t I, class... Types>
-  constexpr tuple_element_t<I, tuple<Types...> >&& get(tuple<Types...>&& t) noexcept;
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\effects Equivalent to
-\tcode{return std::forward<typename tuple_element<I, tuple<Types...> >}\\
-\tcode{::type\&\&>(get<I>(t));}
 
 \pnum
-\realnote if a \tcode{T} in \tcode{Types} is some reference type \tcode{X\&}, the return
-type is \tcode{X\&}, not \tcode{X\&\&}. However, if the element type is a non-reference type
-\tcode{T}, the return type is \tcode{T\&\&}.
-\end{itemdescr}
-
-\indexlibrary{\idxcode{tuple}!\idxcode{get}}%
-\indexlibrary{\idxcode{get}!\idxcode{tuple}}%
-\begin{itemdecl}
-template <size_t I, class... Types>
-  constexpr tuple_element_t<I, tuple<Types...> > const& get(const tuple<Types...>& t) noexcept;
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\requires \tcode{I < sizeof...(Types)}.
-The program is ill-formed if \tcode{I} is out of bounds.
+{\EnterBlock{Note\ A}}
+If a \tcode{T} in \tcode{Types} is some reference type \tcode{X\&},
+the return type is \tcode{X\&}, not \tcode{X\&\&}.
+However, if the element type is a non-reference type \tcode{T},
+the return type is \tcode{T\&\&}.
+{\ExitBlock{note}}
 
 \pnum
-\returns  A const reference to the \tcode{I}th element of \tcode{t}, where
-indexing is zero-based.
-
-\pnum
-\enternote Constness is shallow. If a \tcode{T}
+{\EnterBlock{Note\ B}}
+Constness is shallow. If a \tcode{T}
 in \tcode{Types} is some
 reference type \tcode{X\&}, the return type is \tcode{X\&}, not \tcode{const X\&}.
 However, if the element type is non-reference type \tcode{T}, the return
 type is \tcode{const T\&}.
 This is consistent with how constness is defined to work
-for member variables of reference type. \exitnote
+for member variables of reference type.
+{\ExitBlock{note}}
 \end{itemdescr}
 
 \indexlibrary{\idxcode{tuple}!\idxcode{get}}%
@@ -1832,6 +1822,8 @@ template <class T, class... Types>
   constexpr T&& get(tuple<Types...>&& t) noexcept;
 template <class T, class... Types>
   constexpr const T& get(const tuple<Types...>& t) noexcept;
+template <class T, class... Types>
+  constexpr const T&& get(const tuple<Types...>&& t) noexcept;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -1847,9 +1839,9 @@ Otherwise, the program is ill-formed.
 \enterexample
 \begin{codeblock}
   const tuple<int, const int, double, double> t(1, 2, 3.4, 5.6);
-  const int &i1 = get<int>(t);        // OK. Not ambiguous. i1 == 1
-  const int &i2 = get<const int>(t);  // OK. Not ambiguous. i2 == 2
-  const double &d = get<double>(t);   // ERROR. ill-formed
+  const int& i1 = get<int>(t);        // OK. Not ambiguous. i1 == 1
+  const int& i2 = get<const int>(t);  // OK. Not ambiguous. i2 == 2
+  const double& d = get<double>(t);   // ERROR. ill-formed
 \end{codeblock}
 \exitexample
 \end{itemdescr}
@@ -2129,10 +2121,10 @@ namespace std {
     constexpr bitset(unsigned long long val) noexcept;
     template<class charT, class traits, class Allocator>
       explicit bitset(
-        const basic_string<charT,traits,Allocator>& str,
-        typename basic_string<charT,traits,Allocator>::size_type pos = 0,
-        typename basic_string<charT,traits,Allocator>::size_type n =
-          basic_string<charT,traits,Allocator>::npos,
+        const basic_string<charT, traits, Allocator>& str,
+        typename basic_string<charT, traits, Allocator>::size_type pos = 0,
+        typename basic_string<charT, traits, Allocator>::size_type n =
+          basic_string<charT, traits, Allocator>::npos,
           charT zero = charT('0'), charT one = charT('1'));
     template <class charT>
       explicit bitset(
@@ -2162,7 +2154,7 @@ namespace std {
     unsigned long long to_ullong() const;
     template <class charT = char,
         class traits = char_traits<charT>,
-        class Allocator = allocator<charT> >
+        class Allocator = allocator<charT>>
       basic_string<charT, traits, Allocator>
       to_string(charT zero = charT('0'), charT one = charT('1')) const;
     size_t count() const noexcept;
@@ -2179,7 +2171,7 @@ namespace std {
 
   // \ref{bitset.hash} hash support
   template <class T> struct hash;
-  template <size_t N> struct hash<bitset<N> >;
+  template <size_t N> struct hash<bitset<N>>;
 }
 \end{codeblock}
 
@@ -2278,14 +2270,11 @@ bitset(const basic_string<charT, traits, Allocator>& str,
 
 \begin{itemdescr}
 \pnum
-\requires
-\tcode{pos <= str.size()}.
-
-\pnum
 \throws
 \tcode{out_of_range}
 if
-\tcode{pos > str.size()}.%
+\tcode{pos > str.size()}
+or \tcode{invalid_argument} if an invalid character is found (see below).%
 \indexlibrary{\idxcode{out_of_range}}
 
 \pnum
@@ -2475,10 +2464,6 @@ bitset<N>& set(size_t pos, bool val = true);
 
 \begin{itemdescr}
 \pnum
-\requires
-\tcode{pos} is valid
-
-\pnum
 \throws
 \tcode{out_of_range}
 if \tcode{pos} does not correspond to a valid bit position.%
@@ -2519,10 +2504,6 @@ bitset<N>& reset(size_t pos);
 \end{itemdecl}
 
 \begin{itemdescr}
-\pnum
-\requires
-\tcode{pos} is valid
-
 \pnum
 \throws
 \tcode{out_of_range}
@@ -2580,10 +2561,6 @@ bitset<N>& flip(size_t pos);
 \end{itemdecl}
 
 \begin{itemdescr}
-\pnum
-\requires
-\tcode{pos} is valid
-
 \pnum
 \throws
 \tcode{out_of_range}
@@ -2644,7 +2621,7 @@ cannot be represented as type
 \begin{itemdecl}
 template <class charT = char,
     class traits = char_traits<charT>,
-    class Allocator = allocator<charT> >
+    class Allocator = allocator<charT>>
   basic_string<charT, traits, Allocator>
   to_string(charT zero = charT('0'), charT one = charT('1')) const;
 \end{itemdecl}
@@ -2722,10 +2699,6 @@ bool test(size_t pos) const;
 \end{itemdecl}
 
 \begin{itemdescr}
-\pnum
-\requires
-\tcode{pos} is valid
-
 \pnum
 \throws
 \tcode{out_of_range}
@@ -2849,7 +2822,7 @@ underlying bitset.
 
 \indexlibrary{\idxcode{hash_code}}%
 \begin{itemdecl}
-template <size_t N> struct hash<bitset<N> >;
+template <size_t N> struct hash<bitset<N>>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2949,9 +2922,9 @@ template <class charT, class traits, size_t N>
 \pnum
 \returns
 \begin{codeblock}
-os @\shl@ x.template to_string<charT,traits,allocator<charT> >(
-  use_facet<ctype<charT> >(os.getloc()).widen('0'),
-  use_facet<ctype<charT> >(os.getloc()).widen('1'))
+os @\shl@ x.template to_string<charT, traits, allocator<charT>>(
+  use_facet<ctype<charT>>(os.getloc()).widen('0'),
+  use_facet<ctype<charT>>(os.getloc()).widen('1'))
 \end{codeblock}
 (see~\ref{ostream.formatted}).
 \end{itemdescr}
@@ -3020,7 +2993,7 @@ namespace std {
 
   // \ref{temporary.buffer}, temporary buffers:
   template <class T>
-    pair<T*,ptrdiff_t> get_temporary_buffer(ptrdiff_t n) noexcept;
+    pair<T*, ptrdiff_t> get_temporary_buffer(ptrdiff_t n) noexcept;
   template <class T>
     void return_temporary_buffer(T* p);
 
@@ -3163,7 +3136,7 @@ namespace std {
   template<class T> void swap(weak_ptr<T>& a, weak_ptr<T>& b) noexcept;
 
   // \ref{util.smartptr.ownerless}, class template owner_less:
-  template<class T> class owner_less;
+  template<class T = void> struct owner_less;
 
   // \ref{util.smartptr.enab}, class template enable_shared_from_this:
   template<class T> class enable_shared_from_this;
@@ -3205,8 +3178,12 @@ namespace std {
 
   // \ref{util.smartptr.hash} hash support
   template <class T> struct hash;
-  template <class T, class D> struct hash<unique_ptr<T, D> >;
-  template <class T> struct hash<shared_ptr<T> >;
+  template <class T, class D> struct hash<unique_ptr<T, D>>;
+  template <class T> struct hash<shared_ptr<T>>;
+
+  // \ref{allocator.uses.trait} uses_allocator
+  template <class T, class Alloc> constexpr bool uses_allocator_v
+    = uses_allocator<T, Alloc>::value;
 }
 \end{codeblock}
 
@@ -3220,7 +3197,7 @@ attributes of pointer-like types.
 \begin{codeblock}
 namespace std {
   template <class Ptr> struct pointer_traits {
-    typedef Ptr       pointer;
+    typedef Ptr @\itcorr@      pointer;
     typedef @\seebelow@ element_type;
     typedef @\seebelow@ difference_type;
 
@@ -3580,7 +3557,7 @@ namespace std {
     typedef @\seebelow@ is_always_equal;
 
     template <class T> using rebind_alloc = @\seebelow@;
-    template <class T> using rebind_traits = allocator_traits<rebind_alloc<T> >;
+    template <class T> using rebind_traits = allocator_traits<rebind_alloc<T>>;
 
     static pointer allocate(Alloc& a, size_type n);
     static pointer allocate(Alloc& a, size_type n, const_void_pointer hint);
@@ -3829,7 +3806,7 @@ static size_type max_size(const Alloc& a) noexcept;
 \begin{itemdescr}
 \pnum
 \returns \tcode{a.max_size()} if that expression is well-formed; otherwise,
-\tcode{numeric_limits<size_type>::\brk{}max()}.
+\tcode{numeric_limits<size_type>::\brk{}max()/sizeof(value_type)}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{allocator_traits}!\idxcode{select_on_container_copy_construction}}%
@@ -3997,7 +3974,7 @@ size_type max_size() const noexcept;
 \begin{itemdescr}
 \pnum
 \returns
-The largest value \textit{N} for which the call \tcode{allocate(N,0)}
+The largest value \textit{N} for which the call \tcode{allocate(N, 0)}
 might succeed.
 \end{itemdescr}
 
@@ -4078,6 +4055,7 @@ namespace std {
 
     raw_storage_iterator& operator*();
     raw_storage_iterator& operator=(const T& element);
+    raw_storage_iterator& operator=(T&& element);
     raw_storage_iterator& operator++();
     raw_storage_iterator  operator++(int);
     OutputIterator base() const;
@@ -4116,8 +4094,33 @@ raw_storage_iterator& operator=(const T& element);
 
 \begin{itemdescr}
 \pnum
+\requires
+\tcode{T} shall be \tcode{CopyConstructible}.
+
+\pnum
 \effects
 Constructs a value from \tcode{element} at the location to which the iterator points.
+
+\pnum
+\returns
+A reference to the iterator.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{operator=}!\idxcode{raw_storage_iterator}}
+\indexlibrary{\idxcode{raw_storage_iterator}!\idxcode{operator=}}
+\begin{itemdecl}
+raw_storage_iterator& operator=(T&& element);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires
+\tcode{T} shall be \tcode{MoveConstructible}.
+
+\pnum
+\effects
+Constructs a value from \tcode{std::move(element)} at the location to which
+the iterator points.
 
 \pnum
 \returns
@@ -4172,16 +4175,29 @@ template <class T>
 \begin{itemdescr}
 \pnum
 \effects
-Obtains a pointer to storage sufficient to store up to \tcode{n}
-adjacent \tcode{T} objects.
+Obtains a pointer to uninitialized, contiguous storage for $N$ adjacent
+objects of type \tcode{T}, for some non-negative number $N$.
 It is \impldef{support for over-aligned types} whether over-aligned types are
 supported~(\ref{basic.align}).
 
 \pnum
+\remarks
+Calling \tcode{get_temporary_buffer} with a positive number \tcode{n} is
+a non-binding request to return storage for \tcode{n} objects of type \tcode{T}.
+In this case, an implementation is permitted to return instead storage for
+a non-negative number $N$ of such objects,
+where \tcode{$N$ != n} (including \tcode{$N$ == 0}).
+\enternote The request is non-binding to allow latitude for
+implementation-specific optimizations of its memory management. \exitnote
+
+\pnum
 \returns
-A \tcode{pair} containing the buffer's address and capacity (in the units of
-\tcode{sizeof(T)}), or a pair of 0 values if no storage can be obtained or
-if \tcode{n <= 0}.
+If \tcode{n <= 0} or if no storage could be obtained,
+returns a pair \tcode{P} such that
+\tcode{P.first} is a null pointer value and \tcode{P.second == 0};
+otherwise returns a pair \tcode{P} such that
+\tcode{P.first} refers to the address of the uninitialized storage and
+\tcode{P.second} refers to its capacity $N$ (in the units of \tcode{sizeof(T)}).
 \end{itemdescr}
 
 \indexlibrary{\idxcode{return_temporary_buffer}}%
@@ -4192,12 +4208,17 @@ template <class T> void return_temporary_buffer(T* p);
 \begin{itemdescr}
 \pnum
 \effects
-Deallocates the buffer to which \tcode{p}
-points.
+Deallocates the storage referenced by \tcode{p}.
 
 \pnum
 \requires
-The buffer shall have been previously allocated by \tcode{get_temporary_buffer}.
+\tcode{p} shall be a pointer value returned by an earlier call to
+\tcode{get_temporary_buffer} that has not been invalidated by
+an intervening call to \tcode{return_temporary_buffer(T*)}.
+
+\pnum
+\throws
+Nothing.
 \end{itemdescr}
 
 \rSec2[specialized.algorithms]{Specialized algorithms}
@@ -4239,7 +4260,7 @@ template <class InputIterator, class ForwardIterator>
 \pnum
 \effects
 \begin{codeblock}
-for (; first != last; ++result, ++first)
+for (; first != last; ++result, (void) ++first)
   ::new (static_cast<void*>(addressof(*result)))
     typename iterator_traits<ForwardIterator>::value_type(*first);
 \end{codeblock}
@@ -4260,7 +4281,7 @@ template <class InputIterator, class Size, class ForwardIterator>
 \pnum
 \effects
 \begin{codeblock}
-for ( ; n > 0; ++result, ++first, --n) {
+for ( ; n > 0; ++result, (void) ++first, --n) {
   ::new (static_cast<void*>(addressof(*result)))
     typename iterator_traits<ForwardIterator>::value_type(*first);
 }
@@ -5241,7 +5262,7 @@ this replaces the overload-resolution specification of the primary template
 \indexlibrary{\idxcode{unique_ptr}!\idxcode{operator=}}%
 \begin{itemdecl}
 template <class U, class E>
-  unique_ptr& operator=(unique_ptr<U,E>&& u)noexcept;
+  unique_ptr& operator=(unique_ptr<U, E>&& u)noexcept;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -5406,7 +5427,7 @@ template <class T1, class D1, class T2, class D2>
 induces a strict weak ordering~(\ref{alg.sorting}) on the pointer values.
 
 \pnum
-\returns \tcode{less<CT>()(x.get(), y.get()).}
+\returns \tcode{less<CT>()(x.get(), y.get())}.
 
 \pnum
 \remarks If \tcode{unique_ptr<T1, D1>::pointer} is not implicitly convertible
@@ -5753,17 +5774,13 @@ shall be well formed, shall have well defined behavior, and shall not
 throw exceptions.
 
 \pnum\effects Constructs a \tcode{shared_ptr} object that \textit{owns} the pointer
-\tcode{p}.
+\tcode{p}. If an exception is thrown, \tcode{delete p} is called.
 
 \pnum\postconditions  \tcode{use_count() == 1 \&\& get() == p}.
 
 \pnum\throws \tcode{bad_alloc}, or an \impldef{exception type when \tcode{shared_ptr}
 constructor fails} exception when a resource other than memory could not be obtained.
-
-\pnum\exceptionsafety  If an exception is thrown, \tcode{delete p} is
-called.
 \end{itemdescr}
-
 
 \indexlibrary{\idxcode{shared_ptr}!constructor}%
 \begin{itemdecl}
@@ -5785,14 +5802,13 @@ The copy constructor and destructor of \tcode{A} shall not throw exceptions.
 object \tcode{p} and the deleter \tcode{d}.
 The second and fourth constructors shall use a copy of \tcode{a} to
 allocate memory for internal use.
+If an exception is thrown, \tcode{d(p)} is called.
 
 \pnum\postconditions  \tcode{use_count() == 1 \&\& get() == p}.
 
 \pnum\throws  \tcode{bad_alloc}, or an \impldef{exception type when \tcode{shared_ptr}
 constructor fails} exception
 when a resource other than memory could not be obtained.
-
-\pnum\exceptionsafety  If an exception is thrown, \tcode{d(p)} is called.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{shared_ptr}!constructor}%
@@ -5867,13 +5883,11 @@ template<class Y> explicit shared_ptr(const weak_ptr<Y>& r);
 
 \pnum\effects  Constructs a \tcode{shared_ptr} object that \textit{shares ownership} with
 \tcode{r} and stores a copy of the pointer stored in \tcode{r}.
+If an exception is thrown, the constructor has no effect.
 
 \pnum\postconditions  \tcode{use_count() == r.use_count()}.
 
 \pnum\throws  \tcode{bad_weak_ptr} when \tcode{r.expired()}.
-
-\pnum\exceptionsafety  If an exception is thrown, the constructor has no
-effect.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{shared_ptr}!constructor}%
@@ -5891,9 +5905,7 @@ unless \tcode{unique_ptr<Y, D>::pointer} is convertible to \tcode{T*}.
 Otherwise, if \tcode{D} is not a reference type,
 equivalent to \tcode{shared_ptr(r.release(), r.get_deleter())}.
 Otherwise, equivalent to \tcode{shared_ptr(r.release(), ref(r.get_deleter()))}.
-
-\pnum
-\exceptionsafety If an exception is thrown, the constructor has no effect.
+If an exception is thrown, the constructor has no effect.
 \end{itemdescr}
 
 \rSec4[util.smartptr.shared.dest]{\tcode{shared_ptr} destructor}
@@ -5982,7 +5994,7 @@ template <class Y, class D> shared_ptr& operator=(unique_ptr<Y, D>&& r);
 \effects Equivalent to \tcode{shared_ptr(std::move(r)).swap(*this)}.
 
 \pnum
-\returns \tcode{*this}
+\returns \tcode{*this}.
 \end{itemdescr}
 
 
@@ -6679,9 +6691,9 @@ and weak pointers.
 
 \begin{codeblock}
 namespace std {
-  template<class T> struct owner_less;
+  template<class T = void> struct owner_less;
 
-  template<class T> struct owner_less<shared_ptr<T> > {
+  template<class T> struct owner_less<shared_ptr<T>> {
     typedef bool result_type;
     typedef shared_ptr<T> first_argument_type;
     typedef shared_ptr<T> second_argument_type;
@@ -6690,7 +6702,7 @@ namespace std {
     bool operator()(weak_ptr<T> const&, shared_ptr<T> const&) const;
   };
 
-  template<class T> struct owner_less<weak_ptr<T> > {
+  template<class T> struct owner_less<weak_ptr<T>> {
     typedef bool result_type;
     typedef weak_ptr<T> first_argument_type;
     typedef weak_ptr<T> second_argument_type;
@@ -6698,10 +6710,23 @@ namespace std {
     bool operator()(shared_ptr<T> const&, weak_ptr<T> const&) const;
     bool operator()(weak_ptr<T> const&, shared_ptr<T> const&) const;
   };
+
+  template<> struct owner_less<void> {
+    template<class T, class U>
+      bool operator()(shared_ptr<T> const&, shared_ptr<U> const&) const;
+    template<class T, class U>
+      bool operator()(shared_ptr<T> const&, weak_ptr<U> const&) const;
+    template<class T, class U>
+      bool operator()(weak_ptr<T> const&, shared_ptr<U> const&) const;
+    template<class T, class U>
+      bool operator()(weak_ptr<T> const&, weak_ptr<U> const&) const;
+
+    typedef @\unspec@ is_transparent;
+  };
 }
 \end{codeblock}
 
-\pnum \tcode{operator()(x,y)} shall return \tcode{x.owner_before(y)}. \enternote
+\pnum \tcode{operator()(x, y)} shall return \tcode{x.owner_before(y)}. \enternote
 Note that
 
 \begin{itemize}
@@ -6813,8 +6838,8 @@ private:
   weak_ptr<T> __weak_this;
 protected:
   constexpr enable_shared_from_this() : __weak_this() { }
-  enable_shared_from_this(enable_shared_from_this const &) { }
-  enable_shared_from_this& operator=(enable_shared_from_this const &) { return *this; }
+  enable_shared_from_this(enable_shared_from_this const&) { }
+  enable_shared_from_this& operator=(enable_shared_from_this const&) { return *this; }
   ~enable_shared_from_this() { }
 public:
   shared_ptr<T> shared_from_this() { return shared_ptr<T>(__weak_this); }
@@ -7055,7 +7080,7 @@ pointer value and share ownership.
 
 \indexlibrary{\idxcode{hash}}%
 \begin{itemdecl}
-template <class T, class D> struct hash<unique_ptr<T, D> >;
+template <class T, class D> struct hash<unique_ptr<T, D>>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -7072,14 +7097,14 @@ template \tcode{hash}~(\ref{unord.hash}).
 
 \indexlibrary{\idxcode{hash}}%
 \begin{itemdecl}
-template <class T> struct hash<shared_ptr<T> >;
+template <class T> struct hash<shared_ptr<T>>;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
 The template specialization shall meet the requirements of class
 template \tcode{hash}~(\ref{unord.hash}). For an object \tcode{p} of type \tcode{shared_ptr<T>},
-\tcode{hash<shared_ptr<T> >()(p)} shall evaluate to
+\tcode{hash<shared_ptr<T>>()(p)} shall evaluate to
 the same value as \tcode{hash<T*>()(p.get())}.
 \end{itemdescr}%
 \indextext{smart pointers|)}
@@ -7193,7 +7218,7 @@ namespace std {
   }
 
   // \ref{func.memfn}, member function adaptors:
-  template<class R, class T> @\unspec@ mem_fn(R T::*);
+  template<class R, class T> @\unspec@ mem_fn(R T::*) noexcept;
 
   // \ref{func.wrap} polymorphic function wrappers:
   class bad_function_call;
@@ -7238,6 +7263,12 @@ namespace std {
   template <> struct hash<long double>;
 
   template<class T> struct hash<T*>;
+
+  // \ref{func.bind}, Function object binders
+  template <class T> constexpr bool is_bind_expression_v
+    = is_bind_expression<T>::value;
+  template <class T> constexpr int is_placeholder_v
+    = is_placeholder<T>::value;
 }
 \end{codeblock}
 
@@ -7314,24 +7345,28 @@ Define \tcode{\textit{INVOKE}(f, t1, t2, ..., tN)} as follows:
 
 \begin{itemize}
 \item \tcode{(t1.*f)(t2, ..., tN)} when \tcode{f} is a pointer to a
-member function of a class \tcode{T} and \tcode{t1} is an object of
-type \tcode{T} or a reference to an object of type \tcode{T} or a
-reference to an object of a type derived from \tcode{T};
+member function of a class \tcode{T}
+and \tcode{is_base_of<T, decay_t<decltype(t1)>>::value} is \tcode{true};
+
+\item \tcode{(t1.get().*f)(t2, ..., tN)} when \tcode{f} is a pointer to a
+member function of a class \tcode{T}
+and \tcode{decay_t<decltype(t1)>} is a specialization of \tcode{reference_wrapper};
 
 \item \tcode{((*t1).*f)(t2, ..., tN)} when \tcode{f} is a pointer to a
-member function of a class \tcode{T} and \tcode{t1} is not one of the
-types described in the previous item;
+member function of a class \tcode{T}
+and \tcode{t1} does not satisfy the previous two items;
 
-\item \tcode{t1.*f} when \tcode{N == 1} and
-\tcode{f} is a pointer to member data of a
-class \tcode{T} and \tcode{t1} is an object of type \tcode{T} or a
-reference to an object of type \tcode{T} or a reference to an object
-of a type derived from \tcode{T};
+\item \tcode{t1.*f} when \tcode{N == 1} and \tcode{f} is a pointer to
+data member of a class \tcode{T}
+and \tcode{is_base_of<T, decay_t<decltype(t1)>>::value} is \tcode{true};
+    
+\item \tcode{t1.get().*f} when \tcode{N == 1} and \tcode{f} is a pointer to
+data member of a class \tcode{T}
+and \tcode{decay_t<decltype(t1)>} is a specialization of \tcode{reference_wrapper};
 
-\item \tcode{(*t1).*f} when \tcode{N == 1} and
-\tcode{f} is a pointer to member data of a
-class \tcode{T} and \tcode{t1} is not one of the types described in
-the previous item;
+\item \tcode{(*t1).*f} when \tcode{N == 1} and \tcode{f} is a pointer to
+data member of a class \tcode{T}
+and \tcode{t1} does not satisfy the previous two items;
 
 \item \tcode{f(t1, t2, ..., tN)} in all other cases.
 \end{itemize}
@@ -7353,9 +7388,8 @@ the type of its member type \tcode{result_type} is based on the
 type \tcode{T} of the wrapper's target object~(\ref{func.def}):
 \begin{itemize}
 \item
-if \tcode{T} is a pointer to
-function type, \tcode{result_type} shall be a synonym for the return
-type of \tcode{T};
+if \tcode{T} is a function pointer type,
+\tcode{result_type} shall be a synonym for the return type of \tcode{T};
 
 \item
 if \tcode{T} is a pointer to member function, \tcode{result_type}
@@ -7377,14 +7411,16 @@ otherwise \tcode{result_type} shall not be defined.
 \indextext{simple call wrapper}%
 \indextext{forwarding call wrapper}%
 Every call wrapper~(\ref{func.def}) shall be
-\tcode{MoveConstructible}. A \term{simple call wrapper} is a call wrapper
-that is \tcode{CopyConstructible} and \tcode{CopyAssignable} and whose copy
-constructor, move constructor, and assignment operator
-do not throw exceptions. A \term{forwarding call wrapper} is a
+\tcode{MoveConstructible}.
+A \term{forwarding call wrapper} is a
 call wrapper that can be called with an arbitrary argument list
 and delivers the arguments to the wrapped callable object as references.
 This forwarding step shall ensure that rvalue arguments are delivered as rvalue references
 and lvalue arguments are delivered as lvalue references.
+A \term{simple call wrapper} is a forwarding call wrapper that is
+\tcode{CopyConstructible} and \tcode{CopyAssignable} and
+whose copy constructor, move constructor, and assignment operator
+do not throw exceptions.
 \enternote In a typical implementation
 forwarding call wrappers have an overloaded function call
 operator of
@@ -7467,7 +7503,7 @@ following:
 
 \begin{itemize}
 \item
-a function type or a pointer to function type taking one argument of type \tcode{T1}
+a function type or a function pointer type taking one argument of type \tcode{T1}
 
 \item
 a pointer to member function \tcode{R T0::f} \textit{cv} (where \textit{cv} represents the
@@ -7488,7 +7524,7 @@ only if the type
 
 \begin{itemize}
 \item
-a function type or a pointer to function type taking two arguments of types \tcode{T1} and
+a function type or a function pointer type taking two arguments of types \tcode{T1} and
 \tcode{T2}
 
 \item
@@ -7574,13 +7610,6 @@ template <class... ArgTypes>
 
 \begin{itemdescr}
 \pnum\returns \tcode{\textit{INVOKE}(get(), std::forward<ArgTypes>(args)...)}.~(\ref{func.require})
-
-\pnum\note \tcode{operator()} is described for exposition only.
-Implementations are not required to provide an actual
-\tcode{reference_wrapper::operator()}.  Implementations are
-permitted to support \tcode{reference_wrapper} function invocation
-through multiple overloaded operators or through other means.
-
 \end{itemdescr}
 
 
@@ -8284,7 +8313,7 @@ template <class Predicate>
 
 \begin{itemdescr}
 \pnum
-\tcode{operator()} returns \tcode{!pred(x,y)}.
+\tcode{operator()} returns \tcode{!pred(x, y)}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{not2}}%
@@ -8389,6 +8418,8 @@ in \tcode{BoundArgs}, \tcode{is_cons\-tructible<TiD, Ti>::value} shall be \tcode
 wN)}~(\ref{func.require}) shall be a valid expression for some
 values \textit{w1, w2, ..., wN}, where
 \tcode{N == sizeof...(bound_args)}.
+The \textit{cv}-qualifiers \textit{cv} of the call wrapper \tcode{g},
+as specified below, shall be neither \tcode{volatile} nor \tcode{const volatile}.
 
 \pnum\returns A forwarding call wrapper \tcode{g} with a weak result
 type~(\ref{func.require}). The effect of \tcode{g(u1, u2, ..., uM)} shall
@@ -8426,6 +8457,8 @@ in \tcode{BoundArgs}, \tcode{is_con\-structible<TiD, Ti>::value} shall be \tcode
 expression for some
 values \textit{w1, w2, ..., wN}, where
 \tcode{N == sizeof...(bound_args)}.
+The \textit{cv}-qualifiers \textit{cv} of the call wrapper \tcode{g},
+as specified below, shall be neither \tcode{volatile} nor \tcode{const volatile}.
 
 \pnum
 \returns A forwarding call wrapper \tcode{g} with a nested  type
@@ -8516,7 +8549,7 @@ extern @\unspec@ _1;
 
 \indexlibrary{\idxcode{mem_fn}}%
 \begin{itemdecl}
-template<class R, class T> @\unspec@ mem_fn(R T::* pm);
+template<class R, class T> @\unspec@ mem_fn(R T::* pm) noexcept;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -8531,7 +8564,7 @@ member function.
 \pnum
 The simple call wrapper shall
 define two nested types named \tcode{argument_type} and \tcode{result_type} as synonyms
-for \tcode{\cv{} T*} and \tcode{Ret}, respectively,
+for \cv{} \tcode{T*} and \tcode{Ret}, respectively,
 when \tcode{pm} is
 a pointer to member function with cv-qualifier \textit{cv} and taking no
 arguments, where \textit{Ret} is \tcode{pm}'s return type.
@@ -8540,13 +8573,10 @@ arguments, where \textit{Ret} is \tcode{pm}'s return type.
 The simple call wrapper shall
 define three nested types named \tcode{first_argument_type},
 \tcode{second_argument_type}, and \tcode{result_type} as synonyms
-for \tcode{\cv{} T*}, \tcode{T1}, and \tcode{Ret}, respectively,
+for \cv{} \tcode{T*}, \tcode{T1}, and \tcode{Ret}, respectively,
 when \tcode{pm} is
 a pointer to member function with cv-qualifier \textit{cv} and taking
 one argument of type \tcode{T1}, where \textit{Ret} is \tcode{pm}'s return type.
-
-\pnum
-\throws Nothing.
 \end{itemdescr}
 \indextext{function object!\idxcode{mem_fn}|)}
 
@@ -8635,7 +8665,6 @@ namespace std {
 
     // \ref{func.wrap.func.mod}, function modifiers:
     void swap(function&) noexcept;
-    template<class F, class A> void assign(F&&, const A&);
 
     // \ref{func.wrap.func.cap}, function capacity:
     explicit operator bool() const noexcept;
@@ -8794,7 +8823,7 @@ Otherwise, \tcode{*this} targets a copy of \tcode{f}
 initialized with \tcode{std::move(f)}.
 \enternote Implementations are encouraged to avoid the use of
 dynamically allocated memory for small callable objects, for example,
-where \tcode{f}'s target is an object holding only a pointer or
+where \tcode{f} is an object holding only a pointer or
 reference to an object and a member function pointer. \exitnote
 
 \pnum
@@ -8859,7 +8888,7 @@ template<class F> function& operator=(F&& f);
 \pnum\returns \tcode{*this}
 
 \pnum\remarks This assignment operator shall not participate in overload
-resolution unless \tcode{declval<typename decay<F>::type\&>()} is
+resolution unless \tcode{declval<decay_t<F>\&>()} is
 Callable~(\ref{func.wrap.func}) for argument types \tcode{ArgTypes...} and
 return type \tcode{R}.
 \end{itemdescr}
@@ -8896,17 +8925,6 @@ void swap(function& other) noexcept;
 
 \begin{itemdescr}
 \pnum\effects interchanges the targets of \tcode{*this} and \tcode{other}.
-\end{itemdescr}
-
-\indexlibrary{\idxcode{function}!\idxcode{assign}}%
-\indexlibrary{\idxcode{assign}!\idxcode{function}}%
-\begin{itemdecl}
-template<class F, class A>
-  void assign(F&& f, const A& a);
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum\effects \tcode{function(allocator_arg, a, std::forward<F>(f)).swap(*this)}
 \end{itemdescr}
 
 \rSec4[func.wrap.func.cap]{\tcode{function} capacity}
@@ -9021,7 +9039,7 @@ template<class R, class... ArgTypes>
 The unordered associative containers defined in \ref{unord} use
 specializations of the class template \tcode{hash} as the default hash function.
 For all object types \tcode{Key} for which there exists a specialization \tcode{hash<Key>},
-and for all enumeration types~(\ref{dcl.enum}) \tcode{Key},
+and for all integral and enumeration types~(\ref{dcl.enum}) \tcode{Key},
 the instantiation \tcode{hash<Key>} shall:
 
 \begin{itemize}
@@ -9296,15 +9314,15 @@ namespace std {
 
   template <std::size_t Len,
             std::size_t Align = default-alignment > // see \ref{meta.trans.other}
-    using aligned_storage_t = typename aligned_storage<Len,Align>::type;
+    using aligned_storage_t = typename aligned_storage<Len, Align>::type;
   template <std::size_t Len, class... Types>
-    using aligned_union_t   = typename aligned_union<Len,Types...>::type;
+    using aligned_union_t   = typename aligned_union<Len, Types...>::type;
   template <class T>
     using decay_t           = typename decay<T>::type;
   template <bool b, class T = void>
-    using enable_if_t       = typename enable_if<b,T>::type;
+    using enable_if_t       = typename enable_if<b, T>::type;
   template <bool b, class T, class F>
-    using conditional_t     = typename conditional<b,T,F>::type;
+    using conditional_t     = typename conditional<b, T, F>::type;
   template <class... T>
     using common_type_t     = typename common_type<T...>::type;
   template <class T>
@@ -9313,6 +9331,156 @@ namespace std {
     using result_of_t       = typename result_of<T>::type;  
   template <class...>
     using void_t            = void;
+
+  // \ref{meta.logical}, logical operator traits:
+  template<class... B> struct conjunction;
+  template<class... B> struct disjunction;
+  template<class B> struct negation;
+
+  // \ref{meta.unary.cat}, primary type categories
+  template <class T> constexpr bool is_void_v
+    = is_void<T>::value;
+  template <class T> constexpr bool is_null_pointer_v
+    = is_null_pointer<T>::value;
+  template <class T> constexpr bool is_integral_v
+    = is_integral<T>::value;
+  template <class T> constexpr bool is_floating_point_v
+    = is_floating_point<T>::value;
+  template <class T> constexpr bool is_array_v
+    = is_array<T>::value;
+  template <class T> constexpr bool is_pointer_v
+    = is_pointer<T>::value;
+  template <class T> constexpr bool is_lvalue_reference_v
+    = is_lvalue_reference<T>::value;
+  template <class T> constexpr bool is_rvalue_reference_v
+    = is_rvalue_reference<T>::value;
+  template <class T> constexpr bool is_member_object_pointer_v
+    = is_member_object_pointer<T>::value;
+  template <class T> constexpr bool is_member_function_pointer_v
+    = is_member_function_pointer<T>::value;
+  template <class T> constexpr bool is_enum_v
+    = is_enum<T>::value;
+  template <class T> constexpr bool is_union_v
+    = is_union<T>::value;
+  template <class T> constexpr bool is_class_v
+    = is_class<T>::value;
+  template <class T> constexpr bool is_function_v
+    = is_function<T>::value;
+
+  // \ref{meta.unary.comp}, composite type categories
+  template <class T> constexpr bool is_reference_v
+    = is_reference<T>::value;
+  template <class T> constexpr bool is_arithmetic_v
+    = is_arithmetic<T>::value;
+  template <class T> constexpr bool is_fundamental_v
+    = is_fundamental<T>::value;
+  template <class T> constexpr bool is_object_v
+    = is_object<T>::value;
+  template <class T> constexpr bool is_scalar_v
+    = is_scalar<T>::value;
+  template <class T> constexpr bool is_compound_v
+    = is_compound<T>::value;
+  template <class T> constexpr bool is_member_pointer_v
+    = is_member_pointer<T>::value;
+
+  // \ref{meta.unary.prop}, type properties
+  template <class T> constexpr bool is_const_v
+    = is_const<T>::value;
+  template <class T> constexpr bool is_volatile_v
+    = is_volatile<T>::value;
+  template <class T> constexpr bool is_trivial_v
+    = is_trivial<T>::value;
+  template <class T> constexpr bool is_trivially_copyable_v
+    = is_trivially_copyable<T>::value;
+  template <class T> constexpr bool is_standard_layout_v
+    = is_standard_layout<T>::value;
+  template <class T> constexpr bool is_pod_v
+    = is_pod<T>::value;
+  template <class T> constexpr bool is_literal_type_v
+    = is_literal_type<T>::value;
+  template <class T> constexpr bool is_empty_v
+    = is_empty<T>::value;
+  template <class T> constexpr bool is_polymorphic_v
+    = is_polymorphic<T>::value;
+  template <class T> constexpr bool is_abstract_v
+    = is_abstract<T>::value;
+  template <class T> constexpr bool is_final_v
+    = is_final<T>::value;
+  template <class T> constexpr bool is_signed_v
+    = is_signed<T>::value;
+  template <class T> constexpr bool is_unsigned_v
+    = is_unsigned<T>::value;
+  template <class T, class... Args> constexpr bool is_constructible_v
+    = is_constructible<T, Args...>::value;
+  template <class T> constexpr bool is_default_constructible_v
+    = is_default_constructible<T>::value;
+  template <class T> constexpr bool is_copy_constructible_v
+    = is_copy_constructible<T>::value;
+  template <class T> constexpr bool is_move_constructible_v
+    = is_move_constructible<T>::value;
+  template <class T, class U> constexpr bool is_assignable_v
+    = is_assignable<T, U>::value;
+  template <class T> constexpr bool is_copy_assignable_v
+    = is_copy_assignable<T>::value;
+  template <class T> constexpr bool is_move_assignable_v
+    = is_move_assignable<T>::value;
+  template <class T> constexpr bool is_destructible_v
+    = is_destructible<T>::value;
+  template <class T, class... Args> constexpr bool is_trivially_constructible_v
+    = is_trivially_constructible<T, Args...>::value;
+  template <class T> constexpr bool is_trivially_default_constructible_v
+    = is_trivially_default_constructible<T>::value;
+  template <class T> constexpr bool is_trivially_copy_constructible_v
+    = is_trivially_copy_constructible<T>::value;
+  template <class T> constexpr bool is_trivially_move_constructible_v
+    = is_trivially_move_constructible<T>::value;
+  template <class T, class U> constexpr bool is_trivially_assignable_v
+    = is_trivially_assignable<T, U>::value;
+  template <class T> constexpr bool is_trivially_copy_assignable_v
+    = is_trivially_copy_assignable<T>::value;
+  template <class T> constexpr bool is_trivially_move_assignable_v
+    = is_trivially_move_assignable<T>::value;
+  template <class T> constexpr bool is_trivially_destructible_v
+    = is_trivially_destructible<T>::value;
+  template <class T, class... Args> constexpr bool is_nothrow_constructible_v
+    = is_nothrow_constructible<T, Args...>::value;
+  template <class T> constexpr bool is_nothrow_default_constructible_v
+    = is_nothrow_default_constructible<T>::value;
+  template <class T> constexpr bool is_nothrow_copy_constructible_v
+    = is_nothrow_copy_constructible<T>::value;
+  template <class T> constexpr bool is_nothrow_move_constructible_v
+    = is_nothrow_move_constructible<T>::value;
+  template <class T, class U> constexpr bool is_nothrow_assignable_v
+    = is_nothrow_assignable<T, U>::value;
+  template <class T> constexpr bool is_nothrow_copy_assignable_v
+    = is_nothrow_copy_assignable<T>::value;
+  template <class T> constexpr bool is_nothrow_move_assignable_v
+    = is_nothrow_move_assignable<T>::value;
+  template <class T> constexpr bool is_nothrow_destructible_v
+    = is_nothrow_destructible<T>::value;
+  template <class T> constexpr bool has_virtual_destructor_v
+    = has_virtual_destructor<T>::value;
+
+  // See \ref{meta.unary.prop.query}, type property queries
+  template <class T> constexpr size_t alignment_of_v
+    = alignment_of<T>::value;
+  template <class T> constexpr size_t rank_v
+    = rank<T>::value;
+  template <class T, unsigned I = 0> constexpr size_t extent_v
+    = extent<T, I>::value;
+
+  // See \ref{meta.rel}, type relations
+  template <class T, class U> constexpr bool is_same_v
+    = is_same<T, U>::value;
+  template <class Base, class Derived> constexpr bool is_base_of_v
+    = is_base_of<Base, Derived>::value;
+  template <class From, class To> constexpr bool is_convertible_v
+    = is_convertible<From, To>::value;
+
+  // \ref{meta.logical}, logical operator traits:
+  template<class... B> constexpr bool conjunction_v = conjunction<B...>::value;
+  template<class... B> constexpr bool disjunction_v = disjunction<B...>::value;
+  template<class B> constexpr bool negation_v = negation<B>::value;
 } // namespace std
 \end{codeblock}
 
@@ -9328,7 +9496,7 @@ namespace std {
   struct integral_constant {
     static constexpr T value = v;
     typedef T value_type;
-    typedef integral_constant<T,v> type;
+    typedef integral_constant<T, v> type;
     constexpr operator value_type() const noexcept { return value; }
     constexpr value_type operator()() const noexcept { return value; }
   };
@@ -9480,11 +9648,19 @@ It is unspecified whether the library defines any full or partial
 specializations of any of these templates.
 
 \pnum
-For all of the class templates \tcode{X} declared in this Clause,
+For all of the class templates \tcode{X} declared in this sub-clause,
 instantiating that template with a template-argument that is a class
 template specialization may result in the implicit instantiation of
 the template argument if and only if the semantics of \tcode{X} require that
 the argument must be a complete type.
+
+\pnum
+For the purpose of defining the templates in this sub-clause,
+a function call expression \tcode{declval<T>()} for any type \tcode{T}
+is considered to be a trivial~(\ref{basic.types}, \ref{special}) function call
+that is not an odr-use~(\ref{basic.def.odr}) of \tcode{declval}
+in the context of the corresponding definition
+notwithstanding the restrictions of~\ref{declval}.
 
 \begin{libreqtab3b}{Type property predicates}{tab:type-traits.properties}
 \\ \topline
@@ -9812,18 +9988,12 @@ static_assert( is_final<U2>::value, "Error!");
 \exitexample
 
 \pnum
-Given the following function declaration:
-\begin{codeblock}
-template <class T>
-  add_rvalue_reference_t<T> create() noexcept;
-\end{codeblock}
-
-the predicate condition for a template specialization
+The predicate condition for a template specialization
 \tcode{is_constructible<T, Args...>} shall be satisfied if and only if the
 following variable definition would be well-formed for some invented variable \tcode{t}:
 
 \begin{codeblock}
-T t(create<Args>()...);
+T t(declval<Args>()...);
 \end{codeblock}
 
 \enternote These tokens are never interpreted as a function declaration.
@@ -9950,6 +10120,14 @@ with a BaseCharacteristic of
 \end{libreqtab3f}
 
 \pnum
+For the purpose of defining the templates in this sub-clause,
+a function call expression \tcode{declval<T>()} for any type \tcode{T}
+is considered to be a trivial~(\ref{basic.types}, \ref{special}) function call
+that is not an odr-use~(\ref{basic.def.odr}) of \tcode{declval}
+in the context of the corresponding definition
+notwithstanding the restrictions of~\ref{declval}.
+
+\pnum
 \enterexample
 \begin{codeblock}
 struct B {};
@@ -9969,20 +10147,13 @@ is_base_of<int, int>::value     // false
 \exitexample
 
 \pnum
-Given the following function declaration:
-
-\begin{codeblock}
-template <class T>
-  add_rvalue_reference_t<T> create() noexcept;
-\end{codeblock}
-
-the predicate condition for a template specialization \tcode{is_convertible<From, To>}
+The predicate condition for a template specialization \tcode{is_convertible<From, To>}
 shall be satisfied if and only if the return expression in the following code would be
 well-formed, including any implicit conversions to the return type of the function:
 
 \begin{codeblock}
 To test() {
-  return create<From>();
+  return declval<From>();
 }
 \end{codeblock}
 
@@ -10078,17 +10249,16 @@ Each of the templates in this subclause shall be a
 
 \tcode{template <class T>\br
  struct add_lvalue_reference;}                     &
- If \tcode{T} names an object or function type then
+ If \tcode{T} names a referenceable type then
  the member typedef \tcode{type} shall name \tcode{T\&};
- otherwise, if \tcode{T} names a
-  type ``rvalue reference to \tcode{T1}'' then
- the member typedef \tcode{type} shall name \tcode{T1\&};
- otherwise, \tcode{type} shall
- name \tcode{T}. \\ \rowsep
+ otherwise, \tcode{type} shall name \tcode{T}.
+ \enternote
+ This rule reflects the semantics of reference collapsing~(\ref{dcl.ref}).
+ \exitnote\\ \rowsep
 
 \tcode{template <class T>}\br
  \tcode{struct add_rvalue_reference;}    &
- If \tcode{T} names an object or function type then
+ If \tcode{T} names a referenceable type then
  the member typedef \tcode{type} shall name \tcode{T\&\&};
  otherwise, \tcode{type} shall name \tcode{T}.
  \enternote This rule reflects the semantics of reference collapsing~(\ref{dcl.ref}).
@@ -10200,8 +10370,11 @@ assert((is_same<remove_all_extents_t<int[][3]>, int>::value));
  shall name \tcode{T1}; otherwise, it shall name \tcode{T}.\\ \rowsep
 \tcode{template <class T>\br
  struct add_pointer;}                       &
- The member typedef \tcode{type} shall name the same type as
- \tcode{remove_reference_t<T>*}.                         \\
+ If \tcode{T} names a referenceable type or a
+ (possibly cv-qualified) \tcode{void} type then
+ the member typedef \tcode{type} shall name the same type as
+ \tcode{remove_reference_t<T>*};
+ otherwise, \tcode{type} shall name \tcode{T}.             \\
 \end{libreqtab2a}
 \clearpage
 
@@ -10346,7 +10519,7 @@ whose first operand is an arbitrary value of type \tcode{bool},
 whose second operand is an xvalue of type \tcode{T1}, and
 whose third operand is an xvalue of type \tcode{T2}.
 If there is such a type \tcode{C}, the member typedef \tcode{type}
-shall denote the same type, if any, as \tcode{common_type_t<C,R...>}.
+shall denote the same type, if any, as \tcode{common_type_t<C, R...>}.
 Otherwise, there shall be no member \tcode{type}.
 \end{itemize}
 
@@ -10379,6 +10552,94 @@ static_assert(is_same<result_of_t<PMD(S)>, char&&>::value, "Error!");
 static_assert(is_same<result_of_t<PMD(const S*)>, const char&>::value, "Error!");
 \end{codeblock}
 \exitexample
+
+\rSec2[meta.logical]{Logical operator traits}
+
+\pnum
+This subclause describes type traits for applying logical operators
+to other type traits.
+
+\indexlibrary{\idxcode{conjunction}}%
+\begin{itemdecl}
+template<class... B> struct conjunction : @\seebelow@ { };
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+The class template \tcode{conjunction}
+forms the logical conjunction of its template type arguments.
+Every template type argument
+shall be usable as a base class and
+shall have a member \tcode{value} which
+is convertible to \tcode{bool},
+is not hidden, and
+is unambiguously available in the type.
+
+\pnum
+The BaseCharacteristic of a specialization \tcode{conjunction<B1, ..., BN>}
+is the first type \tcode{Bi} in the list \tcode{true_type, B1, ..., BN}
+for which \tcode{Bi::value == false}, or
+if every \tcode{Bi::value != false}, the BaseCharacteristic is \tcode{BN}.
+\enternote This means a specialization of \tcode{conjunction}
+does not necessarily have a BaseCharacteristic
+of either \tcode{true_type} or \tcode{false_type}.
+\exitnote
+
+\pnum
+For a specialization \tcode{conjunction<B1, ..., BN>},
+if there is a template type argument \tcode{Bi} with \tcode{Bi::value == false},
+then instantiating \tcode{conjunction<B1, ..., BN>::value}
+does not require the instantiation of \tcode{Bj::value} for \tcode{j > i}.
+\enternote This is analogous to the short-circuiting behavior of \tcode{\&\&}.
+\exitnote
+\end{itemdescr}
+
+\indexlibrary{\idxcode{disjunction}}%
+\begin{itemdecl}
+template<class... B> struct disjunction : @\seebelow@ { };
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+The class template \tcode{disjunction}
+forms the logical disjunction of its template type arguments.
+Every template type argument shall be usable as a base class and
+shall have a member \tcode{value} which
+is convertible to \tcode{bool},
+is not hidden, and
+is unambiguously available in the type.
+
+\pnum
+The BaseCharacteristic of a specialization \tcode{disjunction<B1, ..., BN>}
+is the first type \tcode{Bi} in the list \tcode{false_type, B1, ..., BN}
+for which \tcode{Bi::value != false}, or
+if every \tcode{Bi::value == false}, the BaseCharacteristic is \tcode{BN}.
+\enternote This means a specialization of \tcode{disjunction}
+does not necessarily have a BaseCharacteristic
+of either \tcode{true_type} or \tcode{false_type}.
+\exitnote
+
+\pnum
+For a specialization \tcode{disjunction<B1, ..., BN>},
+if there is a template type argument \tcode{Bi} with \tcode{Bi::value != false},
+then instantiating \tcode{disjunction<B1, ..., BN>::value}
+does not require the instantiation of \tcode{Bj::value} for \tcode{j > i}.
+\enternote This is analogous to the short-circuiting behavior of \tcode{||}.
+\exitnote
+\end{itemdescr}
+
+\indexlibrary{\idxcode{negation}}%
+\begin{itemdecl}
+template<class B> struct negation : bool_constant<!B::value> { };
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+The class template \tcode{negation}
+forms the logical negation of its template type argument.
+The type \tcode{negation<B>}
+is a UnaryTypeTrait with a BaseCharacteristic of \tcode{bool_constant<!B::value>}.
+\end{itemdescr}
 
 \rSec1[ratio]{Compile-time rational arithmetic}
 
@@ -10439,6 +10700,20 @@ namespace std {
   typedef ratio<        1'000'000'000'000'000'000, 1> exa;
   typedef ratio<    1'000'000'000'000'000'000'000, 1> zetta;  // \seebelow
   typedef ratio<1'000'000'000'000'000'000'000'000, 1> yotta;  // \seebelow
+
+  // \ref{ratio.arithmetic}, ratio comparison
+  template <class R1, class R2> constexpr bool ratio_equal_v
+    = ratio_equal<R1, R2>::value;
+  template <class R1, class R2> constexpr bool ratio_not_equal_v
+    = ratio_not_equal<R1, R2>::value;
+  template <class R1, class R2> constexpr bool ratio_less_v
+    = ratio_less<R1, R2>::value;
+  template <class R1, class R2> constexpr bool ratio_less_equal_v
+    = ratio_less_equal<R1, R2>::value;
+  template <class R1, class R2> constexpr bool ratio_greater_v
+    = ratio_greater<R1, R2>::value;
+  template <class R1, class R2> constexpr bool ratio_greater_equal_v
+    = ratio_greater_equal<R1, R2>::value;
 }
 \end{codeblockdigitsep}
 
@@ -10525,19 +10800,19 @@ program is ill-formed unless the implementation yields correct values of \tcode{
 \enterexample
 
 \begin{codeblock}
-static_assert(ratio_add<ratio<1,3>, ratio<1,6>>::num == 1, "1/3+1/6 == 1/2");
-static_assert(ratio_add<ratio<1,3>, ratio<1,6>>::den == 2, "1/3+1/6 == 1/2");
-static_assert(ratio_multiply<ratio<1,3>, ratio<3,2>>::num == 1, "1/3*3/2 == 1/2");
-static_assert(ratio_multiply<ratio<1,3>, ratio<3,2>>::den == 2, "1/3*3/2 == 1/2");
+static_assert(ratio_add<ratio<1, 3>, ratio<1, 6>>::num == 1, "1/3+1/6 == 1/2");
+static_assert(ratio_add<ratio<1, 3>, ratio<1, 6>>::den == 2, "1/3+1/6 == 1/2");
+static_assert(ratio_multiply<ratio<1, 3>, ratio<3, 2>>::num == 1, "1/3*3/2 == 1/2");
+static_assert(ratio_multiply<ratio<1, 3>, ratio<3, 2>>::den == 2, "1/3*3/2 == 1/2");
 
 // The following cases may cause the program to be ill-formed under some implementations
-static_assert(ratio_add<ratio<1,INT_MAX>, ratio<1,INT_MAX>>::num == 2,
+static_assert(ratio_add<ratio<1, INT_MAX>, ratio<1, INT_MAX>>::num == 2,
   "1/MAX+1/MAX == 2/MAX");
-static_assert(ratio_add<ratio<1,INT_MAX>, ratio<1,INT_MAX>>::den == INT_MAX,
+static_assert(ratio_add<ratio<1, INT_MAX>, ratio<1, INT_MAX>>::den == INT_MAX,
   "1/MAX+1/MAX == 2/MAX");
-static_assert(ratio_multiply<ratio<1,INT_MAX>, ratio<INT_MAX,2>>::num == 1,
+static_assert(ratio_multiply<ratio<1, INT_MAX>, ratio<INT_MAX, 2>>::num == 1,
   "1/MAX * MAX/2 == 1/2");
-static_assert(ratio_multiply<ratio<1,INT_MAX>, ratio<INT_MAX,2>>::den == 2,
+static_assert(ratio_multiply<ratio<1, INT_MAX>, ratio<INT_MAX, 2>>::den == 2,
   "1/MAX * MAX/2 == 1/2");
 \end{codeblock}
 
@@ -10615,11 +10890,10 @@ namespace std {
 namespace chrono {
 
 // \ref{time.duration}, class template \tcode{duration}
-template <class Rep, class Period = ratio<1> > class duration;
+template <class Rep, class Period = ratio<1>> class duration;
 
 // \ref{time.point}, class template \tcode{time_point}
 template <class Clock, class Duration = typename Clock::duration> class time_point;
-
 }  // namespace chrono
 
 // \ref{time.traits.specializations} \tcode{common_type} specializations
@@ -10634,6 +10908,8 @@ namespace chrono {
 // \ref{time.traits}, customization traits
 template <class Rep> struct treat_as_floating_point;
 template <class Rep> struct duration_values;
+template <class Rep> constexpr bool treat_as_floating_point_v
+  = treat_as_floating_point<Rep>::value;
 
 // \ref{time.duration.nonmember}, duration arithmetic
 template <class Rep1, class Period1, class Rep2, class Period2>
@@ -10684,6 +10960,12 @@ template <class Rep1, class Period1, class Rep2, class Period2>
 // \ref{time.duration.cast}, duration_cast
 template <class ToDuration, class Rep, class Period>
   constexpr ToDuration duration_cast(const duration<Rep, Period>& d);
+template <class ToDuration, class Rep, class Period>
+  constexpr ToDuration floor(const duration<Rep, Period>& d);
+template <class ToDuration, class Rep, class Period>
+  constexpr ToDuration ceil(const duration<Rep, Period>& d);
+template <class ToDuration, class Rep, class Period>
+  constexpr ToDuration round(const duration<Rep, Period>& d);
 
 // convenience typedefs
 typedef duration<@\term{signed integer type of at least 64 bits},@        nano> nanoseconds;
@@ -10731,6 +11013,19 @@ template <class Clock, class Duration1, class Duration2>
 template <class ToDuration, class Clock, class Duration>
   constexpr time_point<Clock, ToDuration>
   time_point_cast(const time_point<Clock, Duration>& t);
+template <class ToDuration, class Clock, class Duration>
+  constexpr time_point<Clock, ToDuration>
+  floor(const time_point<Clock, Duration>& tp);
+template <class ToDuration, class Clock, class Duration>
+  constexpr time_point<Clock, ToDuration>
+  ceil(const time_point<Clock, Duration>& tp);
+template <class ToDuration, class Clock, class Duration>
+  constexpr time_point<Clock, ToDuration>
+  round(const time_point<Clock, Duration>& tp);
+
+// \ref{time.duration.alg}, specialized algorithms:
+template <class Rep, class Period>
+  constexpr duration<Rep, Period> abs(duration<Rep, Period> d);
 
 // \ref{time.clock}, clocks
 class system_clock;
@@ -10744,17 +11039,17 @@ inline namespace chrono_literals {
 
 // ~\ref{time.duration.literals}, suffixes for duration literals
 constexpr chrono::hours                                 operator "" h(unsigned long long);
-constexpr chrono::duration<@\unspec@, ratio<3600,1>> operator "" h(long double);
+constexpr chrono::duration<@\unspec,@ ratio<3600, 1>> operator "" h(long double);
 constexpr chrono::minutes                               operator "" min(unsigned long long);
-constexpr chrono::duration<@\unspec@, ratio<60,1>>   operator "" min(long double);
+constexpr chrono::duration<@\unspec,@ ratio<60, 1>>   operator "" min(long double);
 constexpr chrono::seconds                               operator "" s(unsigned long long);
-constexpr chrono::duration<@\unspec@>                operator "" s(long double);
+constexpr chrono::duration<@\unspec@> @\itcorr[-1]@                operator "" s(long double);
 constexpr chrono::milliseconds                          operator "" ms(unsigned long long);
-constexpr chrono::duration<@\unspec@, milli>         operator "" ms(long double);
+constexpr chrono::duration<@\unspec,@ milli>          operator "" ms(long double);
 constexpr chrono::microseconds                          operator "" us(unsigned long long);
-constexpr chrono::duration<@\unspec@, micro>         operator "" us(long double);
+constexpr chrono::duration<@\unspec,@ micro>          operator "" us(long double);
 constexpr chrono::nanoseconds                           operator "" ns(unsigned long long);
-constexpr chrono::duration<@\unspec@, nano>          operator "" ns(long double);
+constexpr chrono::duration<@\unspec,@ nano>           operator "" ns(long double);
 
 }  // namespace chrono_literals
 }  // namespace literals
@@ -11338,7 +11633,7 @@ static constexpr duration max();
 
 \pnum
 In the function descriptions that follow, \tcode{CD} represents the return type
-of the function. \tcode{CR(A,B)} represents \tcode{common_type_t<A, B>}.
+of the function. \tcode{CR(A, B)} represents \tcode{common_type_t<A, B>}.
 
 \indexlibrary{\idxcode{common_type}}%
 \begin{itemdecl}
@@ -11410,7 +11705,7 @@ template <class Rep1, class Period, class Rep2>
 \pnum
 \remarks This operator shall not participate in overload
 resolution unless \tcode{Rep2} is implicitly convertible to \tcode{CR(Rep1, Rep2)}
-and \tcode{Rep2} is not an instantiation of \tcode{duration}.
+and \tcode{Rep2} is not a specialization of \tcode{duration}.
 
 \pnum
 \returns CD(CD(d).count() / s).
@@ -11441,7 +11736,7 @@ template <class Rep1, class Period, class Rep2>
 \pnum
 \remarks This operator shall not participate in overload
 resolution unless \tcode{Rep2} is implicitly convertible to \tcode{CR(Rep1, Rep2)} and
-\tcode{Rep2} is not an instantiation of \tcode{duration}.
+\tcode{Rep2} is not a specialization of \tcode{duration}.
 
 \pnum
 \returns CD(CD(d).count() \% s).
@@ -11542,6 +11837,7 @@ template <class Rep1, class Period1, class Rep2, class Period2>
 
 \rSec3[time.duration.cast]{\tcode{duration_cast}}
 
+\indexlibrary{\idxcode{duration}!\idxcode{duration_cast}}%
 \indexlibrary{\idxcode{duration_cast}}%
 \begin{itemdecl}
 template <class ToDuration, class Rep, class Period>
@@ -11550,13 +11846,13 @@ template <class ToDuration, class Rep, class Period>
 
 \begin{itemdescr}
 \pnum
-\remarks This function shall not participate in overload
-resolution unless \tcode{ToDuration} is an instantiation of \tcode{duration}.
+\remarks This function shall not participate in overload resolution
+unless \tcode{ToDuration} is a specialization of \tcode{duration}.
 
 \pnum
 \returns Let \tcode{CF} be \tcode{ratio_divide<Period, typename
 ToDuration::period>}, and \tcode{CR} be \tcode{common_type<} \tcode{typename
-ToDuration::rep, Rep, intmax_t>::type.}
+ToDuration::rep, Rep, intmax_t>::type}.
 \begin{itemize}
 \item If \tcode{CF::num == 1} and \tcode{CF::den == 1}, returns
 \begin{codeblock}
@@ -11587,6 +11883,60 @@ are done with \tcode{static_cast}. It avoids multiplications and divisions when
 it is known at compile time that one or more arguments is 1. Intermediate
 computations are carried out in the widest representation and only converted to
 the destination representation at the final step.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{duration}!\idxcode{floor}}%
+\indexlibrary{\idxcode{floor}!\idxcode{duration}}%
+\begin{itemdecl}
+template <class ToDuration, class Rep, class Period>
+  constexpr ToDuration floor(const duration<Rep, Period>& d);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\remarks This function shall not participate in overload resolution
+unless \tcode{ToDuration} is a specialization of \tcode{duration}.
+
+\pnum
+\returns The greatest result \tcode{t} representable in \tcode{ToDuration}
+for which \tcode{t <= d}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{duration}!\idxcode{ceil}}%
+\indexlibrary{\idxcode{ceil}!\idxcode{duration}}%
+\begin{itemdecl}
+template <class ToDuration, class Rep, class Period>
+  constexpr ToDuration ceil(const duration<Rep, Period>& d);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\remarks This function shall not participate in overload resolution
+unless \tcode{ToDuration} is a specialization of \tcode{duration}.
+
+\pnum
+\returns The least result \tcode{t} representable in \tcode{ToDuration}
+for which \tcode{t >= d}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{duration}!\idxcode{round}}%
+\indexlibrary{\idxcode{round}!\idxcode{duration}}%
+\begin{itemdecl}
+template <class ToDuration, class Rep, class Period>
+  constexpr ToDuration round(const duration<Rep, Period>& d);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\remarks This function shall not participate in overload resolution
+unless \tcode{ToDuration} is a specialization of \tcode{duration},
+and \tcode{treat_as_floating_point<typename ToDuration::rep>::value}
+is \tcode{false}.
+
+\pnum
+\returns The value of \tcode{ToDuration} that is closest to \tcode{d}.
+If there are two closest values, then return the value \tcode{t}
+for which \tcode{t \% 2 == 0}.
 \end{itemdescr}
 
 \rSec3[time.duration.literals]{Suffixes for duration literals}
@@ -11620,7 +11970,7 @@ auto constexpr halfanhour=0.5h;
 
 \begin{itemdecl}
 constexpr chrono::hours                                 operator "" h(unsigned long long hours);
-constexpr chrono::duration<@\unspec@, ratio<3600,1>> operator "" h(long double hours);
+constexpr chrono::duration<@\unspec,@ ratio<3600, 1>> operator "" h(long double hours);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -11631,7 +11981,7 @@ A \tcode{duration} literal representing \tcode{hours} hours.
 
 \begin{itemdecl}
 constexpr chrono::minutes                             operator "" min(unsigned long long minutes);
-constexpr chrono::duration<@\unspec@, ratio<60,1>> operator "" min(long double minutes);
+constexpr chrono::duration<@\unspec,@ ratio<60, 1>> operator "" min(long double minutes);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -11641,7 +11991,7 @@ A \tcode{duration} literal representing \tcode{minutes} minutes.
 \end{itemdescr}
 
 \begin{itemdecl}
-constexpr chrono::seconds                operator "" s(unsigned long long sec);
+constexpr chrono::seconds  @\itcorr@             operator "" s(unsigned long long sec);
 constexpr chrono::duration<@\unspec@> operator "" s(long double sec);
 \end{itemdecl}
 
@@ -11659,8 +12009,8 @@ apply to character array literals.
 \end{itemdescr}
 
 \begin{itemdecl}
-constexpr chrono::milliseconds                  operator "" ms(unsigned long long msec);
-constexpr chrono::duration<@\unspec@, milli> operator "" ms(long double msec);
+constexpr chrono::milliseconds                 operator "" ms(unsigned long long msec);
+constexpr chrono::duration<@\unspec,@ milli> operator "" ms(long double msec);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -11670,8 +12020,8 @@ A \tcode{duration} literal representing \tcode{msec} milliseconds.
 \end{itemdescr}
 
 \begin{itemdecl}
-constexpr chrono::microseconds                  operator "" us(unsigned long long usec);
-constexpr chrono::duration<@\unspec@, micro> operator "" us(long double usec);
+constexpr chrono::microseconds                 operator "" us(unsigned long long usec);
+constexpr chrono::duration<@\unspec,@ micro> operator "" us(long double usec);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -11681,14 +12031,33 @@ A \tcode{duration} literal representing \tcode{usec} microseconds.
 \end{itemdescr}
 
 \begin{itemdecl}
-constexpr chrono::nanoseconds                  operator "" ns(unsigned long long nsec);
-constexpr chrono::duration<@\unspec@, nano> operator "" ns(long double nsec);
+constexpr chrono::nanoseconds                 operator "" ns(unsigned long long nsec);
+constexpr chrono::duration<@\unspec,@ nano> operator "" ns(long double nsec);
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
 \returns
 A \tcode{duration} literal representing \tcode{nsec} nanoseconds.
+\end{itemdescr}
+
+\rSec3[time.duration.alg]{\tcode{duration} algorithms}
+
+\indexlibrary{\idxcode{duration}!\idxcode{abs}}%
+\indexlibrary{\idxcode{abs}!\idxcode{duration}}%
+\begin{itemdecl}
+template <class Rep, class Period>
+  constexpr duration<Rep, Period> abs(duration<Rep, Period> d);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\remarks This function shall not participate in overload resolution
+unless \tcode{numeric_limits<Rep>::is_signed} is \tcode{true}.
+
+\pnum
+\returns If \tcode{d >= d.zero()}, return \tcode{d},
+otherwise return \tcode{-d}.
 \end{itemdescr}
 
 \rSec2[time.point]{Class template \tcode{time_point}}
@@ -11976,6 +12345,7 @@ template <class Clock, class Duration1, class Duration2>
 
 \rSec3[time.point.cast]{\tcode{time_point_cast}}
 
+\indexlibrary{\idxcode{time_point}!\idxcode{time_point_cast}}%
 \indexlibrary{\idxcode{time_point_cast}}%
 \begin{itemdecl}
 template <class ToDuration, class Clock, class Duration>
@@ -11985,12 +12355,63 @@ template <class ToDuration, class Clock, class Duration>
 
 \begin{itemdescr}
 \pnum
-\remarks This function shall not participate in overload
-resolution unless \tcode{ToDuration} is an
-instantiation of \tcode{duration}.
+\remarks This function shall not participate in overload resolution
+unless \tcode{ToDuration} is a specialization of \tcode{duration}.
 
 \pnum
 \returns \tcode{time_point<Clock, ToDuration>(duration_cast<ToDuration>(t.time_since_epoch()))}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{time_point}!\idxcode{floor}}%
+\indexlibrary{\idxcode{floor}!\idxcode{time_point}}%
+\begin{itemdecl}
+template <class ToDuration, class Clock, class Duration>
+  constexpr time_point<Clock, ToDuration>
+  floor(const time_point<Clock, Duration>& tp);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\remarks This function shall not participate in overload resolution
+unless \tcode{ToDuration} is a specialization of \tcode{duration}.
+
+\pnum
+\returns \tcode{time_point<Clock, ToDuration>(floor<ToDuration>(tp.time_since_epoch()))}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{time_point}!\idxcode{ceil}}%
+\indexlibrary{\idxcode{ceil}!\idxcode{time_point}}%
+\begin{itemdecl}
+template <class ToDuration, class Clock, class Duration>
+  constexpr time_point<Clock, ToDuration>
+  ceil(const time_point<Clock, Duration>& tp);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\remarks This function shall not participate in overload resolution
+unless \tcode{ToDuration} is a specialization of \tcode{duration}.
+
+\pnum
+\returns \tcode{time_point<Clock, ToDuration>(ceil<ToDuration>(tp.time_since_epoch()))}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{time_point}!\idxcode{round}}%
+\indexlibrary{\idxcode{round}!\idxcode{time_point}}%
+\begin{itemdecl}
+template <class ToDuration, class Clock, class Duration>
+  constexpr time_point<Clock, ToDuration>
+  round(const time_point<Clock, Duration>& tp);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\remarks This function shall not participate in overload resolution
+unless \tcode{ToDuration} is a specialization of \tcode{duration}, and
+\tcode{treat_as_floating_point<typename ToDuration::rep>::value} is \tcode{false}.
+
+\pnum
+\returns \tcode{time_point<Clock, ToDuration>(round<ToDuration>(tp.time_since_epoch()))}.
 \end{itemdescr}
 
 \rSec2[time.clock]{Clocks}
@@ -12009,10 +12430,10 @@ realtime clock.
 \begin{codeblock}
 class system_clock {
 public:
-  typedef @\seebelow@                           rep;
-  typedef ratio<@\unspec@, @\unspec@>   period;
-  typedef chrono::duration<rep, period>       duration;
-  typedef chrono::time_point<system_clock>    time_point;
+  typedef @\seebelow@                     @\itcorr[-1]@   rep;
+  typedef ratio<@\unspecnc,@ @\unspec{}@> @\itcorr[-1]@ period;
+  typedef chrono::duration<rep, period>    duration;
+  typedef chrono::time_point<system_clock> time_point;
   static constexpr bool is_steady =        @\unspec;@
 
   static time_point now() noexcept;
@@ -12047,7 +12468,7 @@ when both values are restricted to the coarser of the precisions of \tcode{time_
 \tcode{time_point}.
 It is implementation defined whether values are rounded or truncated to the
 required precision.\indeximpldef{whether values are rounded or truncated to the
-required precision when converting between \tcode{time_t} values and \tcode{time_point} objects.}
+required precision when converting between \tcode{time_t} values and \tcode{time_point} objects}
 \end{itemdescr}
 
 \indexlibrary{\idxcode{from_time_t}}%
@@ -12062,7 +12483,7 @@ when both values are restricted to the coarser of the precisions of \tcode{time_
 \tcode{time_point}.
 It is implementation defined whether values are rounded or truncated to the
 required precision.\indeximpldef{whether values are rounded or truncated to the
-required precision when converting between \tcode{time_t} values and \tcode{time_point} objects.}
+required precision when converting between \tcode{time_t} values and \tcode{time_point} objects}
 \end{itemdescr}
 
 \rSec3[time.clock.steady]{Class \tcode{steady_clock}}
@@ -12075,11 +12496,11 @@ a steady rate relative to real time. That is, the clock may not be adjusted.
 \begin{codeblock}
 class steady_clock {
 public:
-  typedef @\unspec@                               rep;
-  typedef ratio<@\unspec@, @\unspec@>          period;
-  typedef chrono::duration<rep, period>              duration;
-  typedef chrono::time_point<@\unspec,@ duration>  time_point;
-  static constexpr bool is_steady =               true;
+  typedef @\unspec{}@                      @\itcorr[-1]@         rep;
+  typedef ratio<@\unspecnc,@ @\unspec{}@>  @\itcorr[-1]@         period;
+  typedef chrono::duration<rep, period>             duration;
+  typedef chrono::time_point<@\unspecnc,@ duration> time_point;
+  static constexpr bool is_steady =                 true;
 
   static time_point now() noexcept;
 };
@@ -12095,11 +12516,11 @@ shortest tick period. \tcode{high_resolution_clock} may be a synonym for
 \begin{codeblock}
 class high_resolution_clock {
 public:
-  typedef @\unspec@                               rep;
-  typedef ratio<@\unspec@, @\unspec@>          period;
-  typedef chrono::duration<rep, period>              duration;
-  typedef chrono::time_point<@\unspec@, duration> time_point;
-  static constexpr bool is_steady =               @\unspec@;
+  typedef @\unspec{}@                      @\itcorr[-1]@         rep;
+  typedef ratio<@\unspecnc,@ @\unspec{}@>  @\itcorr[-1]@         period;
+  typedef chrono::duration<rep, period>             duration;
+  typedef chrono::time_point<@\unspecnc,@ duration> time_point;
+  static constexpr bool is_steady =                 @\unspec@;
 
   static time_point now() noexcept;
 };
@@ -12234,6 +12655,9 @@ namespace std {
     template <class OuterA2>
       scoped_allocator_adaptor(
         scoped_allocator_adaptor<OuterA2, InnerAllocs...>&& other) noexcept;
+
+    scoped_allocator_adaptor& operator=(const scoped_allocator_adaptor&) = default;
+    scoped_allocator_adaptor& operator=(scoped_allocator_adaptor&&) = default;
 
     ~scoped_allocator_adaptor();
 
@@ -12564,7 +12988,7 @@ contained element. \exitnote
 \indexlibrary{\idxcode{construct}!\idxcode{scoped_allocator_adaptor}}%
 \begin{itemdecl}
 template <class T1, class T2, class... Args1, class... Args2>
-  void construct(pair<T1, T2>* p,piecewise_construct_t,
+  void construct(pair<T1, T2>* p, piecewise_construct_t,
                  tuple<Args1...> x, tuple<Args2...> y);
 \end{itemdecl}
 
@@ -12694,7 +13118,7 @@ scoped_allocator_adaptor select_on_container_copy_construction() const;
 
 \begin{itemdescr}
 \pnum
-\returns A new scoped_allocator_adaptor object where each allocator \tcode{A} in the
+\returns A new \tcode{scoped_allocator_adaptor} object where each allocator \tcode{A} in the
 adaptor is initialized from the result of calling
 \tcode{allocator_traits<A>::select_on_container_copy_construction()} on the
 corresponding allocator in \tcode{*this}.

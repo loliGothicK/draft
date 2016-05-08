@@ -702,9 +702,9 @@ namespace std {
   template <class InputIterator>
     typename iterator_traits<InputIterator>::difference_type
     distance(InputIterator first, InputIterator last);
-  template <class ForwardIterator>
-    ForwardIterator next(ForwardIterator x,
-      typename std::iterator_traits<ForwardIterator>::difference_type n = 1);
+  template <class InputIterator>
+    InputIterator next(InputIterator x,
+      typename std::iterator_traits<InputIterator>::difference_type n = 1);
   template <class BidirectionalIterator>
     BidirectionalIterator prev(BidirectionalIterator x,
       typename std::iterator_traits<BidirectionalIterator>::difference_type n = 1);
@@ -1182,9 +1182,9 @@ shall be reachable from
 
 \indexlibrary{\idxcode{next}}%
 \begin{itemdecl}
-template <class ForwardIterator>
-  ForwardIterator next(ForwardIterator x,
-    typename std::iterator_traits<ForwardIterator>::difference_type n = 1);
+template <class InputIterator>
+  InputIterator next(InputIterator x,
+    typename std::iterator_traits<InputIterator>::difference_type n = 1);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2172,7 +2172,7 @@ namespace std {
     typedef Iterator                                              pointer;
     typedef typename iterator_traits<Iterator>::value_type        value_type;
     typedef typename iterator_traits<Iterator>::iterator_category iterator_category;
-    typedef @\seebelow@                                             reference;
+    typedef @\seebelownc@                                             reference;
 
     move_iterator();
     explicit move_iterator(Iterator i);
@@ -2231,10 +2231,10 @@ namespace std {
 
 \pnum
 Let \placeholder{R} be \tcode{iterator_traits<Iterator>::reference}.
-If \tcode{is_reference<}\placeholder{R}\tcode{>::value} is \tcode{true},
+If \tcode{is_reference<\placeholder{R}>::value} is \tcode{true},
 the template specialization \tcode{move_iterator<Iterator>} shall define
 the nested type named \tcode{reference} as a synonym for
-\tcode{remove_reference<}\placeholder{R}\tcode{>::type\&\&},
+\tcode{remove_reference<\placeholder{R}>::type\&\&},
 otherwise as a synonym for \placeholder{R}.
 
 \rSec3[move.iter.requirements]{\tcode{move_iterator} requirements}
@@ -3056,7 +3056,7 @@ namespace std {
     typedef input_iterator_tag            iterator_category;
     typedef charT                         value_type;
     typedef typename traits::off_type     difference_type;
-    typedef @\unspecaligned@              pointer;
+    typedef @\unspecnc@                   pointer;
     typedef charT                         reference;
     typedef charT                         char_type;
     typedef traits                        traits_type;

@@ -45,8 +45,8 @@ through constructors, destructors, insert and erase operations.
 All of the complexity requirements in this Clause are stated solely
 in terms of the number of operations on the contained objects.
 \enterexample
-the copy constructor of type
-\tcode{vector <vector<int> >}
+The copy constructor of type
+\tcode{vector<vector<int>>}
 has linear complexity,
 even though the complexity of copying each contained
 \tcode{vector<int>}
@@ -54,11 +54,15 @@ is itself linear.
 \exitexample
 
 \pnum
-For the components affected by this subclause that declare an \tcode{allocator_type}, objects
-stored in these components shall be constructed using
-the \tcode{allocator_traits<allocator_type>::construct} function and destroyed using the
-\tcode{allocator_traits<allocator_type>::destroy}
-function~(\ref{allocator.traits.members}). These functions are called only for the
+For the components affected by this subclause that declare an \tcode{allocator_type},
+objects stored in these components shall be constructed using the
+\tcode{allocator_traits<allocator_type>::rebind_traits<U>::construct} function
+and destroyed using the
+\tcode{allocator_traits<allocator_type>::rebind_traits<U>::destroy}
+function~(\ref{allocator.traits.members}),
+where \tcode{U} is either \tcode{allocator_type::value_type} or
+an internal type used by the container.
+These functions are called only for the
 container's element type, not for internal types used by the container. \enternote This
 means, for example, that a node-based container might need to construct nodes containing
 aligned buffers and call \tcode{construct} to place the element into the buffer.
@@ -316,8 +320,9 @@ All other constructors for these container types take a
 \enternote If an invocation of a constructor uses the default value of an optional
 allocator argument, then the \tcode{Allocator} type must support value initialization.
 \exitnote
-A copy of this allocator is used for any memory allocation performed, by these
-constructors and by all member functions, during the lifetime of each container object
+A copy of this allocator is used for any memory allocation and element construction
+performed, by these constructors and by all member functions,
+during the lifetime of each container object
 or until the allocator is replaced. The allocator may be replaced only via assignment or
 \tcode{swap()}. Allocator replacement is performed by
 copy assignment, move assignment, or swapping of the allocator only if
@@ -508,14 +513,14 @@ All of the containers defined in this Clause and in~(\ref{basic.string}) except 
 meet the additional requirements of an allocator-aware container, as described in
 Table~\ref{tab:containers.allocatoraware}.
 
-Given a container type \tcode{X} having an \tcode{allocator_type}
-identical to \tcode{A} and a
-\tcode{value_type} identical to \tcode{T} and given
-an lvalue \tcode{m} of type \tcode{A}, a
-pointer \tcode{p} of type \tcode{T*},
-an expression \tcode{v} of type (possibly const) \tcode{T}, and
-an rvalue \tcode{rv} of type
-\tcode{T}, the following terms are defined. If \tcode{X}
+Given an allocator type \tcode{A}
+and given a container type \tcode{X} having a \tcode{value_type} identical to \tcode{T}
+and an \tcode{allocator_type} identical to \tcode{allocator_traits<A>::rebind_alloc<T>}
+and given an lvalue \tcode{m} of type \tcode{A},
+a pointer \tcode{p} of type \tcode{T*},
+an expression \tcode{v} of type (possibly \tcode{const}) \tcode{T},
+and an rvalue \tcode{rv} of type \tcode{T},
+the following terms are defined. If \tcode{X}
 is not allocator-aware, the terms below are defined as if \tcode{A} were
 \tcode{std::allocator<T>} --- no allocator object needs to be created
 and user specializations of \tcode{std::allocator<T>} are not instantiated:
@@ -548,7 +553,7 @@ allocator_traits<A>::construct(m, p, rv)
 \end{codeblock}
 and its evaluation causes the following postcondition to hold: The value
 of \tcode{*p} is equivalent to the value of \tcode{rv} before the evaluation.
-\enternote rv remains a valid object. Its state is unspecified \exitnote
+\enternote \tcode{rv} remains a valid object. Its state is unspecified \exitnote
 
 \item
 \tcode{T} is \defnx{\tcode{CopyInsertable} into \tcode{X}}
@@ -582,10 +587,12 @@ allocator_traits<A>::destroy(m, p)
 \end{itemize}
 
 \enternote
-A container calls \tcode{allocator_traits<A>::construct(m, p, args)} to construct an element
-at \tcode{p} using \tcode{args}. The default \tcode{construct} in \tcode{std::allocator} will
-call \tcode{::new((void*)p) T(args)}, but specialized allocators may choose a different
-definition.
+A container calls \tcode{allocator_traits<A>::construct(m, p, args)}
+to construct an element at \tcode{p} using \tcode{args},
+with \tcode{m == get_allocator()}.
+The default \tcode{construct} in \tcode{std::allocator} will
+call \tcode{::new((void*)p) T(args)},
+but specialized allocators may choose a different definition.
 \exitnote
 
 \pnum
@@ -1243,7 +1250,7 @@ are constant iterators. It is unspecified whether or not
 and
 \tcode{const_iterator}
 are the same type.
-\enternote \tcode{iterator} and \tcode{const_iterator} have identical semantics in this case, and \tcode{iterator} is convertible to \tcode{const_iterator}. Users can avoid violating the One Definition Rule by always using \tcode{const_iterator} in their function parameter lists. \exitnote
+\enternote \tcode{iterator} and \tcode{const_iterator} have identical semantics in this case, and \tcode{iterator} is convertible to \tcode{const_iterator}. Users can avoid violating the one-definition rule by always using \tcode{const_iterator} in their function parameter lists. \exitnote
 
 \pnum
 The associative containers meet all the requirements of Allocator-aware
@@ -1744,7 +1751,7 @@ iterators. It is unspecified whether or not \tcode{iterator} and
 \tcode{const_iterator} are the same type.
 \enternote \tcode{iterator} and \tcode{const_iterator} have identical
 semantics in this case, and \tcode{iterator} is convertible to
-\tcode{const_iterator}. Users can avoid violating the One Definition Rule
+\tcode{const_iterator}. Users can avoid violating the one-definition rule
 by always using \tcode{const_iterator} in their function parameter lists.
 \exitnote
 
@@ -1791,7 +1798,7 @@ In Table~\ref{tab:HashRequirements}:
 \tcode{q} and \tcode{q1} denote valid dereferenceable const iterators to \tcode{a},
 \tcode{r} denotes a valid dereferenceable iterator to \tcode{a},
 \tcode{[q1, q2)} denotes a valid range in \tcode{a},
-\tcode{il} designates an object of type \tcode{initializer_list<value_type>},
+\tcode{il} denotes a value of type \tcode{initializer_list<value_type>},
 \tcode{t} denotes a value of type \tcode{X::value_type},
 \tcode{k} denotes a value of type \tcode{key_type},
 \tcode{hf} denotes a possibly const value of type \tcode{hasher},
@@ -2300,7 +2307,7 @@ the number of elements erased.
 %
 \tcode{a.rehash(n)}
 & \tcode{void}
-& Post: \tcode{a.bucket_count() > a.size() / a.max_load_factor()} and
+& Post: \tcode{a.bucket_count() >= a.size() / a.max_load_factor()} and
         \tcode{a.bucket_count() >= n}.%
     \indextext{unordered associative containers!\idxcode{rehash}}%
     \indextext{\idxcode{rehash}!unordered associative containers}%
@@ -2364,7 +2371,7 @@ elements that are not erased.
 \indextext{unordered associative containers!iterator invalidation}%
 \indextext{unordered associative containers!requirements}%
 The \tcode{insert} and \tcode{emplace} members shall not affect the validity of iterators if
-\tcode{(N+n) < z * B}, where \tcode{N} is the number of elements in
+\tcode{(N+n) <= z * B}, where \tcode{N} is the number of elements in
 the container prior to the insert operation, \tcode{n} is the
 number of elements inserted, \tcode{B} is the container's bucket count, and
 \tcode{z} is the container's maximum load factor.
@@ -2403,15 +2410,17 @@ function or comparison function, the \tcode{rehash()} function has no effect.
 
 \pnum
 The headers \tcode{<array>}, \tcode{<deque>}, \tcode{<forward_list>},
-\tcode{<list>}, and \tcode{<vector>} define template classes that meet the
+\tcode{<list>}, and \tcode{<vector>} define class templates that meet the
 requirements for sequence containers.
 
-\synopsis{Header \tcode{<array>} synopsis}%
+\rSec2[array.syn]{Header \tcode{<array>} synopsis}
+
 \indexlibrary{\idxhdr{array}}%
 \begin{codeblock}
 #include <initializer_list>
 
 namespace std {
+  // \ref{array}, class template array:
   template <class T, size_t N> struct array;
   template <class T, size_t N>
     bool operator==(const array<T, N>& x, const array<T, N>& y);
@@ -2431,26 +2440,30 @@ namespace std {
   template <class T> class tuple_size;
   template <size_t I, class T> class tuple_element;
   template <class T, size_t N>
-    struct tuple_size<array<T, N> >;
+    struct tuple_size<array<T, N>>;
   template <size_t I, class T, size_t N>
-    struct tuple_element<I, array<T, N> >;
+    struct tuple_element<I, array<T, N>>;
   template <size_t I, class T, size_t N>
     constexpr T& get(array<T, N>&) noexcept;
   template <size_t I, class T, size_t N>
     constexpr T&& get(array<T, N>&&) noexcept;
   template <size_t I, class T, size_t N>
     constexpr const T& get(const array<T, N>&) noexcept;
+  template <size_t I, class T, size_t N>
+    constexpr const T&& get(const array<T, N>&&) noexcept;
 }
 \end{codeblock}
 
-\synopsis{Header \tcode{<deque>} synopsis}%
+\rSec2[deque.syn]{Header \tcode{<deque>} synopsis}
+
 \indexlibrary{\idxhdr{deque}}
 
 \begin{codeblock}
 #include <initializer_list>
 
 namespace std {
-  template <class T, class Allocator = allocator<T> > class deque;
+  // \ref{deque}, class template deque:
+  template <class T, class Allocator = allocator<T>> class deque;
   template <class T, class Allocator>
     bool operator==(const deque<T, Allocator>& x, const deque<T, Allocator>& y);
   template <class T, class Allocator>
@@ -2469,14 +2482,16 @@ namespace std {
 }
 \end{codeblock}
 
-\synopsis{Header \tcode{<forward_list>} synopsis}%
+\rSec2[forward_list.syn]{Header \tcode{<forward_list>} synopsis}
+
 \indexlibrary{\idxhdr{forward_list}}
 
 \begin{codeblock}
 #include <initializer_list>
 
 namespace std {
-  template <class T, class Allocator = allocator<T> > class forward_list;
+  // \ref{forwardlist}, class template forward_list:
+  template <class T, class Allocator = allocator<T>> class forward_list;
   template <class T, class Allocator>
     bool operator==(const forward_list<T, Allocator>& x, const forward_list<T, Allocator>& y);
   template <class T, class Allocator>
@@ -2495,14 +2510,16 @@ namespace std {
 }
 \end{codeblock}
 
-\synopsis{Header \tcode{<list>} synopsis}%
+\rSec2[list.syn]{Header \tcode{<list>} synopsis}
+
 \indexlibrary{\idxhdr{list}}
 
 \begin{codeblock}
 #include <initializer_list>
 
 namespace std {
-  template <class T, class Allocator = allocator<T> > class list;
+  // \ref{list}, class template list:
+  template <class T, class Allocator = allocator<T>> class list;
   template <class T, class Allocator>
     bool operator==(const list<T, Allocator>& x, const list<T, Allocator>& y);
   template <class T, class Allocator>
@@ -2521,14 +2538,16 @@ namespace std {
 }
 \end{codeblock}
 
-\synopsis{Header \tcode{<vector>} synopsis}%
+\rSec2[vector.syn]{Header \tcode{<vector>} synopsis}
+
 \indexlibrary{\idxhdr{vector}}
 
 \begin{codeblock}
 #include <initializer_list>
 
 namespace std {
-  template <class T, class Allocator = allocator<T> > class vector;
+  // \ref{vector}, class template vector:
+  template <class T, class Allocator = allocator<T>> class vector;
   template <class T, class Allocator>
     bool operator==(const vector<T, Allocator>& x, const vector<T, Allocator>& y);
   template <class T, class Allocator>
@@ -2545,11 +2564,12 @@ namespace std {
     void swap(vector<T, Allocator>& x, vector<T, Allocator>& y)
       noexcept(noexcept(x.swap(y)));
 
-  template <class Allocator> class vector<bool,Allocator>;
+  // \ref{vector.bool}, class vector<bool>
+  template <class Allocator> class vector<bool, Allocator>;
 
   // hash support
   template <class T> struct hash;
-  template <class Allocator> struct hash<vector<bool, Allocator> >;
+  template <class Allocator> struct hash<vector<bool, Allocator>>;
 }
 \end{codeblock}
 
@@ -2606,8 +2626,8 @@ namespace std {
     //  types:
     typedef T&                                    reference;
     typedef const T&                              const_reference;
-    typedef @\impdefx{type of \tcode{array::iterator}}@                iterator;
-    typedef @\impdefx{type of \tcode{array::const_iterator}}@                const_iterator;
+    typedef @\impdefx{type of \tcode{array::iterator}}\itcorr[-1]@                iterator;
+    typedef @\impdefx{type of \tcode{array::const_iterator}}\itcorr[-1]@                const_iterator;
     typedef size_t                                size_type;
     typedef ptrdiff_t                             difference_type;
     typedef T                                     value_type;
@@ -2784,7 +2804,7 @@ template <class T, size_t N>
 
 \indexlibrary{\idxcode{tuple_element}}%
 \begin{itemdecl}
-tuple_element<I, array<T, N> >::type
+tuple_element<I, array<T, N>>::type
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2800,34 +2820,12 @@ tuple_element<I, array<T, N> >::type
 \begin{itemdecl}
 template <size_t I, class T, size_t N>
   constexpr T& get(array<T, N>& a) noexcept;
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\requires \tcode{I < N}. The program is ill-formed if \tcode{I} is out of bounds.
-
-\pnum
-\returns  A reference to the \tcode{I}th element of \tcode{a},
-where indexing is zero-based.
-\end{itemdescr}
-
-\indexlibrary{\idxcode{array}!\idxcode{get}}%
-\indexlibrary{\idxcode{get}!\idxcode{array}}%
-\begin{itemdecl}
 template <size_t I, class T, size_t N>
   constexpr T&& get(array<T, N>&& a) noexcept;
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\effects Equivalent to \tcode{return std::move(get<I>(a));}
-\end{itemdescr}
-
-\indexlibrary{\idxcode{array}!\idxcode{get}}%
-\indexlibrary{\idxcode{get}!\idxcode{array}}%
-\begin{itemdecl}
 template <size_t I, class T, size_t N>
   constexpr const T& get(const array<T, N>& a) noexcept;
+template <size_t I, class T, size_t N>
+  constexpr const T&& get(const array<T, N>&& a) noexcept;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2835,7 +2833,7 @@ template <size_t I, class T, size_t N>
 \requires \tcode{I < N}. The program is ill-formed if \tcode{I} is out of bounds.
 
 \pnum
-\returns A const reference to the \tcode{I}th element of \tcode{a},
+\returns A reference to the \tcode{I}th element of \tcode{a},
 where indexing is zero-based.
 \end{itemdescr}
 
@@ -2867,22 +2865,22 @@ or for operations where there is additional semantic information.
 
 \begin{codeblock}
 namespace std {
-  template <class T, class Allocator = allocator<T> >
+  template <class T, class Allocator = allocator<T>>
   class deque {
   public:
     // types:
-    typedef value_type&                           reference;
-    typedef const value_type&                     const_reference;
-    typedef @\impdef@                iterator;       // See \ref{container.requirements}
-    typedef @\impdef@                const_iterator; // See \ref{container.requirements}
-    typedef @\impdef@                size_type;      // See \ref{container.requirements}
-    typedef @\impdef@                difference_type;// See \ref{container.requirements}
-    typedef T                                     value_type;
-    typedef Allocator                             allocator_type;
-    typedef typename allocator_traits<Allocator>::pointer           pointer;
-    typedef typename allocator_traits<Allocator>::const_pointer     const_pointer;
-    typedef std::reverse_iterator<iterator>       reverse_iterator;
-    typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+    typedef value_type&                                         reference;
+    typedef const value_type&                                   const_reference;
+    typedef @\impdefnc@                              iterator;        // see \ref{container.requirements}
+    typedef @\impdefnc@                              const_iterator;  // see \ref{container.requirements}
+    typedef @\impdefnc@                              size_type;       // see \ref{container.requirements}
+    typedef @\impdefnc@                              difference_type; // see \ref{container.requirements}
+    typedef T                                                   value_type;
+    typedef Allocator                                           allocator_type;
+    typedef typename allocator_traits<Allocator>::pointer       pointer;
+    typedef typename allocator_traits<Allocator>::const_pointer const_pointer;
+    typedef std::reverse_iterator<iterator>                     reverse_iterator;
+    typedef std::reverse_iterator<const_iterator>               const_reverse_iterator;
 
     // \ref{deque.cons}, construct/copy/destroy:
     deque() : deque(Allocator()) { }
@@ -2955,7 +2953,7 @@ namespace std {
     iterator insert(const_iterator position, T&& x);
     iterator insert(const_iterator position, size_type n, const T& x);
     template <class InputIterator>
-      iterator insert (const_iterator position, InputIterator first, InputIterator last);
+      iterator insert(const_iterator position, InputIterator first, InputIterator last);
     iterator insert(const_iterator position, initializer_list<T>);
 
     void pop_front();
@@ -2981,7 +2979,7 @@ namespace std {
   template <class T, class Allocator>
     bool operator<=(const deque<T, Allocator>& x, const deque<T, Allocator>& y);
 
-  // specialized algorithms:
+  // \ref{deque.special}, specialized algorithms:
   template <class T, class Allocator>
     void swap(deque<T, Allocator>& x, deque<T, Allocator>& y)
       noexcept(noexcept(x.swap(y)));
@@ -3195,8 +3193,8 @@ iterator and all iterators and references to all the elements of the deque.
 
 \pnum
 \complexity
-The number of calls to the destructor is the same as the
-number of elements erased, but the number of calls to the assignment operator is
+The number of calls to the destructor of \tcode{T} is the same as the
+number of elements erased, but the number of calls to the assignment operator of \tcode{T} is
 no more than the lesser of the number of elements before the erased elements and the number of elements after the erased elements.
 
 \pnum
@@ -3257,20 +3255,20 @@ preceding element. For this reason, ranges that are modified, such as those supp
 
 \begin{codeblock}
 namespace std {
-  template <class T, class Allocator = allocator<T> >
+  template <class T, class Allocator = allocator<T>>
   class forward_list {
   public:
     // types:
-    typedef value_type&                                           reference;
-    typedef const value_type&                                     const_reference;
-    typedef @\impdef@ iterator;       // See \ref{container.requirements}
-    typedef @\impdef@ const_iterator; // See \ref{container.requirements}
-    typedef @\impdef@ size_type;      // See \ref{container.requirements}
-    typedef @\impdef@ difference_type;// See \ref{container.requirements}
-    typedef T value_type;
-    typedef Allocator allocator_type;
-    typedef typename allocator_traits<Allocator>::pointer         pointer;
-    typedef typename allocator_traits<Allocator>::const_pointer   const_pointer;
+    typedef value_type&                                         reference;
+    typedef const value_type&                                   const_reference;
+    typedef @\impdefnc@                              iterator;        // see \ref{container.requirements}
+    typedef @\impdefnc@                              const_iterator;  // see \ref{container.requirements}
+    typedef @\impdefnc@                              size_type;       // see \ref{container.requirements}
+    typedef @\impdefnc@                              difference_type; // see \ref{container.requirements}
+    typedef T                                                   value_type;
+    typedef Allocator                                           allocator_type;
+    typedef typename allocator_traits<Allocator>::pointer       pointer;
+    typedef typename allocator_traits<Allocator>::const_pointer const_pointer;
 
     // \ref{forwardlist.cons}, construct/copy/destroy:
     forward_list() : forward_list(Allocator()) { }
@@ -3310,7 +3308,7 @@ namespace std {
     const_iterator cend() const noexcept;
 
     // capacity:
-    bool empty() const noexcept;
+    bool      empty() const noexcept;
     size_type max_size() const noexcept;
 
     // \ref{forwardlist.access}, element access:
@@ -3370,7 +3368,6 @@ namespace std {
     void reverse() noexcept;
   };
 
-  // Comparison operators
   template <class T, class Allocator>
     bool operator==(const forward_list<T, Allocator>& x, const forward_list<T, Allocator>& y);
   template <class T, class Allocator>
@@ -3995,22 +3992,22 @@ or for operations where there is additional semantic information.
 
 \begin{codeblock}
 namespace std {
-  template <class T, class Allocator = allocator<T> >
+  template <class T, class Allocator = allocator<T>>
   class list {
   public:
     // types:
-    typedef value_type&                                             reference;
-    typedef const value_type&                                       const_reference;
-    typedef @\impdef@                iterator;       // see \ref{container.requirements}
-    typedef @\impdef@                const_iterator; // see \ref{container.requirements}
-    typedef @\impdef@                size_type;      // see \ref{container.requirements}
-    typedef @\impdef@                difference_type;// see \ref{container.requirements}
-    typedef T                                     value_type;
-    typedef Allocator                             allocator_type;
-    typedef typename allocator_traits<Allocator>::pointer           pointer;
-    typedef typename allocator_traits<Allocator>::const_pointer     const_pointer;
-    typedef std::reverse_iterator<iterator>       reverse_iterator;
-    typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+    typedef value_type&                                         reference;
+    typedef const value_type&                                   const_reference;
+    typedef @\impdefnc@                              iterator;        // see \ref{container.requirements}
+    typedef @\impdefnc@                              const_iterator;  // see \ref{container.requirements}
+    typedef @\impdefnc@                              size_type;       // see \ref{container.requirements}
+    typedef @\impdefnc@                              difference_type; // see \ref{container.requirements}
+    typedef T                                                   value_type;
+    typedef Allocator                                           allocator_type;
+    typedef typename allocator_traits<Allocator>::pointer       pointer;
+    typedef typename allocator_traits<Allocator>::const_pointer const_pointer;
+    typedef std::reverse_iterator<iterator>                     reverse_iterator;
+    typedef std::reverse_iterator<const_iterator>               const_reverse_iterator;
 
     // \ref{list.cons}, construct/copy/destroy:
     list() : list(Allocator()) { }
@@ -4024,7 +4021,7 @@ namespace std {
     list(const list&, const Allocator&);
     list(list&&, const Allocator&);
     list(initializer_list<T>, const Allocator& = Allocator());
-   ~list();
+    ~list();
     list& operator=(const list& x);
     list& operator=(list&& x)
       noexcept(allocator_traits<Allocator>::is_always_equal::value);
@@ -4129,7 +4126,7 @@ namespace std {
   template <class T, class Allocator>
     bool operator<=(const list<T, Allocator>& x, const list<T, Allocator>& y);
 
-  // specialized algorithms:
+  // \ref{list.special}, specialized algorithms:
   template <class T, class Allocator>
     void swap(list<T, Allocator>& x, list<T, Allocator>& y)
       noexcept(noexcept(x.swap(y)));
@@ -4693,22 +4690,22 @@ additional semantic information.
 
 \begin{codeblock}
 namespace std {
-  template <class T, class Allocator = allocator<T> >
+  template <class T, class Allocator = allocator<T>>
   class vector {
   public:
     // types:
-    typedef value_type&                           reference;
-    typedef const value_type&                     const_reference;
-    typedef @\impdef@                iterator;       // see \ref{container.requirements}
-    typedef @\impdef@                const_iterator; // see \ref{container.requirements}
-    typedef @\impdef@                size_type;      // see \ref{container.requirements}
-    typedef @\impdef@                difference_type;// see \ref{container.requirements}
-    typedef T                                     value_type;
-    typedef Allocator                             allocator_type;
-    typedef typename allocator_traits<Allocator>::pointer           pointer;
-    typedef typename allocator_traits<Allocator>::const_pointer     const_pointer;
-    typedef std::reverse_iterator<iterator>       reverse_iterator;
-    typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+    typedef value_type&                                         reference;
+    typedef const value_type&                                   const_reference;
+    typedef @\impdefnc@                              iterator;        // see \ref{container.requirements}
+    typedef @\impdefnc@                              const_iterator;  // see \ref{container.requirements}
+    typedef @\impdefnc@                              size_type;       // see \ref{container.requirements}
+    typedef @\impdefnc@                              difference_type; // see \ref{container.requirements}
+    typedef T                                                   value_type;
+    typedef Allocator                                           allocator_type;
+    typedef typename allocator_traits<Allocator>::pointer       pointer;
+    typedef typename allocator_traits<Allocator>::const_pointer const_pointer;
+    typedef std::reverse_iterator<iterator>                     reverse_iterator;
+    typedef std::reverse_iterator<const_iterator>               const_reverse_iterator;
 
     // \ref{vector.cons}, construct/copy/destroy:
     vector() noexcept(noexcept(Allocator())) : vector(Allocator()) { }
@@ -4722,7 +4719,7 @@ namespace std {
     vector(const vector&, const Allocator&);
     vector(vector&&, const Allocator&);
     vector(initializer_list<T>, const Allocator& = Allocator());
-   ~vector();
+    ~vector();
     vector& operator=(const vector& x);
     vector& operator=(vector&& x)
       noexcept(allocator_traits<Allocator>::propagate_on_container_move_assignment::value ||
@@ -5123,7 +5120,7 @@ Invalidates iterators and references at or after the point of the erase.
 \pnum
 \complexity
 The destructor of \tcode{T} is called the number of times equal to the
-number of the elements erased, but the move assignment operator
+number of the elements erased, but the assignment operator
 of \tcode{T} is called the number of times equal to the number of
 elements in the vector after the erased elements.
 
@@ -5163,18 +5160,19 @@ elements is provided:
 
 \begin{codeblock}
 namespace std {
-  template <class Allocator> class vector<bool, Allocator> {
+  template <class Allocator>
+  class vector<bool, Allocator> {
   public:
     // types:
     typedef bool                                  const_reference;
-    typedef @\impdef@                iterator;       // see \ref{container.requirements}
-    typedef @\impdef@                const_iterator; // see \ref{container.requirements}
-    typedef @\impdef@                size_type;      // see \ref{container.requirements}
-    typedef @\impdef@                difference_type;// see \ref{container.requirements}
+    typedef @\impdefnc@                iterator;        // see \ref{container.requirements}
+    typedef @\impdefnc@                const_iterator;  // see \ref{container.requirements}
+    typedef @\impdefnc@                size_type;       // see \ref{container.requirements}
+    typedef @\impdefnc@                difference_type; // see \ref{container.requirements}
     typedef bool                                  value_type;
     typedef Allocator                             allocator_type;
-    typedef @\impdef@                pointer;
-    typedef @\impdef@                const_pointer;
+    typedef @\impdefnc@                pointer;
+    typedef @\impdefnc@                const_pointer;
     typedef std::reverse_iterator<iterator>       reverse_iterator;
     typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
@@ -5254,7 +5252,7 @@ namespace std {
     void pop_back();
     template <class... Args> iterator emplace(const_iterator position, Args&&... args);
     iterator insert(const_iterator position, const bool& x);
-    iterator insert (const_iterator position, size_type n, const bool& x);
+    iterator insert(const_iterator position, size_type n, const bool& x);
     template <class InputIterator>
       iterator insert(const_iterator position,
                       InputIterator first, InputIterator last);
@@ -5321,7 +5319,7 @@ y = b;
 \end{itemdescr}
 
 \begin{itemdecl}
-template <class Allocator> struct hash<vector<bool, Allocator> >;
+template <class Allocator> struct hash<vector<bool, Allocator>>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -5346,9 +5344,9 @@ The header \tcode{<map>} defines the class templates \tcode{map} and
 #include <initializer_list>
 
 namespace std {
-
+  // \ref{map}, class template map:
   template <class Key, class T, class Compare = less<Key>,
-            class Allocator = allocator<pair<const Key, T> > >
+            class Allocator = allocator<pair<const Key, T>>>
     class map;
   template <class Key, class T, class Compare, class Allocator>
     bool operator==(const map<Key, T, Compare, Allocator>& x,
@@ -5373,8 +5371,9 @@ namespace std {
               map<Key, T, Compare, Allocator>& y)
       noexcept(noexcept(x.swap(y)));
 
+  // \ref{multimap}, class template multimap:
   template <class Key, class T, class Compare = less<Key>,
-            class Allocator = allocator<pair<const Key, T> > >
+            class Allocator = allocator<pair<const Key, T>>>
     class multimap;
   template <class Key, class T, class Compare, class Allocator>
     bool operator==(const multimap<Key, T, Compare, Allocator>& x,
@@ -5408,9 +5407,9 @@ namespace std {
 #include <initializer_list>
 
 namespace std {
-
+  // \ref{set}, class template set:
   template <class Key, class Compare = less<Key>,
-            class Allocator = allocator<Key> >
+            class Allocator = allocator<Key>>
     class set;
   template <class Key, class Compare, class Allocator>
     bool operator==(const set<Key, Compare, Allocator>& x,
@@ -5435,8 +5434,9 @@ namespace std {
               set<Key, Compare, Allocator>& y)
       noexcept(noexcept(x.swap(y)));
 
+  // \ref{set}, class template multiset:
   template <class Key, class Compare = less<Key>,
-            class Allocator = allocator<Key> >
+            class Allocator = allocator<Key>>
     class multiset;
   template <class Key, class Compare, class Allocator>
     bool operator==(const multiset<Key, Compare, Allocator>& x,
@@ -5509,25 +5509,25 @@ or for operations where there is additional semantic information.
 \begin{codeblock}
 namespace std {
   template <class Key, class T, class Compare = less<Key>,
-            class Allocator = allocator<pair<const Key, T> > >
+            class Allocator = allocator<pair<const Key, T>>>
   class map {
   public:
     // types:
-    typedef Key                                   key_type;
-    typedef T                                     mapped_type;
-    typedef pair<const Key, T>                    value_type;
-    typedef Compare                               key_compare;
-    typedef Allocator                             allocator_type;
-    typedef value_type&                           reference;
-    typedef const value_type&                     const_reference;
-    typedef @\impdef@                iterator;       // see \ref{container.requirements}
-    typedef @\impdef@                const_iterator; // see \ref{container.requirements}
-    typedef @\impdef@                size_type;      // see \ref{container.requirements}
-    typedef @\impdef@                difference_type;// see \ref{container.requirements}
-    typedef typename allocator_traits<Allocator>::pointer           pointer;
-    typedef typename allocator_traits<Allocator>::const_pointer     const_pointer;
-    typedef std::reverse_iterator<iterator>       reverse_iterator;
-    typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+    typedef Key                                                 key_type;
+    typedef T                                                   mapped_type;
+    typedef pair<const Key, T>                                  value_type;
+    typedef Compare                                             key_compare;
+    typedef Allocator                                           allocator_type;
+    typedef value_type&                                         reference;
+    typedef const value_type&                                   const_reference;
+    typedef @\impdefnc@                              iterator;        // see \ref{container.requirements}
+    typedef @\impdefnc@                              const_iterator;  // see \ref{container.requirements}
+    typedef @\impdefnc@                              size_type;       // see \ref{container.requirements}
+    typedef @\impdefnc@                              difference_type; // see \ref{container.requirements}
+    typedef typename allocator_traits<Allocator>::pointer       pointer;
+    typedef typename allocator_traits<Allocator>::const_pointer const_pointer;
+    typedef std::reverse_iterator<iterator>                     reverse_iterator;
+    typedef std::reverse_iterator<const_iterator>               const_reverse_iterator;
 
     class value_compare {
     friend class map;
@@ -5562,7 +5562,7 @@ namespace std {
         : map(first, last, Compare(), a) { }
     map(initializer_list<value_type> il, const Allocator& a)
       : map(il, Compare(), a) { }
-   ~map();
+    ~map();
     map& operator=(const map& x);
     map& operator=(map&& x)
       noexcept(allocator_traits<Allocator>::is_always_equal::value &&
@@ -5687,7 +5687,7 @@ namespace std {
     bool operator<=(const map<Key, T, Compare, Allocator>& x,
                     const map<Key, T, Compare, Allocator>& y);
 
-  // specialized algorithms:
+  // \ref{map.special}, specialized algorithms:
   template <class Key, class T, class Compare, class Allocator>
     void swap(map<Key, T, Compare, Allocator>& x,
               map<Key, T, Compare, Allocator>& y)
@@ -5753,24 +5753,7 @@ T& operator[](const key_type& x);
 \begin{itemdescr}
 \pnum
 \effects
-If there is no key equivalent to \tcode{x} in the map, inserts
-\tcode{value_type(x, T())}
-into the map.
-
-\pnum
-\requires \tcode{key_type} shall be
-\tcode{CopyInsertable} and \tcode{mapped_type} shall be
-\tcode{DefaultInsertable} into \tcode{*this}.
-
-\pnum
-\returns
-A reference to the
-\tcode{mapped_type}
-corresponding to \tcode{x} in
-\tcode{*this}.
-
-\pnum
-\complexity Logarithmic.
+Equivalent to \tcode{return try_emplace(x).first->second;}
 \end{itemdescr}
 
 \indexlibrary{\idxcode{operator[]}!\idxcode{map}}%
@@ -5781,23 +5764,7 @@ T& operator[](key_type&& x);
 \begin{itemdescr}
 \pnum
 \effects
-If there is no key equivalent to \tcode{x} in the map, inserts
-\tcode{value_type(std::move(x), T())}
-into the map.
-
-\pnum
-\requires \tcode{mapped_type} shall be
-\tcode{DefaultInsertable} into \tcode{*this}.
-
-\pnum
-\returns
-A reference to the
-\tcode{mapped_type}
-corresponding to \tcode{x} in
-\tcode{*this}.
-
-\pnum
-\complexity Logarithmic.
+Equivalent to \tcode{return try_emplace(move(x)).first->second;}
 \end{itemdescr}
 
 \indexlibrary{\idxcode{at}!\idxcode{map}}%
@@ -6063,25 +6030,25 @@ or for operations where there is additional semantic information.
 \begin{codeblock}
 namespace std {
   template <class Key, class T, class Compare = less<Key>,
-            class Allocator = allocator<pair<const Key, T> > >
+            class Allocator = allocator<pair<const Key, T>>>
   class multimap {
   public:
     // types:
-    typedef Key                                   key_type;
-    typedef T                                     mapped_type;
-    typedef pair<const Key,T>                     value_type;
-    typedef Compare                               key_compare;
-    typedef Allocator                             allocator_type;
-    typedef value_type&                           reference;
-    typedef const value_type&                     const_reference;
-    typedef @\impdef@                iterator;       // see \ref{container.requirements}
-    typedef @\impdef@                const_iterator; // see \ref{container.requirements}
-    typedef @\impdef@                size_type;      // see \ref{container.requirements}
-    typedef @\impdef@                difference_type;// see \ref{container.requirements}
-    typedef typename allocator_traits<Allocator>::pointer           pointer;
-    typedef typename allocator_traits<Allocator>::const_pointer     const_pointer;
-    typedef std::reverse_iterator<iterator>       reverse_iterator;
-    typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+    typedef Key                                                 key_type;
+    typedef T                                                   mapped_type;
+    typedef pair<const Key,T>                                   value_type;
+    typedef Compare                                             key_compare;
+    typedef Allocator                                           allocator_type;
+    typedef value_type&                                         reference;
+    typedef const value_type&                                   const_reference;
+    typedef @\impdefnc@                              iterator;        // see \ref{container.requirements}
+    typedef @\impdefnc@                              const_iterator;  // see \ref{container.requirements}
+    typedef @\impdefnc@                              size_type;       // see \ref{container.requirements}
+    typedef @\impdefnc@                              difference_type; // see \ref{container.requirements}
+    typedef typename allocator_traits<Allocator>::pointer       pointer;
+    typedef typename allocator_traits<Allocator>::const_pointer const_pointer;
+    typedef std::reverse_iterator<iterator>                     reverse_iterator;
+    typedef std::reverse_iterator<const_iterator>               const_reverse_iterator;
 
     class value_compare {
     friend class multimap;
@@ -6097,7 +6064,7 @@ namespace std {
       }
     };
 
-    // construct/copy/destroy:
+    // \ref{multimap.cons}, construct/copy/destroy:
     multimap() : multimap(Compare()) { }
     explicit multimap(const Compare& comp, const Allocator& = Allocator());
     template <class InputIterator>
@@ -6117,7 +6084,7 @@ namespace std {
         : multimap(first, last, Compare(), a) { }
     multimap(initializer_list<value_type> il, const Allocator& a)
       : multimap(il, Compare(), a) { }
-   ~multimap();
+    ~multimap();
     multimap& operator=(const multimap& x);
     multimap& operator=(multimap&& x)
       noexcept(allocator_traits<Allocator>::is_always_equal::value &&
@@ -6146,7 +6113,7 @@ namespace std {
     size_type size() const noexcept;
     size_type max_size() const noexcept;
 
-    // modifiers:
+    // \ref{multimap.modifiers}, modifiers:
     template <class... Args> iterator emplace(Args&&... args);
     template <class... Args> iterator emplace_hint(const_iterator position, Args&&... args);
     iterator insert(const value_type& x);
@@ -6218,7 +6185,7 @@ namespace std {
     bool operator<=(const multimap<Key, T, Compare, Allocator>& x,
                     const multimap<Key, T, Compare, Allocator>& y);
 
-  // specialized algorithms:
+  // \ref{multimap.special}, specialized algorithms:
   template <class Key, class T, class Compare, class Allocator>
     void swap(multimap<Key, T, Compare, Allocator>& x,
               multimap<Key, T, Compare, Allocator>& y)
@@ -6365,25 +6332,25 @@ and for operations where there is additional semantic information.
 \begin{codeblock}
 namespace std {
   template <class Key, class Compare = less<Key>,
-            class Allocator = allocator<Key> >
+            class Allocator = allocator<Key>>
   class set {
   public:
     // types:
-    typedef Key                                   key_type;
-    typedef Key                                   value_type;
-    typedef Compare                               key_compare;
-    typedef Compare                               value_compare;
-    typedef Allocator                             allocator_type;
-    typedef value_type&                           reference;
-    typedef const value_type&                     const_reference;
-    typedef @\impdef@                iterator;       // See \ref{container.requirements}
-    typedef @\impdef@                const_iterator; // See \ref{container.requirements}
-    typedef @\impdef@                size_type;      // See \ref{container.requirements}
-    typedef @\impdef@                difference_type;// See \ref{container.requirements}
-    typedef typename allocator_traits<Allocator>::pointer           pointer;
-    typedef typename allocator_traits<Allocator>::const_pointer     const_pointer;
-    typedef std::reverse_iterator<iterator>       reverse_iterator;
-    typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+    typedef Key                                                 key_type;
+    typedef Key                                                 value_type;
+    typedef Compare                                             key_compare;
+    typedef Compare                                             value_compare;
+    typedef Allocator                                           allocator_type;
+    typedef value_type&                                         reference;
+    typedef const value_type&                                   const_reference;
+    typedef @\impdefnc@                              iterator;        // see \ref{container.requirements}
+    typedef @\impdefnc@                              const_iterator;  // see \ref{container.requirements}
+    typedef @\impdefnc@                              size_type;       // see \ref{container.requirements}
+    typedef @\impdefnc@                              difference_type; // see \ref{container.requirements}
+    typedef typename allocator_traits<Allocator>::pointer       pointer;
+    typedef typename allocator_traits<Allocator>::const_pointer const_pointer;
+    typedef std::reverse_iterator<iterator>                     reverse_iterator;
+    typedef std::reverse_iterator<const_iterator>               const_reverse_iterator;
 
     // \ref{set.cons}, construct/copy/destroy:
     set() : set(Compare()) { }
@@ -6403,7 +6370,7 @@ namespace std {
         : set(first, last, Compare(), a) { }
     set(initializer_list<value_type> il, const Allocator& a)
       : set(il, Compare(), a) { }
-   ~set();
+    ~set();
     set& operator=(const set& x);
     set& operator=(set&& x)
       noexcept(allocator_traits<Allocator>::is_always_equal::value &&
@@ -6502,7 +6469,7 @@ namespace std {
     bool operator<=(const set<Key, Compare, Allocator>& x,
                     const set<Key, Compare, Allocator>& y);
 
-  // specialized algorithms:
+  // \ref{set.special}, specialized algorithms:
   template <class Key, class Compare, class Allocator>
     void swap(set<Key, Compare, Allocator>& x,
               set<Key, Compare, Allocator>& y)
@@ -6622,27 +6589,27 @@ and for operations where there is additional semantic information.
 \begin{codeblock}
 namespace std {
   template <class Key, class Compare = less<Key>,
-            class Allocator = allocator<Key> >
+            class Allocator = allocator<Key>>
   class multiset {
   public:
     // types:
-    typedef Key                                                     key_type;
-    typedef Key                                                     value_type;
-    typedef Compare                                                 key_compare;
-    typedef Compare                                                 value_compare;
-    typedef Allocator                                               allocator_type;
-    typedef value_type&                                             reference;
-    typedef const value_type&                                       const_reference;
-    typedef @\impdef@                iterator;       // see \ref{container.requirements}
-    typedef @\impdef@                const_iterator; // see \ref{container.requirements}
-    typedef @\impdef@                size_type;      // see \ref{container.requirements}
-    typedef @\impdef@                difference_type;// see \ref{container.requirements}
-    typedef typename allocator_traits<Allocator>::pointer           pointer;
-    typedef typename allocator_traits<Allocator>::const_pointer     const_pointer;
-    typedef std::reverse_iterator<iterator>       reverse_iterator;
-    typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+    typedef Key                                                 key_type;
+    typedef Key                                                 value_type;
+    typedef Compare                                             key_compare;
+    typedef Compare                                             value_compare;
+    typedef Allocator                                           allocator_type;
+    typedef value_type&                                         reference;
+    typedef const value_type&                                   const_reference;
+    typedef @\impdefnc@                              iterator;        // see \ref{container.requirements}
+    typedef @\impdefnc@                              const_iterator;  // see \ref{container.requirements}
+    typedef @\impdefnc@                              size_type;       // see \ref{container.requirements}
+    typedef @\impdefnc@                              difference_type; // see \ref{container.requirements}
+    typedef typename allocator_traits<Allocator>::pointer       pointer;
+    typedef typename allocator_traits<Allocator>::const_pointer const_pointer;
+    typedef std::reverse_iterator<iterator>                     reverse_iterator;
+    typedef std::reverse_iterator<const_iterator>               const_reverse_iterator;
 
-    // construct/copy/destroy:
+    // \ref{multiset.cons}, construct/copy/destroy:
     multiset() : multiset(Compare()) { }
     explicit multiset(const Compare& comp, const Allocator& = Allocator());
     template <class InputIterator>
@@ -6660,7 +6627,7 @@ namespace std {
         : multiset(first, last, Compare(), a) { }
     multiset(initializer_list<value_type> il, const Allocator& a)
       : multiset(il, Compare(), a) { }
-   ~multiset();
+    ~multiset();
     multiset& operator=(const multiset& x);
     multiset& operator=(multiset&& x)
       noexcept(allocator_traits<Allocator>::is_always_equal::value &&
@@ -6759,7 +6726,7 @@ namespace std {
     bool operator<=(const multiset<Key, Compare, Allocator>& x,
                     const multiset<Key, Compare, Allocator>& y);
 
-  // specialized algorithms:
+  // \ref{multiset.special}, specialized algorithms:
   template <class Key, class Compare, class Allocator>
     void swap(multiset<Key, Compare, Allocator>& x,
               multiset<Key, Compare, Allocator>& y)
@@ -6856,7 +6823,7 @@ namespace std {
             class T,
             class Hash = hash<Key>,
             class Pred = std::equal_to<Key>,
-            class Alloc = std::allocator<std::pair<const Key, T> > >
+            class Alloc = std::allocator<std::pair<const Key, T>>>
     class unordered_map;
 
   // \ref{unord.multimap}, class template unordered_multimap:
@@ -6864,7 +6831,7 @@ namespace std {
             class T,
             class Hash = hash<Key>,
             class Pred = std::equal_to<Key>,
-            class Alloc = std::allocator<std::pair<const Key, T> > >
+            class Alloc = std::allocator<std::pair<const Key, T>>>
     class unordered_multimap;
 
   template <class Key, class T, class Hash, class Pred, class Alloc>
@@ -6889,7 +6856,7 @@ namespace std {
   template <class Key, class T, class Hash, class Pred, class Alloc>
     bool operator!=(const unordered_multimap<Key, T, Hash, Pred, Alloc>& a,
                     const unordered_multimap<Key, T, Hash, Pred, Alloc>& b);
-} // namespace std
+}
 \end{codeblock}
 
 \rSec2[unord.set.syn]{Header \tcode{<unordered_set>} synopsis}%
@@ -6904,14 +6871,14 @@ namespace std {
   template <class Key,
             class Hash = hash<Key>,
             class Pred = std::equal_to<Key>,
-            class Alloc = std::allocator<Key> >
+            class Alloc = std::allocator<Key>>
     class unordered_set;
 
   // \ref{unord.multiset}, class template unordered_multiset:
   template <class Key,
             class Hash = hash<Key>,
             class Pred = std::equal_to<Key>,
-            class Alloc = std::allocator<Key> >
+            class Alloc = std::allocator<Key>>
     class unordered_multiset;
 
   template <class Key, class Hash, class Pred, class Alloc>
@@ -6936,7 +6903,7 @@ namespace std {
   template <class Key, class Hash, class Pred, class Alloc>
     bool operator!=(const unordered_multiset<Key, Hash, Pred, Alloc>& a,
                     const unordered_multiset<Key, Hash, Pred, Alloc>& b);
-} // namespace std
+}
 \end{codeblock}
 
 \rSec2[unord.map]{Class template \tcode{unordered_map}}%
@@ -6969,11 +6936,10 @@ namespace std {
             class T,
             class Hash = hash<Key>,
             class Pred = std::equal_to<Key>,
-            class Allocator = std::allocator<std::pair<const Key, T> > >
-  class unordered_map
-  {
+            class Allocator = std::allocator<std::pair<const Key, T>>>
+  class unordered_map {
   public:
-    // types
+    // types:
     typedef Key                                                 key_type;
     typedef std::pair<const Key, T>                             value_type;
     typedef T                                                   mapped_type;
@@ -6984,15 +6950,15 @@ namespace std {
     typedef typename allocator_traits<Allocator>::const_pointer const_pointer;
     typedef value_type&                                         reference;
     typedef const value_type&                                   const_reference;
-    typedef @\impdef@                              size_type;
-    typedef @\impdef@                              difference_type;
+    typedef @\impdefnc@                              size_type;
+    typedef @\impdefnc@                              difference_type;
 
-    typedef @\impdef@                              iterator;
-    typedef @\impdef@                              const_iterator;
-    typedef @\impdef@                              local_iterator;
-    typedef @\impdef@                              const_local_iterator;
+    typedef @\impdefnc@                              iterator;
+    typedef @\impdefnc@                              const_iterator;
+    typedef @\impdefnc@                              local_iterator;
+    typedef @\impdefnc@                              const_local_iterator;
 
-    // construct/destroy/copy
+    // \ref{unord.map.cnstr}, construct/copy/destroy:
     unordered_map();
     explicit unordered_map(size_type n,
                            const hasher& hf = hasher(),
@@ -7039,7 +7005,7 @@ namespace std {
     unordered_map& operator=(initializer_list<value_type>);
     allocator_type get_allocator() const noexcept;
 
-    // iterators
+    // iterators:
     iterator       begin() noexcept;
     const_iterator begin() const noexcept;
     iterator       end() noexcept;
@@ -7047,12 +7013,12 @@ namespace std {
     const_iterator cbegin() const noexcept;
     const_iterator cend() const noexcept;
 
-    // size and capacity
+    // capacity:
     bool      empty() const noexcept;
     size_type size() const noexcept;
     size_type max_size() const noexcept;
 
-    // modifiers
+    // \ref{unord.map.modifiers}, modifiers:
     template <class... Args> pair<iterator, bool> emplace(Args&&... args);
     template <class... Args> iterator emplace_hint(const_iterator position, Args&&... args);
     pair<iterator, bool> insert(const value_type& obj);
@@ -7091,23 +7057,24 @@ namespace std {
                noexcept(swap(declval<Pred&>(), declval<Pred&>())));
     void      clear() noexcept;
 
-    // observers
+    // observers:
     hasher hash_function() const;
     key_equal key_eq() const;
 
-    // lookup
+    // map operations:
     iterator       find(const key_type& k);
     const_iterator find(const key_type& k) const;
     size_type      count(const key_type& k) const;
     std::pair<iterator, iterator>             equal_range(const key_type& k);
     std::pair<const_iterator, const_iterator> equal_range(const key_type& k) const;
 
+    // \ref{unord.map.elem} element access:
     mapped_type& operator[](const key_type& k);
     mapped_type& operator[](key_type&& k);
     mapped_type& at(const key_type& k);
     const mapped_type& at(const key_type& k) const;
 
-    // bucket interface
+    // bucket interface:
     size_type bucket_count() const noexcept;
     size_type max_bucket_count() const noexcept;
     size_type bucket_size(size_type n) const;
@@ -7119,7 +7086,7 @@ namespace std {
     const_local_iterator cbegin(size_type n) const;
     const_local_iterator cend(size_type n) const;
 
-    // hash policy
+    // hash policy:
     float load_factor() const noexcept;
     float max_load_factor() const noexcept;
     void max_load_factor(float z);
@@ -7128,16 +7095,17 @@ namespace std {
   };
 
   template <class Key, class T, class Hash, class Pred, class Alloc>
-    void swap(unordered_map<Key, T, Hash, Pred, Alloc>& x,
-              unordered_map<Key, T, Hash, Pred, Alloc>& y)
-      noexcept(noexcept(x.swap(y)));
-
-  template <class Key, class T, class Hash, class Pred, class Alloc>
     bool operator==(const unordered_map<Key, T, Hash, Pred, Alloc>& a,
                     const unordered_map<Key, T, Hash, Pred, Alloc>& b);
   template <class Key, class T, class Hash, class Pred, class Alloc>
     bool operator!=(const unordered_map<Key, T, Hash, Pred, Alloc>& a,
                     const unordered_map<Key, T, Hash, Pred, Alloc>& b);
+
+  // \ref{unord.map.swap}, swap:
+  template <class Key, class T, class Hash, class Pred, class Alloc>
+    void swap(unordered_map<Key, T, Hash, Pred, Alloc>& x,
+              unordered_map<Key, T, Hash, Pred, Alloc>& y)
+      noexcept(noexcept(x.swap(y)));
 }
 \end{codeblock}
 
@@ -7203,30 +7171,23 @@ for the first form, or from the range
 \indextext{\idxcode{unordered_map}!element access}%
 \begin{itemdecl}
 mapped_type& operator[](const key_type& k);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to \tcode{return try_emplace(k).first->second;}
+\end{itemdescr}
+
+\indexlibrary{\idxcode{unordered_map}!\idxcode{operator[]}}%
+\indexlibrary{\idxcode{operator[]}!\idxcode{unordered_map}}%
+\indextext{\idxcode{unordered_map}!element access}%
+\begin{itemdecl}
 mapped_type& operator[](key_type&& k);
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\requires \tcode{mapped_type} shall be \tcode{DefaultInsertable} into \tcode{*this}.
-For the first operator, \tcode{key_type} shall be \tcode{CopyInsertable} into \tcode{*this}.
-For the second operator, \tcode{key_type} shall be \tcode{MoveConstructible}.
-
-\pnum
-\effects If the \tcode{unordered_map} does not already contain
-an element whose key is equivalent to \tcode{\textit{k}}, the first operator inserts
-the value
-\tcode{value_type(k, mapped_type())}
-and the second operator inserts the value
-\tcode{value_type(std::move(k), mapped_type())}.
-
-
-\pnum
-\returns A reference to \tcode{x.second}, where \tcode{x}
-is the (unique) element whose key is equivalent to \tcode{\textit{k}}.
-
-\pnum
-\complexity Average case \bigoh{1}, worst case \bigoh{\tcode{size()}}.
+\effects Equivalent to \tcode{return try_emplace(move(k)).first->second;}
 \end{itemdescr}
 
 \indexlibrary{\idxcode{unordered_map}!\idxcode{at}}%
@@ -7477,11 +7438,10 @@ namespace std {
             class T,
             class Hash = hash<Key>,
             class Pred = std::equal_to<Key>,
-            class Allocator = std::allocator<std::pair<const Key, T> > >
-  class unordered_multimap
-  {
+            class Allocator = std::allocator<std::pair<const Key, T>>>
+  class unordered_multimap {
   public:
-    // types
+    // types:
     typedef Key                                                 key_type;
     typedef std::pair<const Key, T>                             value_type;
     typedef T                                                   mapped_type;
@@ -7492,15 +7452,15 @@ namespace std {
     typedef typename allocator_traits<Allocator>::const_pointer const_pointer;
     typedef value_type&                                         reference;
     typedef const value_type&                                   const_reference;
-    typedef @\impdef@                              size_type;
-    typedef @\impdef@                              difference_type;
+    typedef @\impdefnc@                              size_type;
+    typedef @\impdefnc@                              difference_type;
 
-    typedef @\impdef@                              iterator;
-    typedef @\impdef@                              const_iterator;
-    typedef @\impdef@                              local_iterator;
-    typedef @\impdef@                              const_local_iterator;
+    typedef @\impdefnc@                              iterator;
+    typedef @\impdefnc@                              const_iterator;
+    typedef @\impdefnc@                              local_iterator;
+    typedef @\impdefnc@                              const_local_iterator;
 
-    // construct/destroy/copy
+    // \ref{unord.multimap.cnstr}, construct/copy/destroy:
     unordered_multimap();
     explicit unordered_multimap(size_type n,
                                 const hasher& hf = hasher(),
@@ -7547,7 +7507,7 @@ namespace std {
     unordered_multimap& operator=(initializer_list<value_type>);
     allocator_type get_allocator() const noexcept;
 
-    // iterators
+    // iterators:
     iterator       begin() noexcept;
     const_iterator begin() const noexcept;
     iterator       end() noexcept;
@@ -7555,12 +7515,12 @@ namespace std {
     const_iterator cbegin() const noexcept;
     const_iterator cend() const noexcept;
 
-    // size and capacity
+    // capacity:
     bool      empty() const noexcept;
     size_type size() const noexcept;
     size_type max_size() const noexcept;
 
-    // modifiers
+    // \ref{unord.multimap.modifiers}, modifiers:
     template <class... Args> iterator emplace(Args&&... args);
     template <class... Args> iterator emplace_hint(const_iterator position, Args&&... args);
     iterator insert(const value_type& obj);
@@ -7582,18 +7542,18 @@ namespace std {
                noexcept(swap(declval<Pred&>(), declval<Pred&>())));
     void      clear() noexcept;
 
-    // observers
+    // observers:
     hasher hash_function() const;
     key_equal key_eq() const;
 
-    // lookup
+    // map operations:
     iterator       find(const key_type& k);
     const_iterator find(const key_type& k) const;
     size_type      count(const key_type& k) const;
     std::pair<iterator, iterator>             equal_range(const key_type& k);
     std::pair<const_iterator, const_iterator> equal_range(const key_type& k) const;
 
-    // bucket interface
+    // bucket interface:
     size_type bucket_count() const noexcept;
     size_type max_bucket_count() const noexcept;
     size_type bucket_size(size_type n) const;
@@ -7614,16 +7574,18 @@ namespace std {
   };
 
   template <class Key, class T, class Hash, class Pred, class Alloc>
-    void swap(unordered_multimap<Key, T, Hash, Pred, Alloc>& x,
-              unordered_multimap<Key, T, Hash, Pred, Alloc>& y)
-      noexcept(noexcept(x.swap(y)));
-
-  template <class Key, class T, class Hash, class Pred, class Alloc>
     bool operator==(const unordered_multimap<Key, T, Hash, Pred, Alloc>& a,
                     const unordered_multimap<Key, T, Hash, Pred, Alloc>& b);
   template <class Key, class T, class Hash, class Pred, class Alloc>
     bool operator!=(const unordered_multimap<Key, T, Hash, Pred, Alloc>& a,
                     const unordered_multimap<Key, T, Hash, Pred, Alloc>& b);
+
+  // \ref{unord.multimap.swap}, swap:
+  template <class Key, class T, class Hash, class Pred, class Alloc>
+    void swap(unordered_multimap<Key, T, Hash, Pred, Alloc>& x,
+              unordered_multimap<Key, T, Hash, Pred, Alloc>& y)
+      noexcept(noexcept(x.swap(y)));
+
 }
 \end{codeblock}
 
@@ -7762,11 +7724,10 @@ namespace std {
   template <class Key,
             class Hash = hash<Key>,
             class Pred = std::equal_to<Key>,
-            class Allocator = std::allocator<Key> >
-  class unordered_set
-  {
+            class Allocator = std::allocator<Key>>
+  class unordered_set {
   public:
-    // types
+    // types:
     typedef Key                                                 key_type;
     typedef Key                                                 value_type;
     typedef Hash                                                hasher;
@@ -7776,15 +7737,15 @@ namespace std {
     typedef typename allocator_traits<Allocator>::const_pointer const_pointer;
     typedef value_type&                                         reference;
     typedef const value_type&                                   const_reference;
-    typedef @\impdef@                              size_type;
-    typedef @\impdef@                              difference_type;
+    typedef @\impdefnc@                              size_type;
+    typedef @\impdefnc@                              difference_type;
 
-    typedef @\impdef@                              iterator;
-    typedef @\impdef@                              const_iterator;
-    typedef @\impdef@                              local_iterator;
-    typedef @\impdef@                              const_local_iterator;
+    typedef @\impdefnc@                              iterator;
+    typedef @\impdefnc@                              const_iterator;
+    typedef @\impdefnc@                              local_iterator;
+    typedef @\impdefnc@                              const_local_iterator;
 
-    // construct/destroy/copy
+    // \ref{unord.set.cnstr}, construct/copy/destroy:
     unordered_set();
     explicit unordered_set(size_type n,
                            const hasher& hf = hasher(),
@@ -7831,7 +7792,7 @@ namespace std {
     unordered_set& operator=(initializer_list<value_type>);
     allocator_type get_allocator() const noexcept;
 
-    // iterators
+    // iterators:
     iterator       begin() noexcept;
     const_iterator begin() const noexcept;
     iterator       end() noexcept;
@@ -7839,12 +7800,12 @@ namespace std {
     const_iterator cbegin() const noexcept;
     const_iterator cend() const noexcept;
 
-    // size and capacity
+    // capacity:
     bool      empty() const noexcept;
     size_type size() const noexcept;
     size_type max_size() const noexcept;
 
-    // modifiers
+    // modifiers:
     template <class... Args> pair<iterator, bool> emplace(Args&&... args);
     template <class... Args> iterator emplace_hint(const_iterator position, Args&&... args);
     pair<iterator, bool> insert(const value_type& obj);
@@ -7864,18 +7825,18 @@ namespace std {
                noexcept(swap(declval<Pred&>(), declval<Pred&>())));
     void      clear() noexcept;
 
-    // observers
+    // observers:
     hasher hash_function() const;
     key_equal key_eq() const;
 
-    // lookup
+    // set operations:
     iterator       find(const key_type& k);
     const_iterator find(const key_type& k) const;
     size_type      count(const key_type& k) const;
     std::pair<iterator, iterator>             equal_range(const key_type& k);
     std::pair<const_iterator, const_iterator> equal_range(const key_type& k) const;
 
-    // bucket interface
+    // bucket interface:
     size_type bucket_count() const noexcept;
     size_type max_bucket_count() const noexcept;
     size_type bucket_size(size_type n) const;
@@ -7887,7 +7848,7 @@ namespace std {
     const_local_iterator cbegin(size_type n) const;
     const_local_iterator cend(size_type n) const;
 
-    // hash policy
+    // hash policy:
     float load_factor() const noexcept;
     float max_load_factor() const noexcept;
     void max_load_factor(float z);
@@ -7896,16 +7857,17 @@ namespace std {
   };
 
   template <class Key, class Hash, class Pred, class Alloc>
-    void swap(unordered_set<Key, Hash, Pred, Alloc>& x,
-              unordered_set<Key, Hash, Pred, Alloc>& y)
-      noexcept(noexcept(x.swap(y)));
-
-  template <class Key, class Hash, class Pred, class Alloc>
     bool operator==(const unordered_set<Key, Hash, Pred, Alloc>& a,
                     const unordered_set<Key, Hash, Pred, Alloc>& b);
   template <class Key, class Hash, class Pred, class Alloc>
     bool operator!=(const unordered_set<Key, Hash, Pred, Alloc>& a,
                     const unordered_set<Key, Hash, Pred, Alloc>& b);
+
+  // \ref{unord.set.swap}, swap:
+  template <class Key, class Hash, class Pred, class Alloc>
+    void swap(unordered_set<Key, Hash, Pred, Alloc>& x,
+              unordered_set<Key, Hash, Pred, Alloc>& y)
+      noexcept(noexcept(x.swap(y)));
 }
 \end{codeblock}
 
@@ -8014,11 +7976,10 @@ namespace std {
   template <class Key,
             class Hash = hash<Key>,
             class Pred = std::equal_to<Key>,
-            class Allocator = std::allocator<Key> >
-  class unordered_multiset
-  {
+            class Allocator = std::allocator<Key>>
+  class unordered_multiset {
   public:
-    // types
+    // types:
     typedef Key                                                 key_type;
     typedef Key                                                 value_type;
     typedef Hash                                                hasher;
@@ -8028,15 +7989,15 @@ namespace std {
     typedef typename allocator_traits<Allocator>::const_pointer const_pointer;
     typedef value_type&                                         reference;
     typedef const value_type&                                   const_reference;
-    typedef @\impdef@                              size_type;
-    typedef @\impdef@                              difference_type;
+    typedef @\impdefnc@                              size_type;
+    typedef @\impdefnc@                              difference_type;
 
-    typedef @\impdef@                              iterator;
-    typedef @\impdef@                              const_iterator;
-    typedef @\impdef@                              local_iterator;
-    typedef @\impdef@                              const_local_iterator;
+    typedef @\impdefnc@                              iterator;
+    typedef @\impdefnc@                              const_iterator;
+    typedef @\impdefnc@                              local_iterator;
+    typedef @\impdefnc@                              const_local_iterator;
 
-    // construct/destroy/copy
+    // \ref{unord.multiset.cnstr}, construct/copy/destroy:
     unordered_multiset();
     explicit unordered_multiset(size_type n,
                                 const hasher& hf = hasher(),
@@ -8083,7 +8044,7 @@ namespace std {
     unordered_multiset& operator=(initializer_list<value_type>);
     allocator_type get_allocator() const noexcept;
 
-    // iterators
+    // iterators:
     iterator       begin() noexcept;
     const_iterator begin() const noexcept;
     iterator       end() noexcept;
@@ -8091,12 +8052,12 @@ namespace std {
     const_iterator cbegin() const noexcept;
     const_iterator cend() const noexcept;
 
-    // size and capacity
+    // capacity:
     bool      empty() const noexcept;
     size_type size() const noexcept;
     size_type max_size() const noexcept;
 
-    // modifiers
+    // modifiers:
     template <class... Args> iterator emplace(Args&&... args);
     template <class... Args> iterator emplace_hint(const_iterator position, Args&&... args);
     iterator insert(const value_type& obj);
@@ -8116,18 +8077,18 @@ namespace std {
                noexcept(swap(declval<Pred&>(), declval<Pred&>())));
     void      clear() noexcept;
 
-    // observers
+    // observers:
     hasher hash_function() const;
     key_equal key_eq() const;
 
-    // lookup
+    // set operations:
     iterator       find(const key_type& k);
     const_iterator find(const key_type& k) const;
     size_type      count(const key_type& k) const;
     std::pair<iterator, iterator>             equal_range(const key_type& k);
     std::pair<const_iterator, const_iterator> equal_range(const key_type& k) const;
 
-    // bucket interface
+    // bucket interface:
     size_type bucket_count() const noexcept;
     size_type max_bucket_count() const noexcept;
     size_type bucket_size(size_type n) const;
@@ -8139,7 +8100,7 @@ namespace std {
     const_local_iterator cbegin(size_type n) const;
     const_local_iterator cend(size_type n) const;
 
-    // hash policy
+    // hash policy:
     float load_factor() const noexcept;
     float max_load_factor() const noexcept;
     void max_load_factor(float z);
@@ -8148,16 +8109,17 @@ namespace std {
   };
 
   template <class Key, class Hash, class Pred, class Alloc>
-    void swap(unordered_multiset<Key, Hash, Pred, Alloc>& x,
-              unordered_multiset<Key, Hash, Pred, Alloc>& y)
-      noexcept(noexcept(x.swap(y)));
-
-  template <class Key, class Hash, class Pred, class Alloc>
     bool operator==(const unordered_multiset<Key, Hash, Pred, Alloc>& a,
                     const unordered_multiset<Key, Hash, Pred, Alloc>& b);
   template <class Key, class Hash, class Pred, class Alloc>
     bool operator!=(const unordered_multiset<Key, Hash, Pred, Alloc>& a,
                     const unordered_multiset<Key, Hash, Pred, Alloc>& b);
+
+  // \ref{unord.multiset.swap}, swap:
+  template <class Key, class Hash, class Pred, class Alloc>
+    void swap(unordered_multiset<Key, Hash, Pred, Alloc>& x,
+              unordered_multiset<Key, Hash, Pred, Alloc>& y)
+      noexcept(noexcept(x.swap(y)));
 }
 \end{codeblock}
 
@@ -8259,9 +8221,9 @@ exception is thrown by the swap of the adaptor's \tcode{Container} or
 #include <initializer_list>
 
 namespace std {
-  template <class T, class Container = deque<T> > class queue;
+  template <class T, class Container = deque<T>> class queue;
   template <class T, class Container = vector<T>,
-            class Compare = less<typename Container::value_type> >
+            class Compare = less<typename Container::value_type>>
     class priority_queue;
 
   template <class T, class Container>
@@ -8282,6 +8244,31 @@ namespace std {
   template <class T, class Container, class Compare>
     void swap(priority_queue<T, Container, Compare>& x,
               priority_queue<T, Container, Compare>& y) noexcept(noexcept(x.swap(y)));
+}
+\end{codeblock}
+
+\rSec2[stack.syn]{Header \tcode{<stack>} synopsis}%
+\indexlibrary{\idxhdr{stack}}
+
+\begin{codeblock}
+#include <initializer_list>
+
+namespace std {
+  template <class T, class Container = deque<T>> class stack;
+  template <class T, class Container>
+    bool operator==(const stack<T, Container>& x, const stack<T, Container>& y);
+  template <class T, class Container>
+    bool operator< (const stack<T, Container>& x, const stack<T, Container>& y);
+  template <class T, class Container>
+    bool operator!=(const stack<T, Container>& x, const stack<T, Container>& y);
+  template <class T, class Container>
+    bool operator> (const stack<T, Container>& x, const stack<T, Container>& y);
+  template <class T, class Container>
+    bool operator>=(const stack<T, Container>& x, const stack<T, Container>& y);
+  template <class T, class Container>
+    bool operator<=(const stack<T, Container>& x, const stack<T, Container>& y);
+  template <class T, class Container>
+    void swap(stack<T, Container>& x, stack<T, Container>& y) noexcept(noexcept(x.swap(y)));
 }
 \end{codeblock}
 
@@ -8307,7 +8294,7 @@ can be used.
 
 \begin{codeblock}
 namespace std {
-  template <class T, class Container = deque<T> >
+  template <class T, class Container = deque<T>>
   class queue {
   public:
     typedef typename Container::value_type            value_type;
@@ -8554,7 +8541,7 @@ object defines a strict weak ordering~(\ref{alg.sorting}).
 \begin{codeblock}
 namespace std {
   template <class T, class Container = vector<T>,
-    class Compare = less<typename Container::value_type> >
+    class Compare = less<typename Container::value_type>>
   class priority_queue {
   public:
     typedef typename Container::value_type            value_type;
@@ -8611,10 +8598,8 @@ namespace std {
 
 \indexlibrary{\idxcode{priority_queue}!\idxcode{priority_queue}}%
 \begin{itemdecl}
-priority_queue(const Compare& x,
-               const Container& y);
-explicit priority_queue(const Compare& x = Compare(),
-               Container&& y = Container());
+priority_queue(const Compare& x, const Container& y);
+explicit priority_queue(const Compare& x = Compare(), Container&& y = Container());
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -8822,36 +8807,11 @@ and
 \tcode{deque}~(\ref{deque})
 can be used.
 
-\rSec3[stack.syn]{Header \tcode{<stack>} synopsis}%
-\indexlibrary{\idxhdr{stack}}
-
-\begin{codeblock}
-#include <initializer_list>
-
-namespace std {
-  template <class T, class Container = deque<T> > class stack;
-  template <class T, class Container>
-    bool operator==(const stack<T, Container>& x, const stack<T, Container>& y);
-  template <class T, class Container>
-    bool operator< (const stack<T, Container>& x, const stack<T, Container>& y);
-  template <class T, class Container>
-    bool operator!=(const stack<T, Container>& x, const stack<T, Container>& y);
-  template <class T, class Container>
-    bool operator> (const stack<T, Container>& x, const stack<T, Container>& y);
-  template <class T, class Container>
-    bool operator>=(const stack<T, Container>& x, const stack<T, Container>& y);
-  template <class T, class Container>
-    bool operator<=(const stack<T, Container>& x, const stack<T, Container>& y);
-  template <class T, class Container>
-    void swap(stack<T, Container>& x, stack<T, Container>& y) noexcept(noexcept(x.swap(y)));
-}
-\end{codeblock}
-
 \rSec3[stack.defn]{\tcode{stack} definition}
 
 \begin{codeblock}
 namespace std {
-  template <class T, class Container = deque<T> >
+  template <class T, class Container = deque<T>>
   class stack {
   public:
     typedef typename Container::value_type            value_type;

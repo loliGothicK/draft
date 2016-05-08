@@ -182,7 +182,11 @@ the union of all $M(\mathtt{U}_i)$ and the set containing all $\mathtt{U}_i$,
 where each $\mathtt{U}_i$ is the type of the $i$th non-static data member
 of \tcode{X}.
 
-\item If \tcode{X} is a non-class type, the set $M(\mathtt{X})$ is empty.
+\item If \tcode{X} is an array type with element type $\mathtt{X}_e$,
+the set $M(\mathtt{X})$ consists of $\mathtt{X}_e$
+and the elements of $M(\mathtt{X}_e)$.
+
+\item If \tcode{X} is a non-class, non-array type, the set $M(\mathtt{X})$ is empty.
 \end{itemize}
 
 \enternote $M(\mathtt{X})$ is the set of the types of all non-base-class subobjects
@@ -522,10 +526,8 @@ the \grammarterm{class-specifier}.
 Within the class
 \grammarterm{member-specification}, the class is regarded as complete
 within function bodies, default arguments,
-\grammarterm{using-declaration}{s} introducing inheriting
-constructors~(\ref{class.inhctor}),
 \grammarterm{exception-specification}{s}, and
-\grammarterm{brace-or-equal-initializer}{s} for non-static data members
+default member initializers
 (including such things in nested classes).
 Otherwise it is regarded as incomplete within its own class
 \grammarterm{member-specification}.
@@ -540,15 +542,16 @@ are sufficiently different (Clause~\ref{over}).
 A \grammarterm{brace-or-equal-initializer} shall appear only in the
 declaration of a data member. (For static data members,
 see~\ref{class.static.data}; for non-static data members,
-see~\ref{class.base.init}).
+see~\ref{class.base.init} and~\ref{dcl.init.aggr}).
 A \grammarterm{brace-or-equal-initializer} for a non-static data member
+\indextext{member!default~initializer}%
+specifies a \defn{default member initializer} for the member, and
 shall not directly or indirectly cause the implicit definition of a
 defaulted default constructor for the enclosing class or the
 exception specification of that constructor.
 
 \pnum
 A member shall not be declared with the \tcode{extern}
-or \tcode{register}
 \nonterminal{storage-class-specifier}. Within a class definition, a member shall not be declared with the \tcode{thread_local} \nonterminal{storage-class-specifier} unless also declared \tcode{static}.
 
 \pnum
@@ -1137,7 +1140,7 @@ the objects of the class.
 \indextext{definition!static member}%
 The declaration of a \tcode{static} data member in its class definition
 is not a definition and may be of an incomplete type other than
-cv-qualified \tcode{void}. The definition for a \tcode{static} data
+\cv\ \tcode{void}. The definition for a \tcode{static} data
 member shall appear in a namespace scope enclosing the member's class
 definition.
 \indextext{operator~use!scope~resolution}%
@@ -1211,7 +1214,8 @@ data members.
 
 \pnum
 \tcode{Static} data members are initialized and destroyed exactly like
-non-local variables~(\ref{basic.start.init},~\ref{basic.start.term}).
+non-local variables~(\ref{basic.start.static}, \ref{basic.start.dynamic},
+\ref{basic.start.term}).
 
 \pnum
 A \tcode{static} data member shall not be
@@ -1239,7 +1243,7 @@ union object have the same address.
 \indextext{destructor!\idxcode{union}}%
 A union can have member functions (including constructors and destructors),
 \indextext{restriction!\idxcode{union}}%
-but not virtual~(\ref{class.virtual}) functions. A union shall not have
+but it shall not have virtual~(\ref{class.virtual}) functions. A union shall not have
 base classes. A union shall not be used as a base class.
 \indextext{restriction!\idxcode{union}}%
 If a union contains a non-static data member of
@@ -1288,8 +1292,10 @@ new (&u.n) N;
 \end{codeblock}
 \exitexample
 
-\pnum
+\rSec2[class.union.anon]{Anonymous unions}
 \indextext{\idxcode{union}!anonymous}%
+
+\pnum
 A union of the form
 
 \begin{ncbnftab}
@@ -1360,12 +1366,14 @@ in~(\ref{dcl.init.aggr}).
 \exitnote
 
 \pnum
-A \term{union-like class} is a union or a class that has an anonymous union as a direct
-member. A union-like class \tcode{X} has a set of \term{variant members}.
+\indextext{class!union-like}%
+\indextext{class!variant~member~of}%
+A \defn{union-like class} is a union or a class that has an anonymous union as a direct
+member. A union-like class \tcode{X} has a set of \defn{variant member}{s}.
 If \tcode{X} is a union, a non-static data member of \tcode{X} that is not an anonymous
 union is a variant member of \tcode{X}. In addition, a non-static data member of an
 anonymous union that is a member of \tcode{X} is also a variant member of \tcode{X}.
-At most one variant member of a union may have a \grammarterm{brace-or-equal-initializer}.
+At most one variant member of a union may have a default member initializer.
 \enterexample
 
 \begin{codeblock}

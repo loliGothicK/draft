@@ -24,6 +24,8 @@ promotions, floating point promotion, integral conversions, floating
 point conversions, floating-integral conversions, pointer conversions,
 pointer to member conversions, and boolean conversions.
 
+\item Zero or one function pointer conversion.
+
 \item Zero or one qualification conversion.
 \end{itemize}
 
@@ -77,9 +79,10 @@ one of a specified set of types appropriate to the construct. An
 expression \tcode{e} of class type \tcode{E} appearing in such a
 context is said to be
 \indextext{conversion!contextual}%
-\term{contextually implicitly converted to} a specified type \tcode{T} and is
+\defn{contextually implicitly converted} to a specified type \tcode{T} and is
 well-formed if and only if \tcode{e} can be implicitly converted to a type \tcode{T}
-that is determined as follows: \tcode{E} is searched for conversion functions
+that is determined as follows:
+\tcode{E} is searched for non-explicit conversion functions
 whose return type is \cvqual{cv} \tcode{T} or reference to \cvqual{cv}
 \tcode{T} such that \tcode{T} is allowed by the context.
 There shall be exactly one such \tcode{T}.
@@ -250,7 +253,7 @@ can be converted to type \tcode{T2}
 if the following conditions are satisfied,
 % NB: forbid line break between 'where' and 'cv'
 % to stop superscript j from running into
-% desecender of p on the previous line.
+% descender of p on the previous line.
 where~$cv_i^j$ denotes the cv-qualifiers in the cv-qualification signature of $T_j$%
 \footnote{These rules ensure that const-safety is preserved by the conversion.}:
 
@@ -541,6 +544,27 @@ of such pointers do not apply to pointers to members.
 \indextext{conversion!pointer to member!\idxcode{void*}}%
 In particular, a pointer to member cannot be converted to a
 \tcode{void*}.}
+
+\rSec1[conv.fctptr]{Function pointer conversions}
+
+\pnum
+\indextext{conversion!function pointer}%
+A prvalue of type ``pointer to \tcode{noexcept} function''
+can be converted to a prvalue of type ``pointer to function''.
+The result is a pointer to the function.
+A prvalue of type ``pointer to member of type \tcode{noexcept} function''
+can be converted to a prvalue of type ``pointer to member of type function''.
+The result points to the member function.
+
+\enterexample
+\begin{codeblock}
+  void (*p)() throw(int);
+  void (**pp)() noexcept = &p;  // error: cannot convert to pointer to \tcode{noexcept} function
+
+  struct S { typedef void (*p)(); operator p(); };
+  void (*q)() noexcept = S();   // error: cannot convert to pointer to \tcode{noexcept} function
+\end{codeblock}
+\exitexample
 
 \rSec1[conv.bool]{Boolean conversions}
 

@@ -46,10 +46,15 @@ identifier label is as the target of a
 \indextext{label!scope~of}%
 The scope of a label is the function in which it appears. Labels shall
 not be redeclared within a function. A label can be used in a
-\tcode{goto} statement before its definition.
+\tcode{goto} statement before its declaration.
 \indextext{name~space!label}%
 Labels have their own name space and do not interfere with other
 identifiers.
+\enternote
+A label may have the same name as another declaration in the same scope or a
+\grammarterm{template-parameter} from an enclosing scope. Unqualified name
+lookup~(\ref{basic.lookup.unqual}) ignores labels.
+\exitnote
 
 \pnum
 \indextext{label!\idxcode{case}}%
@@ -340,8 +345,7 @@ Iteration statements specify looping.
 
 \begin{bnf}
 \nontermdef{for-range-initializer}\br
-    expression\br
-    braced-init-list
+    expr-or-braced-init-list\br
 \end{bnf}
 
 See~\ref{dcl.meaning} for the optional \grammarterm{attribute-specifier-seq} in a
@@ -476,22 +480,24 @@ is equivalent to
 
 except that names declared in the \grammarterm{for-init-statement} are in
 the same declarative region as those declared in the
-\grammarterm{}{condition}, and except that a
+\grammarterm{condition}, and except that a
 \indextext{statement!\tcode{continue}~in \tcode{for}}%
-\tcode{continue} in \grammarterm{}{statement} (not enclosed in another
-iteration statement) will execute \grammarterm{}{expression} before
-re-evaluating \grammarterm{}{condition}.
+\tcode{continue} in \grammarterm{statement} (not enclosed in another
+iteration statement) will execute \grammarterm{expression} before
+re-evaluating \grammarterm{condition}.
 \enternote
 Thus the first statement specifies initialization for the loop; the
-condition~(\ref{stmt.select}) specifies a test, made before each
+condition~(\ref{stmt.select}) specifies a test, sequenced before each
 iteration, such that the loop is exited when the condition becomes
-\tcode{false}; the expression often specifies incrementing that is done
-after each iteration.
+\tcode{false}; the expression often specifies incrementing that is
+sequenced after each iteration.
 \exitnote
 
 \pnum
-Either or both of the condition and the expression can be omitted. A
-missing \grammarterm{}{condition} makes the implied \tcode{while} clause
+Either or both of the \grammarterm{condition}
+and the \grammarterm{expression} can be omitted.
+A missing \grammarterm{condition}
+makes the implied \tcode{while} clause
 equivalent to \tcode{while(true)}.
 
 \pnum
@@ -516,57 +522,51 @@ int j = i;          // \tcode{j = 42}
 \indextext{statement!range~based \idxcode{for}}
 
 \pnum
-For a range-based \tcode{for} statement of the form
+The range-based \tcode{for} statement
 
 \begin{ncbnf}
-\terminal{for (} for-range-declaration \terminal{:} expression \terminal{)} statement
+\terminal{for (} for-range-declaration \terminal{:} for-range-initializer \terminal{)} statement
 \end{ncbnf}
 
-let \textit{range-init} be equivalent to the \grammarterm{expression} surrounded
-by parentheses\footnote{this ensures that a top-level comma operator cannot be
-reinterpreted as a delimiter between \grammarterm{init-declarator}{s} in the
-declaration of \tcode{__range}.}
-
-\begin{ncbnf}
-\terminal{(} expression \terminal{)}
-\end{ncbnf}
-
-and for a range-based \tcode{for} statement of the form
-
-\begin{ncbnf}
-\terminal{for} \terminal{(} for-range-declaration \terminal{:} braced-init-list \terminal{)} statement
-\end{ncbnf}
-
-let \textit{range-init} be equivalent to the \grammarterm{braced-init-list}. In each case, a
-range-based \tcode{for} statement
 is equivalent to
 
-\begin{codeblock}
-{
-  auto && __range = range-init;
-  for ( auto __begin = begin-expr,
-             __end = end-expr;
-        __begin != __end;
-        ++__begin ) {
-    @\grammarterm{for-range-declaration}@ = *__begin;
-    @\grammarterm{statement}@
-  }
-}
-\end{codeblock}
+\begin{ncbnftab}
+\terminal{\{}\br
+\>\terminal{auto \&\&__range =} for-range-initializer \terminal{;}\br
+\>\terminal{for ( auto __begin =} begin-expr \terminal{,}\br
+\>\terminal{ \ \ \ \ \ \ \ \ \ \ __end =} end-expr \terminal{;}\br
+\>\terminal{ \ \ \ \ \ __begin != __end;}\br
+\>\terminal{ \ \ \ \ \ ++__begin ) \{}\br
+\>\>for-range-declaration \terminal{= *__begin;}\br
+\>\>statement\br
+\>\terminal{\}}\br
+\terminal{\}}
+\end{ncbnftab}
 
-where \tcode{__range}, \tcode{__begin}, and \tcode{__end} are variables defined for
-exposition only, and \tcode{_RangeT} is the type of the
-\grammarterm{}{expression}, and \textit{begin-expr} and \textit{end-expr} are
-determined as follows:
+where
 
 \begin{itemize}
-\item if \tcode{_RangeT} is an array type, \textit{begin-expr} and \textit{end-expr} are
+\item 
+if the \grammarterm{for-range-initializer} is an \grammarterm{expression},
+it is regarded as if it were surrounded by parentheses (so that a comma operator
+cannot be reinterpreted as delimiting two \grammarterm{init-declarators});
+
+\item \tcode{__range}, \tcode{__begin}, and \tcode{__end} are variables defined for
+exposition only; and
+
+\item
+\textit{begin-expr} and \textit{end-expr} are determined as follows:
+
+\begin{itemize}
+\item if the \grammarterm{for-range-initializer} is an expression of
+array type \tcode{R}, \textit{begin-expr} and \textit{end-expr} are
 \tcode{__range} and \tcode{__range + __bound}, respectively, where \tcode{__bound} is
-the array bound. If \tcode{_RangeT} is an array of unknown size or an array of
+the array bound. If \tcode{R} is an array of unknown size or an array of
 incomplete type, the program is ill-formed;
 
-\item if \tcode{_RangeT} is a class type, the \grammarterm{unqualified-id}{s}
-\tcode{begin} and \tcode{end} are looked up in the scope of class \tcode{\mbox{_RangeT}}
+\item if the \grammarterm{for-range-initializer} is an expression of
+class type \tcode{C}, the \grammarterm{unqualified-id}{s}
+\tcode{begin} and \tcode{end} are looked up in the scope of \tcode{C}
 as if by class member access lookup~(\ref{basic.lookup.classref}), and if either
 (or both) finds at least one declaration, \grammarterm{begin-expr} and
 \grammarterm{end-expr} are \tcode{__range.begin()} and \tcode{__range.end()},
@@ -577,6 +577,7 @@ and \tcode{end(__range)}, respectively, where \tcode{begin} and \tcode{end} are 
 up in the associated namespaces~(\ref{basic.lookup.argdep}).
 \enternote Ordinary unqualified lookup~(\ref{basic.lookup.unqual}) is not
 performed. \exitnote
+\end{itemize}
 \end{itemize}
 
 \enterexample
@@ -611,8 +612,7 @@ Jump statements unconditionally transfer control.
 \nontermdef{jump-statement}\br
     \terminal{break ;}\br
     \terminal{continue ;}\br
-    \terminal{return} expression\opt \terminal{;}\br
-    \terminal{return} braced-init-list \terminal{;}\br
+    \terminal{return} expr-or-braced-init-list\opt \terminal{;}\br
     \terminal{goto} identifier \terminal{;}
 \end{bnf}
 
@@ -706,7 +706,7 @@ equivalent to \tcode{goto} \tcode{contin}.
 A function returns to its caller by the \tcode{return} statement.
 
 \pnum
-The \grammarterm{expression} or \grammarterm{braced-init-list}
+The \grammarterm{expr-or-braced-init-list}
 of a return statement is called its operand. A return statement with
 no operand shall be used only in a function whose return type is
 \cv\ \tcode{void}, a constructor~(\ref{class.ctor}), or a
@@ -813,17 +813,12 @@ lx:
 
 \pnum
 \indextext{initialization!automatic}%
+\indextext{initialization!dynamic~block-scope}%
 \indextext{initialization!local \tcode{static}}%
-The zero-initialization~(\ref{dcl.init}) of all block-scope
-variables with
-static storage duration~(\ref{basic.stc.static}) or thread storage duration~(\ref{basic.stc.thread}) is performed before any
-other initialization takes place. Constant initialization~(\ref{basic.start.init}) of a
-block-scope entity with static storage duration, if applicable, is performed before its block is first
-entered. An implementation is permitted to perform early initialization
-of other block-scope variables with static or thread storage duration under the same
-conditions that an implementation is permitted to statically initialize
-a variable with static or thread storage duration in namespace
-scope~(\ref{basic.start.init}). Otherwise such a variable is initialized
+\indextext{initialization!local \tcode{thread_local}}%
+Dynamic initialization of a block-scope variable with
+static storage duration~(\ref{basic.stc.static}) or
+thread storage duration~(\ref{basic.stc.thread}) is performed
 the first time control passes through its declaration; such a variable is
 considered initialized upon the completion of its initialization. If the
 initialization exits by throwing an exception, the initialization is not

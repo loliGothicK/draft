@@ -68,8 +68,9 @@ Certain function declarations cannot be overloaded:
 \begin{itemize}
 \item
 \indextext{return~type!overloading~and}%
-Function declarations that differ only in the return type cannot be
-overloaded.
+Function declarations that differ only in the return type,
+the exception specification~(\ref{except.spec}), or both
+cannot be overloaded.
 \item
 \indextext{\idxcode{static}!overloading~and}%
 Member function declarations with the same name and the same
@@ -172,6 +173,7 @@ void f(E i)   @\tcode{\{ /* ... */ \}}@
 \exitexample
 
 \item
+\indextext{overloading!array~versus~pointer}%
 \indextext{array!overloading~and pointer~versus}%
 Parameter declarations that differ only in a pointer
 \tcode{*}
@@ -198,6 +200,8 @@ int g(char(*)[20]);             // different from \tcode{g(char(*)[10]);}
 \exitexample
 
 \item
+\indextext{overloading!function~versus~pointer}%
+\indextext{function!overloading~and pointer~versus}%
 Parameter declarations that differ only in that one is a function type
 and the other is a pointer to the same function type are equivalent.
 That is, the function type is adjusted to become a pointer to function type~(\ref{dcl.fct}).
@@ -1824,7 +1828,7 @@ the unique conversion sequence designated the
 \indextext{sequence!ambiguous conversion}%
 For the purpose of ranking implicit conversion sequences as described
 in~\ref{over.ics.rank}, the ambiguous conversion sequence is treated
-as a user-defined sequence that is indistinguishable from any
+as a user-defined conversion sequence that is indistinguishable from any
 other user-defined conversion sequence\footnote{The ambiguous conversion
 sequence is ranked with user-defined
 conversion sequences because multiple conversion sequences
@@ -1907,8 +1911,6 @@ a standard conversion sequence is either the Identity conversion
 by itself (that is, no conversion) or consists of one to three
 conversions from the other
 four categories.
-At most one conversion from each
-category is allowed in a single standard conversion sequence.
 If there are two or more conversions in the sequence, the
 conversions are applied in the canonical order:
 \textbf{Lvalue Transformation},
@@ -1938,9 +1940,10 @@ Match rank.
 \hdstyle{Conversion}            &   \hdstyle{Category}          &   \hdstyle{Rank}  &   \hdstyle{Subclause} \\ \capsep
 No conversions required         &   Identity                    &                   &                       \\ \cline{1-2}\cline{4-4}
 Lvalue-to-rvalue conversion     &                               &                   &   \ref{conv.lval}     \\ \cline{1-1}\cline{4-4}
-Array-to-pointer conversion     &   Lvalue Transformation       &   Exact Match     &   \ref{conv.array}    \\ \cline{1-1}\cline{4-4}
-Function-to-pointer conversion  &                               &                   &   \ref{conv.func}     \\ \cline{1-2}\cline{4-4}
-Qualification conversions       &   Qualification Adjustment    &                   &   \ref{conv.qual}     \\ \hline
+Array-to-pointer conversion     &   Lvalue Transformation       &                   &   \ref{conv.array}    \\ \cline{1-1}\cline{4-4}
+Function-to-pointer conversion  &                               &   \rb{Exact Match}&   \ref{conv.func}     \\ \cline{1-2}\cline{4-4}
+Qualification conversions       &                               &                   &   \ref{conv.qual}     \\ \cline{1-1}\cline{4-4}
+Function pointer conversion     & \rb{Qualification Adjustment} &                   &   \ref{conv.fctptr}   \\ \hline
 Integral promotions             &                               &                   &   \ref{conv.prom}     \\ \cline{1-1}\cline{4-4}
 Floating point promotion        &   \rb{Promotion}              &   \rb{Promotion}  &   \ref{conv.fpprom}   \\ \hline
 Integral conversions            &                               &                   &   \ref{conv.integral} \\ \cline{1-1}\cline{4-4}
@@ -2124,11 +2127,10 @@ h({ 1, 2, 3 });             // OK: identity conversion
 
 \pnum
 Otherwise, if the parameter type is ``array of \tcode{N} \tcode{X}'',
-if the initializer list has exactly \tcode{N} elements or if it has fewer
-than \tcode{N} elements and \tcode{X} is default-constructible, and if all the elements
-of the initializer list can be implicitly converted to \tcode{X}, the implicit
-conversion sequence is the worst conversion necessary to convert an element of the list
-to \tcode{X}.
+if there exists an implicit conversion sequence for each element of the array
+from the corresponding element of the initializer list (or from \tcode{\{\}}
+if there is no such element), the implicit conversion sequence is
+the worst such implicit conversion sequence.
 
 \pnum
 Otherwise, if the parameter is a non-aggregate class \tcode{X} and overload
@@ -2621,7 +2623,7 @@ types will be different.
 
 \rSec1[over.over]{Address of overloaded function}%
 \indextext{overloading!address of overloaded function}%
-\indextext{overloadedfunction!address~of}
+\indextext{overloaded~function!address~of}
 
 \pnum
 A use of an overloaded function name without arguments is resolved
@@ -2629,9 +2631,10 @@ in certain contexts to a function, a pointer to function or a pointer to
 member function for a specific function from the overload set.
 A function template name is considered to name a set of overloaded functions
 in such contexts.
-The function selected is the one whose type is identical to the
-function type of the
-target type required in the context.
+A function with type \tcode{F} is selected for the function type \tcode{FT}
+of the target type required in the context if \tcode{F}
+(after possibly applying the function pointer conversion~(\ref{conv.fctptr}))
+is identical to \tcode{FT}.
 \enternote
 That is, the class of which the function is a member is ignored when matching a
 pointer-to-member-function type.
@@ -2691,7 +2694,7 @@ The target type is not used in that determination.
 
 \pnum
 Non-member functions and static member functions
-match targets of pointer to function type or
+match targets of function pointer type or
 reference to function type.
 Non-static member functions match targets of
 pointer to member function type.
@@ -2775,12 +2778,7 @@ or the equivalent expression
 \pnum
 \indextext{conversion!overload resolution and pointer}%
 \enternote
-There are no standard conversions (Clause~\ref{conv}) of one
-pointer-to-function type into another.
-In particular, even if
-\tcode{B}
-is a public base of
-\tcode{D},
+Even if \tcode{B} is a public base of \tcode{D},
 we have
 
 \begin{codeblock}
@@ -3098,13 +3096,7 @@ shall be a non-static member function with exactly one parameter.
 It implements the subscripting syntax
 
 \begin{ncsimplebnf}
-postfix-expression \terminal{[} expression \terminal{]}
-\end{ncsimplebnf}
-
-or
-
-\begin{ncsimplebnf}
-postfix-expression \terminal{[} braced-init-list \terminal{]}
+postfix-expression \terminal{[} expr-or-braced-init-list \terminal{]}
 \end{ncsimplebnf}
 
 Thus, a subscripting expression
@@ -3379,7 +3371,7 @@ For every pair
 \textit{VQ}),
 where
 \textit{T}
-is an arithmetic type, and
+is an arithmetic type other than \tcode{bool}, and
 \textit{VQ}
 is either
 \tcode{volatile}

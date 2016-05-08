@@ -546,7 +546,7 @@ namespace std {
 \end{codeblock}
 
 \pnum
-The class locale::id provides identification of a locale facet
+The class \tcode{locale::id} provides identification of a locale facet
 interface, used as an index for lookup
 and to encapsulate initialization.
 
@@ -560,7 +560,7 @@ One initialization strategy is for
 to initialize each facet's
 \tcode{id}
 member the first time an instance of the facet is installed into a locale.
-This depends only on static storage being zero before constructors run~(\ref{basic.start.init}).
+This depends only on static storage being zero before constructors run~(\ref{basic.start.static}).
 \exitnote
 
 \rSec3[locale.cons]{\tcode{locale} constructors and destructor}
@@ -1006,14 +1006,14 @@ template <class charT> bool isblank (charT c, const locale& loc);
 
 \pnum
 Each of these functions
-\tcode{is\textbf{\textit{F}}}
+\tcode{is\placeholder{F}}
 returns the result of the expression:
 
 \begin{codeblock}
-use_facet< ctype<charT> >(loc).is(ctype_base::@\textbf{\textit{F}}@, c)
+use_facet< ctype<charT> >(loc).is(ctype_base::@\placeholder{F}@, c)
 \end{codeblock}
 
-where \textbf{\textit{F}} is the
+where \tcode{\placeholder{F}} is the
 \tcode{ctype_base::mask}
 value corresponding to that function~(\ref{category.ctype}).\footnote{When
 used in a loop, it is faster to cache the
@@ -1514,7 +1514,7 @@ virtual function.
 namespace std {
   class ctype_base {
   public:
-    typedef @\textbf{\textit{T}}@ mask;
+    typedef @\placeholder{T}@ mask;
 
     // numeric values are for exposition only.
     static const mask space = 1 << 0;
@@ -3109,22 +3109,33 @@ The sequence of \tcode{char}{s} accumulated in stage 2 (the field) is converted 
 
 \item For an unsigned integer value, the function \tcode{strtoull}.
 
-\item For a floating-point value, the function \tcode{strtold}.
+\item For a \tcode{float} value, the function \tcode{strtof}.
+
+\item For a \tcode{double} value, the function \tcode{strtod}.
+
+\item For a \tcode{long double} value, the function \tcode{strtold}.
 \end{itemize}
 
 The numeric value to be stored can be one of:
 
 \begin{itemize}
-\item zero, if the conversion function fails to convert the entire field. \tcode{ios_base::failbit} is assigned to \tcode{err}.
+\item zero, if the conversion function fails to convert the entire field.
 
-\item the most positive representable value, if the field represents a value too large positive to be represented in \tcode{val}. \tcode{ios_base::failbit} is assigned to \tcode{err}.
+\item the most positive (or negative) representable value,
+if the field to be converted to a signed integer type represents a value
+too large positive (or negative) to be represented in \tcode{val}.
 
-\item the most negative representable value or zero for an unsigned integer type, if the field represents a value too large negative to be represented in \tcode{val}. \tcode{ios_base::failbit} is assigned to \tcode{err}.
+\item the most positive representable value,
+if the field to be converted to an unsigned integer type represents a value
+that cannot be represented in \tcode{val}.
 
 \item the converted value, otherwise.
 \end{itemize}
 
 The resultant numeric value is stored in \tcode{val}.
+If the conversion function fails to convert the entire field, or
+if the field represents a value outside the range of representable values,
+\tcode{ios_base::failbit} is assigned to \tcode{err}.
 
 \end{description}
 
@@ -5278,10 +5289,10 @@ pattern      neg_format()    const;
 \end{codeblock}
 
 \pnum
-Each of these functions \tcode{F}
+Each of these functions \tcode{\placeholder{F}}
 returns the result of calling the corresponding
 virtual member function
-\tcode{do_}\textbf\textit{{F}}\tcode{()}.
+\tcode{do_\placeholder{F}()}.
 
 \rSec4[locale.moneypunct.virtuals]{\tcode{moneypunct} virtual functions}
 

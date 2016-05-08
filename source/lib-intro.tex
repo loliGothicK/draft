@@ -54,7 +54,7 @@ by other library elements, such as a predefined storage allocator for dynamic
 storage management~(\ref{basic.stc.dynamic}), and components used
 as infrastructure
 in \Cpp programs,
-such as a tuples, function wrappers, and time facilities.
+such as tuples, function wrappers, and time facilities.
 
 \pnum
 The strings library (Clause~\ref{strings}) provides support for manipulating text represented 
@@ -131,7 +131,7 @@ the length of the stream\\
 place a thread in the blocked state
 
 \definition{blocked thread}{defns.blocked}
-\indexdefn{thread, blocked}%
+\indexdefn{thread!blocked}%
 a thread that is waiting for some condition (other than the availability of a processor) to be
 satisfied before it can continue execution\footnote{This definition is taken from POSIX.}
 
@@ -350,6 +350,14 @@ met and operations on the object behave as specified for its type\\
 \enterexample If an object \tcode{x} of type \tcode{std::vector<int>} is in a
 valid but unspecified state, \tcode{x.empty()} can be called unconditionally,
 and \tcode{x.front()} can be called only if \tcode{x.empty()} returns
+\tcode{false}. \exitexample
+
+\definition{constant subexpression}{defns.const.subexpr}
+\indexdefn{constant subexpression}%
+an expression whose evaluation as subexpression of a
+\grammarterm{conditional-expression}
+\tcode{CE}~(\ref{expr.cond}) would not prevent \tcode{CE}
+from being a core constant expression~(\ref{expr.const}).
 \tcode{false}. \exitexample
 
 \rSec1[defns.additional]{Additional definitions}
@@ -959,7 +967,7 @@ file names~(\ref{cpp.include}). }
 
 \pnum
 The \Cpp standard library provides
-53
+54
 \term{\Cpp library headers},
 \indextext{header!C++ library}%
 as shown in Table~\ref{tab:cpp.library.headers}.
@@ -972,65 +980,66 @@ as shown in Table~\ref{tab:cpp.library.headers}.
 \tcode{<fstream>} &
 \tcode{<list>} &
 \tcode{<regex>} &
-\tcode{<tuple>} \\
+\tcode{<thread>} \\
 
 \tcode{<array>} &
 \tcode{<functional>} &
 \tcode{<locale>} &
 \tcode{<scoped_allocator>} &
-\tcode{<type_traits>} \\
+\tcode{<tuple>} \\
 
 \tcode{<atomic>} &
 \tcode{<future>} &
 \tcode{<map>} &
 \tcode{<set>} &
-\tcode{<typeindex>} \\
+\tcode{<type_traits>} \\
 
 \tcode{<bitset>} &
 \tcode{<initializer_list>} &
 \tcode{<memory>} &
-\tcode{<sstream>} &
-\tcode{<typeinfo>} \\
+\tcode{<shared_mutex>} &
+\tcode{<typeindex>} \\
 
 \tcode{<chrono>} &
 \tcode{<iomanip>} &
 \tcode{<mutex>} &
-\tcode{<stack>} &
-\tcode{<unordered_map>} \\
+\tcode{<sstream>} &
+\tcode{<typeinfo>} \\
 
 \tcode{<codecvt>} &
 \tcode{<ios>} &
 \tcode{<new>} &
-\tcode{<stdexcept>} &
-\tcode{<unordered_set>} \\
+\tcode{<stack>} &
+\tcode{<unordered_map>} \\
 
 \tcode{<complex>} &
 \tcode{<iosfwd>} &
 \tcode{<numeric>} &
-\tcode{<streambuf>} &
-\tcode{<utility>} \\
+\tcode{<stdexcept>} &
+\tcode{<unordered_set>} \\
 
 \tcode{<condition_variable>} &
 \tcode{<iostream>} &
 \tcode{<ostream>} &
-\tcode{<string>} &
-\tcode{<valarray>} \\
+\tcode{<streambuf>} &
+\tcode{<utility>} \\
 
 \tcode{<deque>} &
 \tcode{<istream>} &
 \tcode{<queue>} &
-\tcode{<strstream>} &
-\tcode{<vector>} \\
+\tcode{<string>} &
+\tcode{<valarray>} \\
 
 \tcode{<exception>} &
 \tcode{<iterator>} &
 \tcode{<random>} &
-\tcode{<system_error>} & \\
+\tcode{<strstream>} &
+\tcode{<vector>} \\
 
 \tcode{<forward_list>} &
 \tcode{<limits>} &
 \tcode{<ratio>} &
-\tcode{<thread>} & \\
+\tcode{<system_error>} & \\
 
 \end{floattable}
 
@@ -1081,14 +1090,16 @@ additional headers, as shown in Table~\ref{tab:cpp.c.headers}.
 
 \pnum
 Except as noted in Clauses~\ref{\firstlibchapter} through~\ref{\lastlibchapter}
-and Annex~\ref{depr}, the contents of each header \tcode{c\textit{name}} shall
-be the same as that of the corresponding header \tcode{\textit{name}.h}, as
+and Annex~\ref{depr}, the contents of each header \tcode{c\placeholder{name}} shall
+be the same as that of the corresponding header \tcode{\placeholder{name}.h}, as
 specified in the C standard library~(\ref{intro.refs}) or the C Unicode TR, as
 appropriate, as if by inclusion. In the \Cpp standard library, however, the
 declarations (except for names which are defined as macros in C) are within
-namespace scope~(\ref{basic.scope.namespace}) of the namespace \tcode{std.} It
-is unspecified whether these names are first declared within the global
-namespace scope and are then injected into namespace \tcode{std} by explicit
+namespace scope~(\ref{basic.scope.namespace}) of the namespace \tcode{std}.
+It is unspecified whether these names (including any overloads added in
+Clauses~\ref{\firstlibchapter} through~\ref{\lastlibchapter} and Annex~\ref{depr})
+are first declared within the global namespace scope
+and are then injected into namespace \tcode{std} by explicit
 \grammarterm{using-declaration}{s}~(\ref{namespace.udecl}).
 
 \pnum
@@ -1112,7 +1123,7 @@ standard header \tcode{<iso646.h>} or \tcode{<ciso646>} has no effect.}
 
 \pnum
 \ref{depr.c.headers}, C standard library headers, describes the effects of using
-the \tcode{\textit{name}.h} (C header) form in a \Cpp program.\footnote{ The
+the \tcode{\placeholder{name}.h} (C header) form in a \Cpp program.\footnote{ The
 \tcode{".h"} headers dump all their names into the global namespace, whereas the
 newer forms keep their names in namespace \tcode{std}. Therefore, the newer
 forms are the preferred forms for all uses except for \Cpp programs which are
@@ -1640,7 +1651,7 @@ and \tcode{std::forward}, respectively.
 \hline
 \lhdr{Variable} &   \rhdr{Definition}   \\  \capsep
 \endhead
-\tcode{T, U, C}    &   any non-const object type~(\ref{basic.types})       \\ \rowsep
+\tcode{T, U, C}    &   any \cv-unqualified object type~(\ref{basic.types})       \\ \rowsep
 \tcode{X}       &   an Allocator class for type \tcode{T}   \\ \rowsep
 \tcode{Y}       &   the corresponding Allocator class for type \tcode{U}    \\ \rowsep
 \tcode{XX}      &   the type \tcode{allocator_traits<X>}    \\ \rowsep
@@ -1754,15 +1765,16 @@ If \tcode{n == 0}, the return value is unspecified.
 
 \tcode{a.deallocate(p,n)}   &
   (not used)                &
-  All \tcode{n T} objects in the area pointed to by \tcode{p} shall be
-    destroyed prior to this call. \tcode{n} shall match the value passed to
-    \tcode{allocate} to obtain this memory. Does not throw exceptions.
-    \enternote \tcode{p} shall not be singular.\exitnote   &  \\ \rowsep
+  \textit{pre:} \tcode{p} shall be a value returned by an earlier call
+  to \tcode{allocate} that has not been invalidated by
+  an intervening call to \tcode{deallocate}. \tcode{n} shall
+  match the value passed to \tcode{allocate} to obtain this memory.
+  \throws Nothing.          &  \\ \rowsep
 
 \tcode{a.max_size()}        &
   \tcode{X::size_type}      &
   the largest value that can meaningfully be passed to \tcode{X::allocate()}  &
-  \tcode{numeric_limits<size_type>::max()}  \\ \rowsep
+  \tcode{numeric_limits<size_type>::max()/sizeof(value_type)}  \\ \rowsep
 
 \tcode{a1 == a2}            &
   \tcode{bool}              &
@@ -1793,13 +1805,13 @@ If \tcode{n == 0}, the return value is unspecified.
   Shall not exit via an exception.\br
   post: \tcode{Y(a) == b}, \tcode{a == X(b)} &  \\ \rowsep
 
-\tcode{X u(move(a));}      \br
-\tcode{X u = move(a);}     &
+\tcode{X u(std::move(a));}  \br
+\tcode{X u = std::move(a);} &
                             &
   Shall not exit via an exception.\br
   post: \tcode{a1} equals the prior value of \tcode{a}. & \\ \rowsep
 
-\tcode{X u(move(b));}       &
+\tcode{X u(std::move(b));}  &
                             &
   Shall not exit via an exception.\br
   post: \tcode{a} equals the prior value of \tcode{X(b)}. & \\ \rowsep
@@ -2228,43 +2240,35 @@ however, certain of these function descriptions also apply to replacement functi
 in the program~(\ref{definitions}).
 
 \pnum
-A \Cpp program may provide the definition for any of twelve
+A \Cpp program may provide the definition for any of the following
 dynamic memory allocation function signatures declared in header
 \tcode{<new>}~(\ref{basic.stc.dynamic}, \ref{support.dynamic}):
 
 \begin{itemize}
 \item
-\indextext{\idxcode{new}!\idxcode{operator}}%
+\indextext{\idxcode{new}!\idxcode{operator}!replaceable}%
 \indexlibrary{\idxcode{new}!\idxcode{operator}}%
 \tcode{operator new(std::size_t)}
 \item
 \tcode{operator new(std::size_t, const std::nothrow_t\&)}
 \item
-\indextext{\idxcode{new}!\idxcode{operator}}%
-\indexlibrary{\idxcode{new}!\idxcode{operator}}%
 \tcode{operator new[](std::size_t)}
 \item
 \tcode{operator new[](std::size_t, const std::nothrow_t\&)}
 \item
-\indextext{\idxcode{delete}!\idxcode{operator}}%
+\indextext{\idxcode{delete}!\idxcode{operator}!replaceable}%
 \indexlibrary{\idxcode{delete}!\idxcode{operator}}%
 \tcode{operator delete(void*)}
 \item
 \tcode{operator delete(void*, const std::nothrow_t\&)}
 \item
-\indextext{\idxcode{delete}!\idxcode{operator}}%
-\indexlibrary{\idxcode{delete}!\idxcode{operator}}%
+\tcode{operator delete(void*, std::size_t)}
+\item
 \tcode{operator delete[](void*)}
 \item
 \tcode{operator delete[](void*, const std::nothrow_t\&)}
 \item
-\tcode{operator delete(void*, std::size_t)}
-\item
-\tcode{operator delete(void*, std::size_t, const std::nothrow_t\&)}
-\item
 \tcode{operator delete[](void*, std::size_t)}
-\item
-\tcode{operator delete[](void*, std::size_t, const std::nothrow_t\&)}
 \end{itemize}
 
 \pnum
@@ -2410,13 +2414,13 @@ If the parameter is a generic parameter of the form \tcode{T\&\&} and an lvalue 
 \tcode{A} is bound, the argument binds to an lvalue reference~(\ref{temp.deduct.call})
 and thus is not covered by the previous sentence. \exitnote \enternote If a program casts
 an lvalue to an xvalue while passing that lvalue to a library function (e.g. by calling the function
-with the argument \tcode{move(x)}), the program
+with the argument \tcode{std::move(x)}), the program
 is effectively asking that function to treat that lvalue as a temporary. The implementation
 is free to optimize away aliasing checks which might be needed if the argument was
 an lvalue. \exitnote
 \end{itemize}
 
-\rSec3[res.on.objects]{Shared objects and the library}
+\rSec3[res.on.objects]{Library object access}
 
 \pnum
 The behavior of a program is undefined if calls to standard library functions from different
@@ -2426,12 +2430,14 @@ shared between threads risks undefined behavior unless objects of that type are 
 specified as being sharable without data races or the user supplies a locking mechanism. \exitnote
 
 \pnum
-\enternote In particular, the program is required to ensure that completion
-of the constructor of any object of a class type defined in the standard library
-happens before any other member function invocation on that object and, unless
-otherwise specified, to ensure that completion of any member function invocation
-other than destruction on such an object happens before destruction of that object.
-This applies even to objects such as mutexes intended for thread synchronization. \exitnote
+If an object of a standard library type is accessed, and
+the beginning of the object's lifetime~(\ref{basic.life})
+does not happen before the access, or
+the access does not happen before the end of the object's lifetime,
+the behavior is undefined unless otherwise specified.
+\enternote
+This applies even to objects such as mutexes intended for thread synchronization.
+\exitnote
 
 \rSec3[res.on.required]{Requires paragraph}
 
@@ -2542,34 +2548,17 @@ It is unspecified whether any member functions in the \Cpp standard library are 
 \tcode{inline}~(\ref{dcl.fct.spec}).
 
 \pnum
-An implementation may declare additional
-non-virtual member function signatures within a
-\indextext{function!virtual member}%
-class:
-
-\begin{itemize}
-\item
-by adding arguments with default values to a member function signature;%
-\indextext{argument}%
-\indextext{function!global}\footnote{Hence, the address of a member function of a class in the \Cpp standard
-library has an unspecified type.\indextext{address~of~member~function!unspecified}}
-\enternote An implementation may not add arguments with default values to virtual,
-global, or non-member functions.\exitnote
-\item
-by replacing a member function signature with default values by two
-or more member function signatures with equivalent behavior; and
-\item
-by adding a member function signature for a member function name.
-\end{itemize}
-
-\pnum
-A call to a member function signature described in the \Cpp standard library
-behaves as if the implementation declares no additional member
-function signatures.\footnote{A valid \Cpp program always calls the expected library
-member function, or one with equivalent behavior.
-An implementation may also
-define additional member functions that would otherwise not be called by a
-valid \Cpp program.}
+For a non-virtual member function described in the \Cpp standard library,
+an implementation may declare a different set of member function signatures,
+provided that any call to the member function that would select
+an overload from the set of declarations described in this standard
+behaves as if that overload were selected.
+\enternote
+For instance, an implementation may add parameters with default values,
+or replace a member function with default arguments
+with two or more member functions with equivalent behavior,
+or add additional signatures for a member function name.
+\exitnote
 
 \rSec3[constexpr.functions]{\tcode{constexpr} functions and constructors}
 
@@ -2667,7 +2656,7 @@ It is unspecified whether any function signature or class described in
 Clauses~\ref{\firstlibchapter} through~\ref{\lastlibchapter} and Annex~\ref{depr} is a
 \tcode{friend}
 of another class in the \Cpp standard library.
-\indextext{specifier!\tcode{friend}}
+\indextext{specifier!\idxcode{friend}}
 
 \rSec3[derivation]{Derived classes}
 

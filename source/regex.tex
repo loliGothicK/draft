@@ -1633,7 +1633,11 @@ basic_regex& operator=(const basic_regex& e);
 
 \begin{itemdescr}
 \pnum
-\effects  returns \tcode{assign(e)}.
+\effects  copies \tcode{e} into \tcode{*this} and returns \tcode{*this}.
+
+\pnum\postconditions
+\tcode{flags()} and \tcode{mark_count()} return
+\tcode{e.flags()} and \tcode{e.mark_count()}, respectively.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{basic_regex}!\idxcode{operator=}}%
@@ -1644,7 +1648,12 @@ basic_regex& operator=(basic_regex&& e) noexcept;
 
 \begin{itemdescr}
 \pnum
-\effects  returns \tcode{assign(std::move(e))}.
+\effects  move assigns from \tcode{e} into \tcode{*this} and returns \tcode{*this}.
+
+\pnum
+\postconditions \tcode{flags()} and \tcode{mark_count()} return the values that
+\tcode{e.flags()} and \tcode{e.mark_count()}, respectively, had before assignment.
+\tcode{e} is in a valid state with unspecified value.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{basic_regex}!\idxcode{operator=}}%
@@ -1692,11 +1701,10 @@ basic_regex& assign(const basic_regex& that);
 
 \begin{itemdescr}
 \pnum
-\effects  copies \tcode{that} into \tcode{*this} and returns \tcode{*this}.
+\effects  Equivalent to \tcode{*this = that}.
 
-\pnum\postconditions
-\tcode{flags()} and \tcode{mark_count()} return
-\tcode{that.flags()} and \tcode{that.mark_count()}, respectively.
+\pnum
+\returns  \tcode{*this}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{basic_regex}!\idxcode{assign}}%
@@ -1707,12 +1715,10 @@ basic_regex& assign(basic_regex&& that) noexcept;
 
 \begin{itemdescr}
 \pnum
-\effects  move assigns from \tcode{that} into \tcode{*this} and returns \tcode{*this}.
+\effects  Equivalent to \tcode{*this = std::move(that)}.
 
 \pnum
-\postconditions \tcode{flags()} and \tcode{mark_count()} return the values that
-\tcode{that.flags()} and \tcode{that.mark_count()}, respectively, had before assignment.
-\tcode{that} is in a valid state with unspecified value.
+\returns  \tcode{*this}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{basic_regex}!\idxcode{assign}}%
@@ -2551,7 +2557,7 @@ by the member functions of class template \tcode{match_results}.
 \indextext{requirements!container}%
 \indextext{requirements!sequence}%
 \indextext{\idxcode{match_results}!as sequence}%
-The class template \tcode{match_results} shall satisfy the requirements of an
+The class template \tcode{match_results} satisfies the requirements of an
 allocator-aware container and of a sequence container, as specified
 in~\ref{sequence.reqmts}, except that only operations defined for const-qualified
 sequence containers are supported.
@@ -3130,8 +3136,20 @@ of a Bidirectional Iterator ~(\ref{bidirectional.iterators}).
 regular expression \tcode{e}, and all of the character
 sequence \range{first}{last}. The parameter \tcode{flags} is
 used to control how the expression is matched against the character
-sequence. Returns \tcode{true} if such a match exists, \tcode{false}
-otherwise.
+sequence. When determining if there is a match, only potential matches
+that match the entire character sequence are considered.
+Returns \tcode{true} if such a match exists, \tcode{false}
+otherwis.
+\enterexample
+\begin{codeblock}
+std::regex re("Get|GetValue");
+std::cmatch m;
+regex_search("GetValue", m, re);	// returns true, and m[0] contains "Get"
+regex_match ("GetValue", m, re);	// returns true, and m[0] contains "GetValue"
+regex_search("GetValues", m, re);	// returns true, and m[0] contains "Get"
+regex_match ("GetValues", m, re);	// returns false
+\end{codeblock}
+\exitexample
 
 \pnum
 \postconditions
@@ -4168,7 +4186,7 @@ Objects of type specialization of \tcode{basic_regex} store within themselves a
 default-constructed instance of their \tcode{traits} template parameter, henceforth
 referred to as \tcode{traits_inst}. This \tcode{traits_inst} object is used to support localization
 of the regular expression; \tcode{basic_regex} member functions shall not call
-any locale dependent C or C++ API, including the formatted string input functions.
+any locale dependent C or \Cpp API, including the formatted string input functions.
 Instead they shall call the appropriate traits member function to achieve the required effect.
 
 \pnum
