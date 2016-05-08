@@ -50,12 +50,12 @@ the form
 
 \begin{bnf}
 \nontermdef{alias-declaration}\br
-    \terminal{using} identifier attribute-specifier-seq\opt \terminal{=} type-id \terminal{;}
+    \terminal{using} identifier attribute-specifier-seq\opt{} \terminal{=} defining-type-id \terminal{;}
 \end{bnf}
 
 \begin{bnf}
 \nontermdef{simple-declaration}\br
-    decl-specifier-seq init-declarator-list\opt \terminal{;}\br
+    decl-specifier-seq init-declarator-list\opt{} \terminal{;}\br
     attribute-specifier-seq decl-specifier-seq init-declarator-list \terminal{;}
 \end{bnf}
 
@@ -91,7 +91,7 @@ A
 \grammarterm{nodeclspec-function-declaration} of the form
 
 \begin{ncsimplebnf}
-attribute-specifier-seq\opt decl-specifier-seq\opt init-declarator-list\opt \terminal{;}
+attribute-specifier-seq\opt decl-specifier-seq\opt init-declarator-list\opt{} \terminal{;}
 \end{ncsimplebnf}
 
 is divided into three parts.
@@ -158,10 +158,11 @@ typedef class { };  //  ill-formed
 
 \pnum
 \indextext{\idxgram{static_assert}}%
-In a \grammarterm{static_assert-declaration} the
-\grammarterm{constant-expression} shall be a constant
-expression~(\ref{expr.const}) that can be contextually converted to \tcode{bool}
-(Clause~\ref{conv}). If the value of the expression when
+In a \grammarterm{static_assert-declaration}, the
+\grammarterm{constant-expression} shall be
+a contextually converted constant expression
+of type \tcode{bool}~(\ref{expr.const}).
+If the value of the expression when
 so converted is \tcode{true}, the declaration has no
 effect. Otherwise, the program is ill-formed, and the resulting
 diagnostic message~(\ref{intro.compliance}) shall include the text of
@@ -183,7 +184,7 @@ Each \grammarterm{init-declarator} in the \grammarterm{init-declarator-list}
 contains exactly one \grammarterm{declarator-id}, which is the name
 declared by that \grammarterm{init-declarator} and hence one of the names
 declared by the declaration. The
-\grammarterm{type-specifiers}~(\ref{dcl.type}) in the
+\grammarterm{defining-type-specifiers}~(\ref{dcl.type}) in the
 \grammarterm{decl-specifier-seq} and the recursive \grammarterm{declarator}
 structure of the \grammarterm{init-declarator} describe a
 type~(\ref{dcl.meaning}), which is then associated with the name being
@@ -233,7 +234,7 @@ The specifiers that can be used in a declaration are
 \begin{bnf}
 \nontermdef{decl-specifier}\br
     storage-class-specifier\br
-    type-specifier\br
+    defining-type-specifier\br
     function-specifier\br
     \terminal{friend}\br
     \terminal{typedef}\br
@@ -253,15 +254,15 @@ affects the type only for the declaration it appears in, not other declarations 
 same type.
 
 \pnum
-Each \grammarterm{decl-specifier} shall appear at most once in the complete
-\grammarterm{decl-specifier-seq} of a declaration, except that
+Each \grammarterm{decl-specifier} shall appear at most once in a complete
+\grammarterm{decl-specifier-seq}, except that
 \tcode{long} may appear twice.
 
 \pnum
 \indextext{ambiguity!declaration type}%
 If a \grammarterm{type-name} is encountered while parsing a \grammarterm{decl-specifier-seq},
 it is interpreted as part of the \grammarterm{decl-specifier-seq} if and only if there is no
-previous \grammarterm{type-specifier} other than a \grammarterm{cv-qualifier} in the
+previous \grammarterm{defining-type-specifier} other than a \grammarterm{cv-qualifier} in the
 \grammarterm{decl-specifier-seq}.
 The sequence shall be self-consistent as
 described below.
@@ -330,7 +331,8 @@ a variable it shall be present in all declarations of that entity. If a
 \grammarterm{storage-class-specifier}
 appears in a \grammarterm{decl-specifier-seq}, there can be no
 \tcode{typedef} specifier in the same \grammarterm{decl-specifier-seq} and
-the \grammarterm{init-declarator-list} of the declaration shall not be
+the \grammarterm{init-declarator-list} or \grammarterm{member-declarator-list}
+of the declaration shall not be
 empty (except for an anonymous union declared in a named namespace or in the
 global namespace, which shall be declared
 \indextext{specifier!\idxcode{static}}%
@@ -553,11 +555,13 @@ declare identifiers that can be used later for naming
 fundamental~(\ref{basic.fundamental}) or compound~(\ref{basic.compound})
 types. The \tcode{typedef} specifier shall not be
 combined in a \grammarterm{decl-specifier-seq} with any other kind of
-specifier except a \grammarterm{type-specifier,} and it shall not be used in the
+specifier except a \grammarterm{defining-type-specifier}, and it shall not be used in the
 \grammarterm{decl-specifier-seq} of a
 \grammarterm{parameter-declaration}~(\ref{dcl.fct}) nor in the
 \grammarterm{decl-specifier-seq} of a
 \grammarterm{function-definition}~(\ref{dcl.fct.def}).
+If a \tcode{typedef} specifier appears in a declaration without a \grammarterm{declarator},
+the program is ill-formed.
 
 \begin{bnf}
 \nontermdef{typedef-name}\br
@@ -600,7 +604,7 @@ A \grammarterm{typedef-name} can also be introduced by an
 \tcode{using} keyword becomes a \grammarterm{typedef-name}
 and the optional \grammarterm{attribute-specifier-seq} following the
 \grammarterm{identifier} appertains to that \grammarterm{typedef-name}.
-It has the same
+Such a \grammarterm{typedef-name} has the same
 semantics as if it were introduced by the \tcode{typedef} specifier. In
 particular, it does not define a new type.
 \enterexample
@@ -613,6 +617,10 @@ using cell = pair<void*, cell*>;    // ill-formed
 \end{codeblock}
 
 \exitexample
+The \grammarterm{defining-type-specifier-seq}
+of the \grammarterm{defining-type-id} shall not define
+a class or enumeration if the \grammarterm{alias-declaration}
+is the \grammarterm{declaration} of a \grammarterm{template-declaration}.
 
 \pnum
 \indextext{redefinition!\idxcode{typedef}}%
@@ -815,6 +823,7 @@ that does not contain
 \begin{itemize}
 \item an \grammarterm{asm-definition},
 \item a \tcode{goto} statement,
+\item an identifier label~(\ref{stmt.label}),
 \item a \grammarterm{try-block}, or
 \item a definition of a variable
 of non-literal type or
@@ -1007,13 +1016,6 @@ The type-specifiers are
 %
 \begin{bnf}
 \nontermdef{type-specifier}\br
-    trailing-type-specifier\br
-    class-specifier\br
-    enum-specifier
-\end{bnf}
-
-\begin{bnf}
-\nontermdef{trailing-type-specifier}\br
   simple-type-specifier\br
   elaborated-type-specifier\br
   typename-specifier\br
@@ -1027,22 +1029,31 @@ The type-specifiers are
 \end{bnf}
 
 \begin{bnf}
-\nontermdef{trailing-type-specifier-seq}\br
-  trailing-type-specifier attribute-specifier-seq\opt\br
-  trailing-type-specifier trailing-type-specifier-seq
+\nontermdef{defining-type-specifier}\br
+    type-specifier\br
+    class-specifier\br
+    enum-specifier
+\end{bnf}
+
+\begin{bnf}
+\nontermdef{defining-type-specifier-seq}\br
+  defining-type-specifier attribute-specifier-seq\opt\br
+  defining-type-specifier defining-type-specifier-seq
 \end{bnf}
 
 The optional \grammarterm{attribute-specifier-seq} in a \grammarterm{type-specifier-seq}
-or a \grammarterm{trailing-type-specifier-seq}
+or a \grammarterm{defining-type-specifier-seq}
 appertains
-to the type denoted by the preceding \grammarterm{type-specifier}{s}~(\ref{dcl.meaning}). The
+to the type denoted by the preceding \grammarterm{type-specifier}{s}
+or \grammarterm{defining-type-specifier}{s}~(\ref{dcl.meaning}). The
 \grammarterm{attribute-specifier-seq} affects the type only for the declaration it appears in,
 not other declarations involving the same type.
 
 \pnum
-As a general rule, at most one \grammarterm{type-specifier} is allowed in the complete
+As a general rule, at most one \grammarterm{defining-type-specifier}
+is allowed in the complete
 \grammarterm{decl-specifier-seq} of a \grammarterm{declaration} or in a
-\grammarterm{type-specifier-seq} or \grammarterm{trailing-type-specifier-seq}.
+\grammarterm{type-specifier-seq} or \grammarterm{defining-type-specifier-seq}.
 The only exceptions to this rule are the following:
 
 \begin{itemize}
@@ -1062,7 +1073,7 @@ The only exceptions to this rule are the following:
 
 \pnum
 Except in a declaration of a constructor, destructor, or conversion
-function, at least one \grammarterm{type-specifier} that is not a
+function, at least one \grammarterm{defining-type-specifier} that is not a
 \grammarterm{cv-qualifier} shall appear in a complete
 \grammarterm{type-specifier-seq} or a complete
 \grammarterm{decl-specifier-seq}.\footnote{There is no special
@@ -1070,10 +1081,6 @@ provision for a \grammarterm{decl-specifier-seq} that
 lacks a \grammarterm{type-specifier} or that has a
 \grammarterm{type-specifier} that only specifies \grammarterm{cv-qualifier}{s}.
 The ``implicit int'' rule of C is no longer supported.}
-A \grammarterm{type-specifier-seq} shall not define a class or enumeration unless
-it appears in the \grammarterm{type-id} of an
-\grammarterm{alias-declaration}~(\ref{dcl.typedef}) that is not the \grammarterm{declaration}
-of a \grammarterm{template-declaration}.
 
 \pnum
 \enternote
@@ -1100,7 +1107,8 @@ and
 There are two \grammarterm{cv-qualifiers}, \tcode{const} and
 \tcode{volatile}. Each \grammarterm{cv-qualifier} shall appear at most once in
 a \grammarterm{cv-qualifier-seq}. If a \grammarterm{cv-qualifier} appears in a
-\grammarterm{decl-specifier-seq}, the \grammarterm{init-declarator-list} of
+\grammarterm{decl-specifier-seq}, the \grammarterm{init-declarator-list}
+or \grammarterm{member-declarator-list} of
 the declaration shall not be empty.
 \enternote
 \ref{basic.type.qualifier} and \ref{dcl.fct} describe how cv-qualifiers affect object and
@@ -1181,7 +1189,7 @@ What constitutes an access to an object that has volatile-qualified type is
 implementation-defined.
 If an attempt is made to refer to an object defined with a
 volatile-qualified type through the use of a glvalue with a
-non-volatile-qualified type, the program behavior is undefined.
+non-volatile-qualified type, the behavior is undefined.
 
 \pnum
 \indextext{type~specifier!\idxcode{volatile}}%
@@ -1578,8 +1586,13 @@ When a variable declared using a placeholder type is initialized, or a
 \tcode{return} statement occurs in a function declared with a return type that
 contains a placeholder type, the deduced return type or variable type is
 determined from the type of its initializer. In the case of a \tcode{return}
-with no operand or with an operand of type \tcode{void}, the declared return
-type shall be \tcode{auto} and the deduced return type is \tcode{void}.
+with no operand or with an operand of type \tcode{void}:
+\begin{itemize}
+\item if the declared return type is \tcode{decltype(auto)},
+then the deduced return type is \tcode{void};
+\item otherwise, the declared return type shall be \cv\ \tcode{auto} and
+the deduced return type is \cv\ \tcode{void}.
+\end{itemize}
 Otherwise, let \tcode{T} be the declared type of the variable or return type of
 the function.
 If the placeholder is the \tcode{auto} \grammarterm{type-specifier}, the
@@ -1786,7 +1799,7 @@ constants. Its name becomes an \grammarterm{enum-name}, within its scope.
 
 \begin{bnf}
 \nontermdef{enum-specifier}\br
-    enum-head \terminal{\{} enumerator-list\opt \terminal{\}}\br
+    enum-head \terminal{\{} enumerator-list\opt{} \terminal{\}}\br
     enum-head \terminal{\{} enumerator-list \terminal{, \}}
 \end{bnf}
 
@@ -1799,7 +1812,7 @@ constants. Its name becomes an \grammarterm{enum-name}, within its scope.
 
 \begin{bnf}
 \nontermdef{opaque-enum-declaration}\br
-    enum-key attribute-specifier-seq\opt identifier enum-base\opt \terminal{;}
+    enum-key attribute-specifier-seq\opt nested-name-specifier\opt identifier enum-base\opt{} \terminal{;}
 \end{bnf}
 
 \begin{bnf}
@@ -1835,7 +1848,8 @@ The optional \grammarterm{attribute-specifier-seq} in the \grammarterm{enum-head
 the \grammarterm{opaque-enum-declaration} appertains to the enumeration; the attributes
 in that \grammarterm{attribute-specifier-seq} are thereafter considered attributes of the
 enumeration whenever it is named.
-A \tcode{:} following ``\tcode{enum} \grammarterm{identifier}''
+A \tcode{:} following
+``\tcode{enum} \grammarterm{nested-name-specifier\opt} \grammarterm{identifier}''
 within the \grammarterm{decl-specifier-seq} of a \grammarterm{member-declaration}
 is parsed as part of an \grammarterm{enum-base}.
 \enternote This resolves a potential ambiguity between the declaration of an enumeration
@@ -1851,6 +1865,9 @@ type. \enterexample
 
 \exitexample
 \exitnote
+If an \grammarterm{opaque-enum-declaration} contains
+a \grammarterm{nested-name-specifier},
+the declaration shall be an explicit specialization~(\ref{temp.expl.spec}).
 
 \pnum
 \indextext{constant!enumeration}%
@@ -1984,7 +2001,7 @@ the enumeration are the values of the underlying type. Otherwise,
 for an enumeration where $e_\mathit{min}$ is the smallest enumerator and
 $e_\mathit{max}$ is the largest, the values of the enumeration are the
 values in the range $b_{min}$ to $b_{max}$, defined as follows: Let $K$
-be 1 for a two's complement representation and 0 for a one's complement
+be 1 for a two's complement representation and 0 for a ones' complement
 or sign-magnitude representation. $b_{max}$ is the smallest value
 greater than or equal to $max(|e_{min}| - K, |e_{max}|)$ and equal to
 $2^M-1$, where $M$ is a non-negative integer. $b_{min}$ is zero if
@@ -2095,6 +2112,20 @@ void g(X* p) {
 \end{codeblock}
 \exitexample
 
+\pnum
+If an \grammarterm{enum-head} contains a \grammarterm{nested-name-specifier},
+the \grammarterm{enum-specifier} shall refer to an enumeration
+that was previously declared directly in the class or namespace
+to which the \grammarterm{nested-name-specifier} refers, or
+in an element of the inline namespace set~(\ref{namespace.def})
+of that namespace (i.e., not merely inherited or introduced by a
+\grammarterm{using-declaration}), and
+the \grammarterm{enum-specifier} shall appear in
+a namespace enclosing the previous declaration.
+In such cases, the \grammarterm{nested-name-specifier}
+of the \grammarterm{enum-head} of the definition
+shall not begin with a \grammarterm{decltype-specifier}.
+
 \rSec1[basic.namespace]{Namespaces}%
 \indextext{namespaces|(}
 
@@ -2112,11 +2143,6 @@ see~\ref{basic.scope.namespace}.
 \rSec2[namespace.def]{Namespace definition}%
 \indextext{definition!namespace}%
 \indextext{namespace!definition}
-
-\pnum
-The grammar for a
-\grammarterm{namespace-definition}
-is
 
 \begin{bnf}
 \nontermdef{namespace-name}\br
@@ -2138,7 +2164,7 @@ is
 
 \begin{bnf}
 \nontermdef{unnamed-namespace-definition}\br
-        \terminal{inline\opt} \terminal{namespace} attribute-specifier-seq\opt \terminal{\{} namespace-body \terminal{\}}
+        \terminal{inline\opt} \terminal{namespace} attribute-specifier-seq\opt{} \terminal{\{} namespace-body \terminal{\}}
 \end{bnf}
 
 \begin{bnf}
@@ -2166,8 +2192,9 @@ In a \grammarterm{named-namespace-definition},
 the \grammarterm{identifier} is the name of the namespace.
 If the \grammarterm{identifier}, when looked up~(\ref{basic.lookup.unqual}),
 refers to a \grammarterm{namespace-name} (but not a \grammarterm{namespace-alias})
-introduced in the declarative region
-in which the \grammarterm{named-namespace-definition} appears,
+that was introduced in the namespace
+in which the \grammarterm{named-namespace-definition} appears
+or that was introduced in a member of the inline namespace set of that namespace,
 the \grammarterm{namespace-definition}
 \indextext{extend|see{namespace, extend}}
 \defnx{extends}{namespace!extend} the previously-declared namespace.
@@ -2291,7 +2318,7 @@ An \grammarterm{unnamed-namespace-definition} behaves as if it were
 replaced by
 
 \begin{ncsimplebnf}
-\terminal{inline}\opt \terminal{namespace} \uniquens{} \terminal{\{ /* empty body */ \}}\br
+\terminal{inline}\opt{} \terminal{namespace} \uniquens{} \terminal{\{ /* empty body */ \}}\br
 \terminal{using namespace} \uniquens{} \terminal{;}\br
 \terminal{namespace} \uniquens{} \terminal{\{} namespace-body \terminal{\}}
 \end{ncsimplebnf}
@@ -2954,7 +2981,7 @@ specifies a dependent name~(\ref{temp.dep}), the name introduced by the
 
 \begin{bnf}
 \nontermdef{using-directive}\br
-    attribute-specifier-seq\opt \terminal{using  namespace} nested-name-specifier\opt namespace-name \terminal{;}
+    attribute-specifier-seq\opt{} \terminal{using  namespace} nested-name-specifier\opt namespace-name \terminal{;}
 \end{bnf}
 
 \pnum
@@ -3207,7 +3234,7 @@ be achieved using a \grammarterm{linkage-specification}:
 %
 \begin{bnf}
 \nontermdef{linkage-specification}\br
-    \terminal{extern} string-literal \terminal{\{} declaration-seq\opt \terminal{\}}\br
+    \terminal{extern} string-literal \terminal{\{} declaration-seq\opt{} \terminal{\}}\br
     \terminal{extern} string-literal declaration
 \end{bnf}
 
@@ -3328,7 +3355,7 @@ extern "C" {
 
 \pnum
 If two declarations declare functions with the same name and
-\grammarterm{parameter-type-list}~(\ref{dcl.fct}) to be members of the same
+parameter-type-list~(\ref{dcl.fct}) to be members of the same
 namespace or declare objects with the same name to be members of the same
 namespace and the declarations give the names different language linkages, the
 program is ill-formed; no diagnostic is required if the declarations appear in
@@ -3449,8 +3476,8 @@ such as types, variables, names, blocks, or translation units.
 
 \begin{bnf}
 \nontermdef{alignment-specifier}\br
-  \terminal{alignas (} type-id \terminal{...}\opt \terminal{)}\br
-  \terminal{alignas (} constant-expression \terminal{...}\opt \terminal{)}
+  \terminal{alignas (} type-id \terminal{...}\opt{} \terminal{)}\br
+  \terminal{alignas (} constant-expression \terminal{...}\opt{} \terminal{)}
 \end{bnf}
 
 \begin{bnf}
@@ -3484,7 +3511,7 @@ such as types, variables, names, blocks, or translation units.
 
 \begin{bnf}
 \nontermdef{attribute-argument-clause}\br
-    \terminal{(} balanced-token-seq\opt \terminal{)}
+    \terminal{(} balanced-token-seq\opt{} \terminal{)}
 \end{bnf}
 
 \begin{bnf}
@@ -3495,9 +3522,9 @@ such as types, variables, names, blocks, or translation units.
 
 \begin{bnf}
 \nontermdef{balanced-token}\br
-    \terminal{(} balanced-token-seq\opt \terminal{)}\br
-    \terminal{[} balanced-token-seq\opt \terminal{]}\br
-    \terminal{\{} balanced-token-seq\opt \terminal{\}}\br
+    \terminal{(} balanced-token-seq\opt{} \terminal{)}\br
+    \terminal{[} balanced-token-seq\opt{} \terminal{]}\br
+    \terminal{\{} balanced-token-seq\opt{} \terminal{\}}\br
     \textnormal{any \grammarterm{token} other than a parenthesis, a bracket, or a brace}
 \end{bnf}
 
@@ -3542,8 +3569,11 @@ For an \grammarterm{attribute-token} not specified in this International Standar
 behavior is \impldef{behavior of non-standard attributes}.
 
 \pnum
-Two consecutive left square bracket tokens shall appear only when introducing an
-\grammarterm{attribute-specifier}. \enternote If two consecutive left square brackets appear
+Two consecutive left square bracket tokens shall appear only
+when introducing an \grammarterm{attribute-specifier} or
+within the \grammarterm{balanced-token-seq} of
+an \grammarterm{attribute-argument-clause}.
+\enternote If two consecutive left square brackets appear
 where an \grammarterm{attribute-specifier} is not allowed, the program is ill-formed even
 if the brackets match an alternative grammar production. \exitnote \enterexample
 \begin{codeblock}
@@ -3555,6 +3585,7 @@ void f() {
                                 // an element of \tcode{p}.
   y[[] { return 2; }()] = 2;    // error even though attributes are not allowed
                                 // in this context.
+  int i [[vendor::attr([[]])]]; // well-formed implementation-defined attribute.
 }
 \end{codeblock}
 \exitexample
@@ -3631,7 +3662,7 @@ in different translation units.
 \enterexample
 \begin{codeblock}
 // Translation unit \#1:
-struct S { int x; } s, p = &s;
+struct S { int x; } s, *p = &s;
 
 // Translation unit \#2:
 struct alignas(16) S;           // error: definition of \tcode{S} lacks alignment; no
@@ -3641,8 +3672,7 @@ extern S* p;                    // diagnostic required
 
 \pnum
 \enterexample An aligned buffer with an alignment requirement
-of \tcode{A} and holding \tcode{N} elements of type \tcode{T} other than
-\tcode{char}, \tcode{signed char}, or \tcode{unsigned char}
+of \tcode{A} and holding \tcode{N} elements of type \tcode{T}
 can be declared as:
 
 \begin{codeblock}
@@ -3661,39 +3691,6 @@ alignas(double) unsigned char c[sizeof(double)];  // array of characters, suitab
 extern unsigned char c[sizeof(double)];           // no \tcode{alignas} necessary
 alignas(float)
   extern unsigned char c[sizeof(double)];         // error: different alignment in declaration
-\end{codeblock}
-\exitexample
-
-\rSec2[dcl.attr.noreturn]{Noreturn attribute}%
-\indextext{attribute!noreturn}
-
-\pnum
-The \grammarterm{attribute-token} \tcode{noreturn} specifies that a function does not return. It
-shall appear at most once in each \grammarterm{attribute-list} and no
-\grammarterm{attribute-argument-clause} shall be present. The attribute may be applied to the
-\grammarterm{declarator-id} in a function declaration. The first declaration of a function shall
-specify the \tcode{noreturn} attribute if any declaration of that function specifies the
-\tcode{noreturn} attribute. If a function is declared with the \tcode{noreturn} attribute in one
-translation unit and the same function is declared without the \tcode{noreturn} attribute in another
-translation unit, the program is ill-formed; no diagnostic required.
-
-\pnum
-If a function \tcode{f} is called where \tcode{f} was previously declared with the \tcode{noreturn}
-attribute and \tcode{f} eventually returns, the behavior is undefined. \enternote The function may
-terminate by throwing an exception. \exitnote \enternote Implementations are encouraged to issue a
-warning if a function marked \tcode{[[noreturn]]} might return. \exitnote
-
-\pnum
-\enterexample
-\begin{codeblock}
-[[ noreturn ]] void f() {
-  throw "error";        // OK
-}
-
-[[ noreturn ]] void q(int i) { // behavior is undefined if called with an argument \tcode{<= 0}
-  if (i > 0)
-    throw "positive";
-}
 \end{codeblock}
 \exitexample
 
@@ -3824,3 +3821,163 @@ message in case the program refers to a name or entity other than to declare it,
 declaration that specifies the attribute. The diagnostic message may include the text provided
 within the \grammarterm{attribute-argument-clause} of any \tcode{deprecated} attribute applied
 to the name or entity. \exitnote
+
+\rSec2[dcl.attr.fallthrough]{Fallthrough attribute}
+\indextext{attribute!fallthrough}
+
+\pnum
+The \grammarterm{attribute-token} \tcode{fallthrough}
+may be applied to a null statement~(\ref{stmt.expr});
+\indextext{statement!fallthrough}
+such a statement is a fallthrough statement.
+The \grammarterm{attribute-token} \tcode{fallthrough}
+shall appear at most once in each \grammarterm{attribute-list} and
+no \grammarterm{attribute-argument-clause} shall be present.
+A fallthrough statement may only appear within
+an enclosing \tcode{switch} statement~(\ref{stmt.switch}).
+The next statement that would be executed after a fallthrough statement
+shall be a labeled statement whose label is a case label or
+default label for the same \tcode{switch} statement.
+The program is ill-formed if there is no such statement.
+
+\pnum
+\enternote
+The use of a fallthrough statement is intended to suppress
+a warning that an implementation might otherwise issue
+for a case or default label that is reachable
+from another case or default label along some path of execution.
+Implementations are encouraged to issue a warning
+if a fallthrough statement is not dynamically reachable.
+\exitnote
+
+\pnum
+\enterexample
+\begin{codeblock}
+void f(int n) {
+  void g(), h(), i();
+  switch (n) {
+  case 1:
+  case 2:
+    g();
+    [[fallthrough]];
+  case 3: // warning on fallthrough discouraged
+    h();
+  case 4: // implementation may warn on fallthrough
+    i();
+    [[fallthrough]]; // ill-formed
+  }
+}
+\end{codeblock}
+\exitexample
+
+\rSec2[dcl.attr.unused]{Maybe unused attribute}%
+\indextext{attribute!maybe unused}
+
+\pnum
+The \grammarterm{attribute-token} \tcode{maybe_unused}
+indicates that a name or entity is possibly intentionally unused.
+It shall appear at most once in each \grammarterm{attribute-list} and
+no \grammarterm{attribute-argument-clause} shall be present.
+
+\pnum
+The attribute may be applied to the declaration of a class,
+a \grammarterm{typedef-name}, a variable, a non-static data member,
+a function, an enumeration, or an enumerator.
+
+\pnum
+\enternote
+For an entity marked \tcode{maybe_unused}, implementations
+are encouraged not to emit a warning that the entity is unused, or
+that the entity is used despite the presence of the attribute.
+\exitnote
+
+\pnum
+A name or entity declared without the \tcode{maybe_unused} attribute
+can later be redeclared with the attribute
+and vice versa.
+An entity is considered marked
+after the first declaration that marks it.
+
+\pnum
+\enterexample
+\begin{codeblock}
+[[maybe_unused]] void f([[maybe_unused]] bool thing1,
+                        [[maybe_unused]] bool thing2) {
+  [[maybe_unused]] bool b = thing1 && thing2;
+  assert(b);
+}
+\end{codeblock}
+Implementations are encouraged not to warn that \tcode{b} is unused,
+whether or not \tcode{NDEBUG} is defined.
+\exitexample
+
+\rSec2[dcl.attr.nodiscard]{Nodiscard attribute}%
+\indextext{attribute!nodiscard}
+
+\pnum
+The \grammarterm{attribute-token} \tcode{nodiscard}
+may be applied to the \grammarterm{declarator-id}
+in a function declaration or to the declaration of a class or enumeration.
+It shall appear at most once in each \grammarterm{attribute-list} and
+no \grammarterm{attribute-argument-clause} shall be present.
+
+\pnum
+\enternote
+A nodiscard call is a function call expression that
+calls a function previously declared \tcode{nodiscard}, or
+whose return type is a possibly cv-qualified class or enumeration type
+marked \tcode{nodiscard}. Appearance of a nodiscard call as
+a potentially-evaluated discarded-value expression (Clause~\ref{expr})
+is discouraged unless explicitly cast to \tcode{void}.
+Implementations are encouraged to issue a warning in such cases.
+This is typically because discarding the return value
+of a nodiscard call has surprising consequences.
+\exitnote
+
+\pnum
+\enterexample
+\begin{codeblock}
+struct [[nodiscard]] error_info { /*...*/ };
+error_info enable_missile_safety_mode();
+void launch_missiles();
+void test_missiles() {
+  enable_missile_safety_mode(); // warning encouraged
+  launch_missiles();
+}
+error_info &foo();
+void f() { foo(); } // reference type, warning not encouraged
+\end{codeblock}
+\exitexample
+
+\rSec2[dcl.attr.noreturn]{Noreturn attribute}%
+\indextext{attribute!noreturn}
+
+\pnum
+The \grammarterm{attribute-token} \tcode{noreturn} specifies that a function does not return. It
+shall appear at most once in each \grammarterm{attribute-list} and no
+\grammarterm{attribute-argument-clause} shall be present. The attribute may be applied to the
+\grammarterm{declarator-id} in a function declaration. The first declaration of a function shall
+specify the \tcode{noreturn} attribute if any declaration of that function specifies the
+\tcode{noreturn} attribute. If a function is declared with the \tcode{noreturn} attribute in one
+translation unit and the same function is declared without the \tcode{noreturn} attribute in another
+translation unit, the program is ill-formed; no diagnostic required.
+
+\pnum
+If a function \tcode{f} is called where \tcode{f} was previously declared with the \tcode{noreturn}
+attribute and \tcode{f} eventually returns, the behavior is undefined. \enternote The function may
+terminate by throwing an exception. \exitnote \enternote Implementations are encouraged to issue a
+warning if a function marked \tcode{[[noreturn]]} might return. \exitnote
+
+\pnum
+\enterexample
+\begin{codeblock}
+[[ noreturn ]] void f() {
+  throw "error";        // OK
+}
+
+[[ noreturn ]] void q(int i) { // behavior is undefined if called with an argument \tcode{<= 0}
+  if (i > 0)
+    throw "positive";
+}
+\end{codeblock}
+\exitexample

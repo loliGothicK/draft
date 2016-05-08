@@ -121,7 +121,7 @@ Declarators have the syntax
 \nontermdef{noptr-declarator}\br
     declarator-id attribute-specifier-seq\opt\br
     noptr-declarator parameters-and-qualifiers\br
-    noptr-declarator \terminal{[} constant-expression\opt \terminal{]} attribute-specifier-seq\opt\br
+    noptr-declarator \terminal{[} constant-expression\opt{} \terminal{]} attribute-specifier-seq\opt\br
     \terminal{(} ptr-declarator \terminal{)}
 \end{bnf}
 
@@ -133,7 +133,7 @@ Declarators have the syntax
 
 \begin{bnf}
 \nontermdef{trailing-return-type}\br
-    \terminal{->} trailing-type-specifier-seq abstract-declarator\opt
+    \terminal{->} type-id
 \end{bnf}
 
 \begin{bnf}
@@ -166,19 +166,6 @@ Declarators have the syntax
     \terminal{...}\opt id-expression
 \end{bnf}
 
-\pnum
-The optional \grammarterm{attribute-specifier-seq} in a
-\grammarterm{trailing-return-type} appertains to the indicated return type. The
-\grammarterm{type-id} in a \grammarterm{trailing-return-type} includes the longest
-possible sequence of \grammarterm{abstract-declarator}{s}. \enternote This resolves the
-ambiguous binding of array and function declarators. \enterexample
-
-\begin{codeblock}
-auto f()->int(*)[4];  // function returning a pointer to array[4] of \tcode{int}
-                      // not function returning array[4] of pointer to \tcode{int}
-\end{codeblock}
-\exitexample \exitnote
-
 \rSec1[dcl.name]{Type names}
 
 \pnum
@@ -203,6 +190,11 @@ of that type that omits the name of the entity.
 \end{bnf}
 
 \begin{bnf}
+\nontermdef{defining-type-id}\br
+    defining-type-specifier-seq abstract-declarator\opt
+\end{bnf}
+
+\begin{bnf}
 \nontermdef{abstract-declarator}\br
     ptr-abstract-declarator\br
     noptr-abstract-declarator\opt parameters-and-qualifiers trailing-return-type\br
@@ -218,7 +210,7 @@ of that type that omits the name of the entity.
 \begin{bnf}
 \nontermdef{noptr-abstract-declarator}\br
     noptr-abstract-declarator\opt parameters-and-qualifiers\br
-    noptr-abstract-declarator\opt \terminal{[} constant-expression\opt{} \terminal{]} attribute-specifier-seq\opt\br
+    noptr-abstract-declarator\opt{} \terminal{[} constant-expression\opt{} \terminal{]} attribute-specifier-seq\opt\br
     \terminal{(} ptr-abstract-declarator \terminal{)}
 \end{bnf}
 
@@ -231,7 +223,7 @@ of that type that omits the name of the entity.
 \begin{bnf}
 \nontermdef{noptr-abstract-pack-declarator}\br
     noptr-abstract-pack-declarator parameters-and-qualifiers\br
-    noptr-abstract-pack-declarator \terminal{[} constant-expression\opt\ \terminal{]} attribute-specifier-seq\opt\br
+    noptr-abstract-pack-declarator \terminal{[} constant-expression\opt{} \terminal{]} attribute-specifier-seq\opt\br
     \terminal{...}
 \end{bnf}
 
@@ -289,11 +281,10 @@ Just as for the ambiguities mentioned in~\ref{stmt.ambig},
 the resolution is to consider any construct that could possibly
 be a declaration a declaration.
 \enternote
-A declaration can be explicitly disambiguated by a nonfunction-style
-cast, by an
-\tcode{=}
-to indicate initialization or
-by removing the redundant parentheses around the parameter name.
+A declaration can be explicitly disambiguated by adding parentheses
+around the argument.
+The ambiguity can be avoided by use of copy-initialization or
+list-initialization syntax, or by use of a non-function-style cast.
 \exitnote
 \enterexample
 
@@ -305,6 +296,7 @@ struct S {
 void foo(double a) {
   S w(int(a));      // function declaration
   S x(int());       // function declaration
+  S y((int(a)));    // object declaration
   S y((int)a);      // object declaration
   S z = int(a);     // object declaration
 }
@@ -312,60 +304,31 @@ void foo(double a) {
 \exitexample
 
 \pnum
-The ambiguity arising from the similarity between a function-style
+An ambiguity can arise from the similarity between a function-style
 cast and a
-\grammarterm{type-id}
-can occur in different contexts.
-The ambiguity appears as a choice between a function-style cast
-expression and a declaration of a type.
+\grammarterm{type-id}.
 The resolution is that any construct that could possibly be a
 \grammarterm{type-id}
 in its syntactic context shall be considered a
 \grammarterm{type-id}.
-
-\pnum
 \enterexample
 
 \begin{codeblock}
-#include <cstddef>
-char* p;
-void* operator new(std::size_t, int);
-void foo()  {
-  const int x = 63;
-  new (int(*p)) int;            // new-placement
-  new (int(*[x]));              // parenthesized type-id
-}
-\end{codeblock}
+template <class T> struct X {};
+template <int N> struct Y {};
+X<int()> a;                     // type-id
+X<int(1)> b;                    // expression (ill-formed)
+Y<int()> c;                     // type-id (ill-formed)
+Y<int(1)> d;                    // expression
 
-\pnum
-For another example,
-
-\begin{codeblock}
-template <class T>
-struct S {
-  T* p;
-};
-S<int()> x;                     // type-id
-S<int(1)> y;                    // expression (ill-formed)
-\end{codeblock}
-
-\pnum
-For another example,
-
-\begin{codeblock}
-void foo() {
-  sizeof(int(1));               // expression
+void foo(signed char a) {
   sizeof(int());                // type-id (ill-formed)
-}
-\end{codeblock}
+  sizeof(int(a));               // expression
+  sizeof(int(unsigned(a)));     // type-id (ill-formed)
 
-\pnum
-For another example,
-
-\begin{codeblock}
-void foo() {
-  (int(1));                     // expression
-  (int())1;                     // type-id (ill-formed)
+  (int())+1;                    // type-id (ill-formed)
+  (int(a))+1;                   // expression
+  (int(unsigned(a)))+1;         // type-id (ill-formed)
 }
 \end{codeblock}
 \exitexample
@@ -468,18 +431,14 @@ A
 \tcode{friend},
 \tcode{inline},
 \tcode{virtual},
+\tcode{constexpr},
+\tcode{explicit},
 or
 \tcode{typedef}
-specifier applies directly to each
-\grammarterm{declarator-id}
-in an
-\grammarterm{init-declarator-list};
-the type specified for each
-\grammarterm{declarator-id}
-depends on both the
-\grammarterm{decl-specifier-seq}
-and its
-\grammarterm{declarator}.
+specifier applies directly to each \grammarterm{declarator-id}
+in an \grammarterm{init-declarator-list} or \grammarterm{member-declarator-list};
+the type specified for each \grammarterm{declarator-id} depends on
+both the \grammarterm{decl-specifier-seq} and its \grammarterm{declarator}.
 
 \pnum
 Thus, a declaration of a particular identifier has the form
@@ -579,7 +538,7 @@ where
 has the form
 
 \begin{ncsimplebnf}
-\terminal{*} attribute-specifier-seq\opt cv-qualifier-seq\opt \terminal{D1}
+\terminal{*} attribute-specifier-seq\opt cv-qualifier-seq\opt{} \terminal{D1}
 \end{ncsimplebnf}
 
 and the type of the identifier in the declaration
@@ -693,8 +652,8 @@ where
 has either of the forms
 
 \begin{ncsimplebnf}
-\terminal{\&} attribute-specifier-seq\opt \terminal{D1}\br
-\terminal{\&\&} attribute-specifier-seq\opt \terminal{D1}
+\terminal{\&} attribute-specifier-seq\opt{} \terminal{D1}\br
+\terminal{\&\&} attribute-specifier-seq\opt{} \terminal{D1}
 \end{ncsimplebnf}
 
 and the type of the identifier in the declaration
@@ -999,7 +958,7 @@ where
 has the form
 
 \begin{ncsimplebnf}
-\terminal{D1 [} constant-expression\opt \terminal{]} attribute-specifier-seq\opt
+\terminal{D1 [} constant-expression\opt{} \terminal{]} attribute-specifier-seq\opt
 \end{ncsimplebnf}
 
 and the type of the identifier in the declaration
@@ -1108,12 +1067,12 @@ of the arrays may be omitted.
 In addition to declarations in which an incomplete object type is allowed,
 an array bound may be omitted in some cases in the declaration of a function
 parameter~(\ref{dcl.fct}).
-An array bound may
-also be omitted
+An array bound may also be omitted
 when the declarator is followed by an
-\grammarterm{initializer}
-(\ref{dcl.init}).
-In this case the bound is calculated from the number
+\grammarterm{initializer}~(\ref{dcl.init}) or
+when a declarator for a static data member is followed by a
+\grammarterm{brace-or-equal-initializer}~(\ref{class.mem}).
+In both cases the bound is calculated from the number
 \indextext{array~size!default}%
 of initial elements (say,
 \tcode{N})
@@ -1376,7 +1335,7 @@ A type of either form is a \term{function type}.\footnote{As indicated by syntax
 \indextext{declaration!function}%
 \begin{bnf}
 \nontermdef{parameter-declaration-clause}\br
-parameter-declaration-list\opt \terminal{...}\opt\br
+parameter-declaration-list\opt{} \terminal{...}\opt\br
     parameter-declaration-list \terminal{, ...}
 \end{bnf}
 
@@ -1391,7 +1350,7 @@ parameter-declaration-list\opt \terminal{...}\opt\br
     attribute-specifier-seq\opt decl-specifier-seq declarator\br
     attribute-specifier-seq\opt decl-specifier-seq declarator \terminal{=} initializer-clause\br
     attribute-specifier-seq\opt decl-specifier-seq abstract-declarator\opt\br
-    attribute-specifier-seq\opt decl-specifier-seq abstract-declarator\opt \terminal{=} initializer-clause
+    attribute-specifier-seq\opt decl-specifier-seq abstract-declarator\opt{} \terminal{=} initializer-clause
 \end{bnf}
 
 The optional \grammarterm{attribute-specifier-seq} in a \grammarterm{parameter-declaration}
@@ -1491,7 +1450,7 @@ when forming the function type.
 The resulting list of transformed parameter types
 and the presence or absence of the ellipsis or a function parameter pack
 is the function's
-\grammarterm{parameter-type-list}.
+\defn{parameter-type-list}.
 \enternote This transformation does not affect the types of the parameters.
 For example, \tcode{int(*)(const int p, decltype(p)*)} and
 \tcode{int(*)(int, const int*)} are identical types. \exitnote
@@ -1922,22 +1881,26 @@ void C::g(int i = 88, int j) {  // in this translation unit,
 \exitexample
 
 \pnum
-Local variables shall not be used in a default argument.
+A local variable shall not appear as a potentially-evaluated expression
+in a default argument.
 \enterexample
 
 \begin{codeblock}
 void f() {
   int i;
-  extern void g(int x = i);     //error
+  extern void g(int x = i);          // error
+  extern void h(int x = sizeof(i));  // OK
   // ...
 }
 \end{codeblock}
 \exitexample
 
 \pnum
+\enternote
 The keyword
 \tcode{this}
-shall not be used in a default argument of a member function.
+may not appear in a default argument of a member function;
+see~\ref{expr.prim.this}.
 \enterexample
 
 \begin{codeblock}
@@ -1946,18 +1909,15 @@ class A {
 };
 \end{codeblock}
 \exitexample
+\exitnote
 
 \pnum
 \indextext{argument!evaluation~of default}%
 A default argument is evaluated each time the function is called
 with no argument for the corresponding parameter.
-The order of evaluation of function arguments is
-unspecified.
-\indextext{arguments!implementation-defined order~of~evaluation~of function}%
 \indextext{argument!scope~of default}%
-Consequently,
-parameters of a function shall not be used in a default argument,
-even if they are not evaluated.
+A parameter shall not appear as a potentially-evaluated expression
+in a default argument.
 \indextext{argument~and~name~hiding!default}%
 Parameters of a function declared before a default argument
 are in scope and can hide namespace and class member names.
@@ -1969,11 +1929,10 @@ int f(int a, int b = a);            // error: parameter \tcode{a}
                                     // used as default argument
 typedef int I;
 int g(float I, int b = I(2));       // error: parameter \tcode{I} found
-int h(int a, int b = sizeof(a));    // error, parameter \tcode{a} used
-                                    // in default argument
+int h(int a, int b = sizeof(a));    // OK, unevaluated operand
 \end{codeblock}
 \exitexample
-Similarly, a non-static member shall not be used in a default argument, even if it is not evaluated, unless it appears as
+A non-static member shall not appear in a default argument unless it appears as
 the \grammarterm{id-expression} of a class member access expression (\ref{expr.ref}) or
 unless it is used to form a pointer to member (\ref{expr.unary.op}).
 \enterexample
@@ -2073,7 +2032,7 @@ Function definitions have the form
 \end{bnf}
 
 \begin{bnf}
-function-body:\br
+\nontermdef{function-body}\br
     ctor-initializer\opt compound-statement\br
     function-try-block\br
     \terminal{= default ;}\br
@@ -2194,7 +2153,7 @@ void f(const char* s = __func__);  // error: \tcode{__func__} is undeclared
 A function definition of the form:
 
 \begin{ncbnf}
-    attribute-specifier-seq\opt decl-specifier-seq\opt declarator virt-specifier-seq\opt \terminal{ = default ;}
+    attribute-specifier-seq\opt decl-specifier-seq\opt declarator virt-specifier-seq\opt{} \terminal{ = default ;}
 \end{ncbnf}
 
 is called an \grammarterm{explicitly-defaulted} definition.
@@ -2296,7 +2255,7 @@ nontrivial1::nontrivial1() = default;           // not first declaration
 A function definition of the form:
 
 \begin{ncbnf}
-    attribute-specifier-seq\opt decl-specifier-seq\opt declarator virt-specifier-seq\opt \terminal{ = delete ;}
+    attribute-specifier-seq\opt decl-specifier-seq\opt declarator virt-specifier-seq\opt{} \terminal{ = delete ;}
 \end{ncbnf}
 
 is called a \term{deleted definition}. A function with a
@@ -2313,7 +2272,7 @@ odr-use~(\ref{basic.def.odr}) of a virtual function does not, by itself,
 constitute a reference. \exitnote
 
 \pnum
-\enterexample One can enforce non-default initialization and non-integral
+\enterexample One can enforce non-default-initialization and non-integral
 initialization with
 
 \begin{codeblock}
@@ -2364,6 +2323,8 @@ one-definition rule~(\ref{basic.def.odr}) applies to deleted definitions. \exitn
 A deleted definition of a function shall be the first declaration of the function or,
 for an explicit specialization of a function template, the first declaration of that
 specialization.
+An implicitly declared allocation or deallocation function~(\ref{basic.stc.dynamic})
+shall not be defined as deleted.
 \enterexample
 \begin{codeblock}
 struct sometype {
@@ -2538,13 +2499,13 @@ Otherwise,
 no initialization is performed.
 \end{itemize}
 
-If a program calls for the default initialization of an object of a
+If a program calls for the default-initialization of an object of a
 const-qualified type \tcode{T}, \tcode{T} shall be a class type with a user-provided default constructor.
 
 \pnum
 \indextext{value-initialization}%
 To
-\grammarterm{value-initialize}
+\defn{value-initialize}
 an object of type
 \tcode{T}
 means:
@@ -2849,19 +2810,47 @@ pack expansion~(\ref{temp.variadic}).
 \indextext{\idxcode{\{\}}!initializer list}
 
 \pnum
-An
-\term{aggregate}
-is an array or a class (Clause~\ref{class}) with no
-user-provided constructors (\ref{class.ctor}),
+An \defn{aggregate} is an array or a class (Clause~\ref{class}) with
+\begin{itemize}
+\item
+no user-provided constructors~(\ref{class.ctor})
+(including those inherited~(\ref{namespace.udecl}) from a base class),
+\item
 no private or protected non-static data members (Clause~\ref{class.access}),
-no base classes (Clause~\ref{class.derived}),
-and no virtual functions (\ref{class.virtual}).
+\item
+no virtual functions~(\ref{class.virtual}), and
+\item
+no virtual, private, or protected base classes~(\ref{class.mi}).
+\end{itemize}
+\enternote
+Aggregate initialization does not allow accessing
+protected and private base class' members or constructors.
+\exitnote
 
 \pnum
-When an aggregate is initialized by an initializer list, as specified in~\ref{dcl.init.list}, the elements of the initializer list are taken as initializers
-for the members of the aggregate,
-in increasing subscript or member order.
-Each member is copy-initialized from the corresponding \grammarterm{initializer-clause}. If the \grammarterm{initializer-clause} is an expression and a narrowing conversion~(\ref{dcl.init.list}) is required to convert the expression, the program is ill-formed. \enternote If an \grammarterm{initializer-clause} is itself an initializer list, the member is list-initialized, which will result in a recursive application of the rules in this section if the member is an aggregate. \exitnote
+\indextext{aggregate!elements}%
+The \term{elements} of an aggregate are:
+\begin{itemize}
+\item
+for an array, the array elements in increasing subscript order, or
+\item
+for a class, the direct base classes in declaration order
+followed by the direct members in declaration order.
+\end{itemize}
+
+\pnum
+When an aggregate is initialized by an initializer list
+as specified in~\ref{dcl.init.list},
+the elements of the initializer list are taken as initializers
+for the elements of the aggregate, in order.
+Each element is copy-initialized
+from the corresponding \grammarterm{initializer-clause}.
+If the \grammarterm{initializer-clause} is an expression and
+a narrowing conversion~(\ref{dcl.init.list}) is required
+to convert the expression, the program is ill-formed.
+\enternote If an \grammarterm{initializer-clause} is itself an initializer list,
+the element is list-initialized, which will result in a recursive application
+of the rules in this section if the element is an aggregate. \exitnote
 \enterexample
 \begin{codeblock}
 struct A {
@@ -2872,7 +2861,6 @@ struct A {
   } b;
 } a = { 1, { 2, 3 } };
 \end{codeblock}
-
 initializes
 \tcode{a.x}
 with 1,
@@ -2880,6 +2868,31 @@ with 1,
 with 2,
 \tcode{a.b.j}
 with 3.
+
+\begin{codeblock}
+struct base1 { int b1, b2 = 42; };
+struct base2 {
+  base2() {
+    b3 = 42;
+  }
+  int b3;
+};
+struct derived : base1, base2 {
+  int d;
+};
+
+derived d1{{1, 2}, {}, 4};
+derived d2{{}, {}, 4};
+\end{codeblock}
+initializes
+\tcode{d1.b1} with 1,
+\tcode{d1.b2} with 2,
+\tcode{d1.b3} with 42,
+\tcode{d1.d} with 4, and
+\tcode{d2.b1} with 0,
+\tcode{d2.b2} with 42,
+\tcode{d2.b3} with 42,
+\tcode{d2.d} with 4.
 \exitexample
 
 \pnum
@@ -2955,7 +2968,7 @@ is ill-formed.
 
 \pnum
 If there are fewer \grammarterm{initializer-clause}{s} in the list than there
-are members in the aggregate, then each member not explicitly initialized
+are elements in the aggregate, then each element not explicitly initialized
 shall be initialized from its default member initializer~(\ref{class.mem}) or,
 if there is no default member initializer, from an empty
 initializer list~(\ref{dcl.init.list}).
@@ -3004,12 +3017,12 @@ the program is ill-formed.
 \exitexample
 
 \pnum
-If an aggregate class \tcode{C} contains a subaggregate member
-\tcode{m} that has no members for purposes of aggregate initialization,
-the \grammarterm{initializer-clause} for \tcode{m} shall not be
+If an aggregate class \tcode{C} contains a subaggregate element
+\tcode{e} that has no elements for purposes of aggregate initialization,
+the \grammarterm{initializer-clause} for \tcode{e} shall not be
 omitted from an \grammarterm{initializer-list} for an object of type
 \tcode{C} unless the \grammarterm{initializer-clause}{s} for all
-members of \tcode{C} following \tcode{m} are also omitted.
+elements of \tcode{C} following \tcode{e} are also omitted.
 \enterexample
 
 \begin{codeblock}
@@ -3084,20 +3097,20 @@ If the
 begins with a left brace,
 then the succeeding comma-separated list of
 \grammarterm{initializer-clause}{s}
-initializes the members of a subaggregate;
+initializes the elements of a subaggregate;
 it is erroneous for there to be more
 \grammarterm{initializer-clause}{s}
-than members.
+than elements.
 If, however, the
 \grammarterm{initializer-list}
 for a subaggregate does not begin with a left brace,
 then only enough
 \grammarterm{initializer-clause}{s}
-from the list are taken to initialize the members of the subaggregate;
+from the list are taken to initialize the elements of the subaggregate;
 any remaining
 \grammarterm{initializer-clause}{s}
-are left to initialize the next member of the aggregate
-of which the current subaggregate is a member.
+are left to initialize the next element of the aggregate
+of which the current subaggregate is an element.
 \enterexample
 
 \begin{codeblock}
@@ -3156,16 +3169,16 @@ and
 
 \pnum
 All implicit type conversions (Clause~\ref{conv}) are considered when
-initializing the aggregate member with an \grammarterm{assignment-expression}.
+initializing the element with an \grammarterm{assignment-expression}.
 If the
 \grammarterm{assignment-expression}
-can initialize a member, the member is initialized.
-Otherwise, if the member is itself a subaggregate,
+can initialize an element, the element is initialized.
+Otherwise, if the element is itself a subaggregate,
 brace elision is assumed and the
 \grammarterm{assignment-expression}
-is considered for the initialization of the first member of the subaggregate.
+is considered for the initialization of the first element of the subaggregate.
 \enternote As specified above, brace elision cannot apply to
-subaggregates with no members for purposes of aggregate initialization; an
+subaggregates with no elements for purposes of aggregate initialization; an
 \grammarterm{initializer-clause} for the entire subobject is
 required.\exitnote
 
@@ -3202,7 +3215,7 @@ returns.
 \pnum
 \indextext{initialization!array~of class~objects}%
 \enternote
-An aggregate array or an aggregate class may contain members of a
+An aggregate array or an aggregate class may contain elements of a
 class type with a user-provided constructor (\ref{class.ctor}).
 Initialization of these aggregate objects is described in~\ref{class.expl.init}.
 \exitnote
@@ -3735,6 +3748,34 @@ S& r3 = { 1, 2, 3 };                // error: initializer is not an lvalue
 const int& i1 = { 1 };              // OK
 const int& i2 = { 1.1 };            // error: narrowing
 const int (&iar)[2] = { 1, 2 };     // OK: \tcode{iar} is bound to temporary array
+\end{codeblock}
+\exitexample
+
+\item Otherwise, if \tcode{T} is an enumeration
+with a fixed underlying type~(\ref{dcl.enum}),
+the \grammarterm{initializer-list} has a single element \tcode{v}, and
+the initialization is direct-list-initialization,
+the object is initialized with the value \tcode{T(v)}~(\ref{expr.type.conv});
+if a narrowing conversion is required to convert \tcode{v}
+to the underlying type of \tcode{T}, the program is ill-formed.
+
+\enterexample
+\begin{codeblock}
+enum byte : unsigned char { };
+byte b { 42 };                      // OK
+byte c = { 42 };                    // error
+byte d = byte{ 42 };                // OK; same value as \tcode{b}
+byte e { -1 };                      // error
+
+struct A { byte b; };
+A a1 = { { 42 } };                  // error
+A a2 = { byte{ 42 } };              // OK
+
+void f(byte);
+f({ 42 });                          // error
+
+enum class Handle : uint32_t { Invalid = 0 };
+Handle h { 42 };                    // OK
 \end{codeblock}
 \exitexample
 

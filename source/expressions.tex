@@ -76,6 +76,10 @@ If an expression initially has the type ``reference to
 \tcode{T} prior to any further analysis. The expression designates the
 object or function denoted by the reference, and the expression
 is an lvalue or an xvalue, depending on the expression.
+\enternote 
+Before the lifetime of the reference has started or after it has ended,
+the behavior is undefined (see~\ref{basic.life}).
+\exitnote 
 
 \pnum
 If a prvalue initially has the type ``\cv{} \tcode{T}'', where
@@ -211,7 +215,7 @@ following:
 \begin{itemize}
 \item \tcode{(} \grammarterm{expression} \tcode{)}, where
   \grammarterm{expression} is one of these expressions,
-\item \grammarterm{id-expression}~(\ref{expr.prim.general}),
+\item \grammarterm{id-expression}~(\ref{expr.prim.id}),
 \item subscripting~(\ref{expr.sub}),
 \item class member access~(\ref{expr.ref}),
 \item indirection~(\ref{expr.unary.op}),
@@ -320,8 +324,6 @@ composite pointer type of \tcode{pi} and \tcode{pci} is ``pointer to \tcode{cons
 \rSec1[expr.prim]{Primary expressions}%
 \indextext{expression!primary|(}
 
-\rSec2[expr.prim.general]{General}
-
 \begin{bnf}
 \nontermdef{primary-expression}\br
     literal\br
@@ -332,22 +334,7 @@ composite pointer type of \tcode{pi} and \tcode{pci} is ``pointer to \tcode{cons
     fold-expression
 \end{bnf}
 
-\begin{bnf}
-\nontermdef{id-expression}\br
-    unqualified-id\br
-    qualified-id
-\end{bnf}
-
-\begin{bnf}
-\nontermdef{unqualified-id}\br
-    identifier\br
-    operator-function-id\br
-    conversion-function-id\br
-    literal-operator-id\br
-    \terminal{\tilde} class-name\br
-    \terminal{\tilde} decltype-specifier\br
-    template-id
-\end{bnf}
+\rSec2[expr.prim.literal]{Literals}
 
 \pnum
 A
@@ -357,6 +344,8 @@ A
 is a primary expression.
 Its type depends on its form~(\ref{lex.literal}).
 A string literal is an lvalue; all other literals are prvalues.
+
+\rSec2[expr.prim.this]{This}
 
 \pnum
 \indextext{\idxcode{this}}%
@@ -416,14 +405,25 @@ class Outer {
 \end{codeblock}
 \exitexample
 
+\rSec2[expr.prim.paren]{Parentheses}
+
 \pnum
 \indextext{expression!parenthesized}%
-A parenthesized expression is a primary expression whose type and value
-are identical to those of the enclosed expression. The presence of
+A parenthesized expression \tcode{(E)}
+is a primary expression whose type and value
+are identical to those of \tcode{E}. The presence of
 parentheses does not affect whether the expression is an lvalue. The
 parenthesized expression can be used in exactly the same contexts as
-those where the enclosed expression can be used, and with the same
+those where \tcode{E} can be used, and with the same
 meaning, except as otherwise indicated.
+
+\rSec2[expr.prim.id]{Names}
+
+\begin{bnf}
+\nontermdef{id-expression}\br
+    unqualified-id\br
+    qualified-id
+\end{bnf}
 
 \pnum
 \indextext{name}%
@@ -434,6 +434,46 @@ An \grammarterm{id-expression} is a restricted form of a
 an \grammarterm{id-expression} can appear after \tcode{.} and \tcode{->}
 operators~(\ref{expr.ref}).
 \exitnote 
+
+\pnum
+An \grammarterm{id-expression} that denotes a non-static data member or
+non-static member function of a class can only be used:
+
+\begin{itemize}
+\item as part of a class member access~(\ref{expr.ref}) in which the
+object expression
+refers to the member's class\footnote{This also applies when the object expression
+is an implicit \tcode{(*this)}~(\ref{class.mfct.non-static}).} or a class derived from
+that class, or
+
+\item to form a pointer to member~(\ref{expr.unary.op}), or
+
+\item if that \grammarterm{id-expression} denotes a non-static data member
+and it appears in an unevaluated operand.
+\enterexample
+
+\begin{codeblock}
+struct S {
+  int m;
+};
+int i = sizeof(S::m);           // OK
+int j = sizeof(S::m + 42);      // OK
+\end{codeblock}
+\exitexample
+\end{itemize}
+
+\rSec3[expr.prim.id.unqual]{Unqualified names}
+
+\begin{bnf}
+\nontermdef{unqualified-id}\br
+    identifier\br
+    operator-function-id\br
+    conversion-function-id\br
+    literal-operator-id\br
+    \terminal{\tilde} class-name\br
+    \terminal{\tilde} decltype-specifier\br
+    template-id
+\end{bnf}
 
 \pnum
 \indextext{identifier}%
@@ -453,7 +493,8 @@ class member access expression~(\ref{class.mfct.non-static}).
 The type of the expression is the type of the \grammarterm{identifier}. The
 result is the entity denoted by the identifier. The result is an lvalue
 if the entity is a function, variable, or data member and a prvalue otherwise.
-\clearpage
+
+\rSec3[expr.prim.id.qual]{Qualified names}
 
 \indextext{operator!scope~resolution}%
 \indextext{\idxcode{::}|see{scope~resolution~operator}}%
@@ -476,6 +517,7 @@ if the entity is a function, variable, or data member and a prvalue otherwise.
     nested-name-specifier \terminal{template}\opt simple-template-id \terminal{::}
 \end{bnf}
 
+\pnum
 The type denoted by a \grammarterm{decltype-specifier} in a
 \grammarterm{nested-name-specifier} shall be a class or enumeration
 type.
@@ -535,33 +577,6 @@ shall denote the same type in both the context in which the entire
 \grammarterm{qualified-id} occurs and in the context of the class denoted
 by the \grammarterm{nested-name-specifier}.
 
-\pnum
-An \grammarterm{id-expression} that denotes a non-static data member or
-non-static member function of a class can only be used:
-
-\begin{itemize}
-\item as part of a class member access~(\ref{expr.ref}) in which the
-object expression
-refers to the member's class\footnote{This also applies when the object expression
-is an implicit \tcode{(*this)}~(\ref{class.mfct.non-static}).} or a class derived from
-that class, or
-
-\item to form a pointer to member~(\ref{expr.unary.op}), or
-
-\item if that \grammarterm{id-expression} denotes a non-static data member
-and it appears in an unevaluated operand.
-\enterexample
-
-\begin{codeblock}
-struct S {
-  int m;
-};
-int i = sizeof(S::m);           // OK
-int j = sizeof(S::m + 42);      // OK
-\end{codeblock}
-\exitexample
-\end{itemize}
-
 \rSec2[expr.prim.lambda]{Lambda expressions}%
 \indextext{expression!lambda|(}
 
@@ -588,7 +603,7 @@ void abssort(float* x, unsigned N) {
 
 \begin{bnf}
 \nontermdef{lambda-introducer}\br
-    \terminal{[} lambda-capture\opt \terminal{]}
+    \terminal{[} lambda-capture\opt{} \terminal{]}
 \end{bnf}
 
 \begin{bnf}
@@ -620,7 +635,8 @@ void abssort(float* x, unsigned N) {
 \nontermdef{simple-capture}\br
     identifier\br
     \terminal{\&} identifier\br
-    \terminal{this}
+    \terminal{this}\br
+    \terminal{* this}
 \end{bnf}
 
 \begin{bnf}
@@ -631,9 +647,40 @@ void abssort(float* x, unsigned N) {
 
 \begin{bnf}
 \nontermdef{lambda-declarator}\br
-    \terminal{(} parameter-declaration-clause \terminal{)} \terminal{mutable}\opt\br
+    \terminal{(} parameter-declaration-clause \terminal{)} decl-specifier-seq\opt\br
     \hspace*{\bnfindentinc}exception-specification\opt attribute-specifier-seq\opt trailing-return-type\opt
 \end{bnf}
+
+\pnum
+In the \grammarterm{decl-specifier-seq} of the \grammarterm{lambda-declarator},
+each \grammarterm{decl-specifier}
+shall either be \tcode{mutable} or \tcode{constexpr}.
+\enterexample
+\begin{codeblock}
+auto monoid = [](auto v) { return [=] { return v; }; };
+auto add = [](auto m1) constexpr {
+  auto ret = m1();
+  return [=](auto m2) mutable {
+    auto m1val = m1();
+    auto plus = [=](auto m2val) mutable constexpr
+                   { return m1val += m2val; };
+    ret = plus(m2());
+    return monoid(ret);
+  };
+};
+constexpr auto zero = monoid(0);
+constexpr auto one = monoid(1);
+static_assert(add(one)(zero)() == one()); // OK
+
+// Since \tcode{two} below is not declared \tcode{constexpr}, an evaluation of its \tcode{constexpr} member function call operator
+// cannot perform an lvalue-to-rvalue conversion on one of its subobjects (that represents its capture)
+// in a constant expression.
+auto two = monoid(2);
+assert(two() == 2); // OK, not a constant expression.
+static_assert(add(one)(one)() == two()); // ill-formed: \tcode{two()} is not a constant expression
+static_assert(add(one)(one)() == monoid(2)()); // OK
+\end{codeblock}
+\exitexample
 
 \pnum
 The evaluation of a \grammarterm{lambda-expression} results in a prvalue
@@ -652,9 +699,10 @@ object~(\ref{function.objects}).\exitnote
 
 \pnum
 The type of the \grammarterm{lambda-expression} (which is also the type of the
-closure object) is a unique, unnamed non-union class type --- called the \defn{closure
-type} --- whose properties are described below. This class type is neither an
-aggregate~(\ref{dcl.init.aggr}) nor a literal type~(\ref{basic.types}).
+closure object) is a unique, unnamed non-union class type
+--- called the \defn{closure type} ---
+whose properties are described below.
+This class type is not an aggregate type~(\ref{dcl.init.aggr}).
 The closure type is declared in the smallest block
 scope, class scope, or namespace scope that contains the corresponding
 \grammarterm{lambda-expression}. \enternote This determines the set of namespaces and
@@ -742,9 +790,26 @@ followed by \tcode{mutable}. It is neither virtual nor declared \tcode{volatile}
 applies to the corresponding function call operator or operator template.
 An \grammarterm{attribute-specifier-seq} in a \grammarterm{lambda-declarator} appertains
 to the type of the corresponding function call operator or operator template.
+The function call operator or any given operator template specialization
+is a constexpr function if either
+the corresponding \grammarterm{lambda-expression}{'s}
+\grammarterm{parameter-declaration-clause} is followed by \tcode{constexpr}, or
+it satisfies the requirements for a constexpr function~(\ref{dcl.constexpr}).
 \enternote Names referenced in
 the \grammarterm{lambda-declarator} are looked up in the context in which the
 \grammarterm{lambda-expression} appears. \exitnote
+\enterexample
+\begin{codeblock}
+auto ID = [](auto a) { return a; };
+static_assert(ID(3) == 3); // OK
+
+struct NonLiteral {
+  NonLiteral(int n) : n(n) { }
+  int n;
+};
+static_assert(ID(NonLiteral{3}).n == 3); // ill-formed
+\end{codeblock}
+\exitexample
 
 \pnum
 The closure type for a non-generic \grammarterm{lambda-expression} with no
@@ -755,9 +820,11 @@ the same parameter and return types as the closure type's function call operator
 The conversion is to ``pointer to \tcode{noexcept} function''
 if the function call operator
 has a non-throwing exception specification.
-The
-value returned by this conversion function shall be the address of a function that, when
-invoked, has the same effect as invoking the closure type's function call operator.
+The value returned by this conversion function
+is the address of a function \tcode{F} that, when invoked,
+has the same effect as invoking the closure type's function call operator.
+\tcode{F} is a constexpr function
+if the function call operator is a constexpr function.
 For a generic lambda with no \grammarterm{lambda-capture}, the closure type has a
 conversion function template to
 pointer to function. The conversion function template has the same invented
@@ -766,7 +833,8 @@ parameter types, as the function call operator template.  The return type of
 the pointer to function shall behave as if it were a
 \grammarterm{decltype-specifier} denoting the return type of the corresponding
 function call operator template specialization.
-\enternote If the generic lambda has no \grammarterm{trailing-return-type} or
+\enternote
+If the generic lambda has no \grammarterm{trailing-return-type} or
 the \grammarterm{trailing-return-type} contains a placeholder type, return type
 deduction of the corresponding function call operator template specialization
 has to be done. The corresponding specialization is that instantiation of the
@@ -794,6 +862,7 @@ struct Closure {
 };
 \end{codeblock}
 \exitnote
+
 \enterexample
 \begin{codeblock}
 void f1(int (*)(int))   { }
@@ -813,10 +882,13 @@ h(glambda);   // OK: calls \#3 since it is convertible from ID
 int& (*fpi)(int*) = [](auto* a) -> auto& { return *a; }; // OK
 \end{codeblock}
 \exitexample
+
 The value returned by any given specialization of this conversion function
-template shall be the address of a function that, when invoked, has the same
+template is the address of a function \tcode{F} that, when invoked, has the same
 effect as invoking the generic lambda's corresponding function call operator
 template specialization.
+\tcode{F} is a constexpr function
+if the corresponding specialization is a constexpr function.
 \enternote
 This will result in the implicit instantiation of the generic lambda's body.
 The instantiated generic lambda's return type and parameter types shall match
@@ -829,9 +901,22 @@ int (*GL_int)(int) = GL;  // OK: through conversion function template
 GL_int(3);                // OK: same as \tcode{GL(3)}
 \end{codeblock}
 \exitexample
+
 The conversion function or conversion function template is public,
-non-virtual, non-explicit, const, and has a non-throwing exception
+constexpr, non-virtual, non-explicit, const, and has a non-throwing exception
 specification~(\ref{except.spec}).
+\enterexample
+\begin{codeblock}
+auto Fwd = [](int (*fp)(int), auto a) { return fp(a); };
+auto C = [](auto a) { return a; };
+
+static_assert(Fwd(C,3) == 3); // OK
+
+// No specialization of the function call operator template can be constexpr (due to the local static).
+auto NC = [](auto a) { static int s; return a; };
+static_assert(Fwd(NC,3) == 3); // ill-formed
+\end{codeblock}
+\exitexample
 
 \pnum
 The \grammarterm{lambda-expression}'s \grammarterm{compound-statement} yields the
@@ -866,7 +951,10 @@ is \tcode{\&}, no identifier in a \grammarterm{simple-capture} of that
 by \tcode{\&}. If a \grammarterm{lambda-capture} includes a
 \grammarterm{capture-default} that is \tcode{=}, each
 \grammarterm{simple-capture} of that \grammarterm{lambda-capture} shall
-be of the form ``\tcode{\&} \grammarterm{identifier}''. Ignoring appearances in
+be of the form ``\tcode{\&} \grammarterm{identifier}'' or ``\tcode{* this}''.
+\enternote The form \tcode{[\&,this]} is redundant but accepted
+for compatibility with ISO \CppXIV. \exitnote
+Ignoring appearances in
 \grammarterm{initializer}{s} of \grammarterm{init-capture}{s}, an identifier or
 \tcode{this} shall not appear more than once in a
 \grammarterm{lambda-capture}. \enterexample
@@ -874,10 +962,12 @@ be of the form ``\tcode{\&} \grammarterm{identifier}''. Ignoring appearances in
 \begin{codeblock}
 struct S2 { void f(int i); };
 void S2::f(int i) {
-  [&, i]{ };    // OK
-  [&, &i]{ };   // error: \tcode{i} preceded by \tcode{\&} when \tcode{\&} is the default
-  [=, this]{ }; // error: \tcode{this} when \tcode{=} is the default
-  [i, i]{ };    // error: \tcode{i} repeated
+  [&, i]{ };        // OK
+  [&, &i]{ };       // error: \tcode{i} preceded by \tcode{\&} when \tcode{\&} is the default
+  [=, *this]{ };    // OK
+  [=, this]{ };     // error: \tcode{this} when \tcode{=} is the default
+  [i, i]{ };        // error: \tcode{i} repeated
+  [this, *this]{ }; // error: \tcode{this} appears twice
 }
 \end{codeblock}
 \exitexample
@@ -897,7 +987,9 @@ The \grammarterm{identifier} in a \grammarterm{simple-capture} is looked up usin
 usual rules for unqualified name lookup~(\ref{basic.lookup.unqual}); each such lookup
 shall find an entity.  An entity that is designated by a
 \grammarterm{simple-capture}
-is said to be \defn{explicitly captured}, and shall be \tcode{this} or
+is said to be \defn{explicitly captured}, and shall be \tcode{*this}
+(when the \grammarterm{simple-capture}
+is ``\tcode{this}'' or ``\tcode{* this}'') or
 a variable with automatic storage duration declared in
 the reaching scope of the local lambda expression.
 
@@ -932,15 +1024,17 @@ auto y = [&r = x, x = x+1]()->int {
 
 \pnum
 A \grammarterm{lambda-expression} with an associated
-\grammarterm{capture-default} that does not explicitly capture \tcode{this} or
+\grammarterm{capture-default} that does not explicitly capture \tcode{*this} or
 a variable with automatic storage duration (this excludes any \grammarterm{id-expression}
 that has been found to refer to an \grammarterm{init-capture}{'s} associated
 \indextext{implicit capture!definition of}%
 non-static data member), is said to \defnx{implicitly capture}{capture!implicit}
 the entity (i.e.,
-\tcode{this} or a variable) if the \grammarterm{compound-statement}:
+\tcode{*this} or a variable) if the \grammarterm{compound-statement}:
 \begin{itemize}
-\item odr-uses~(\ref{basic.def.odr}) the entity, or
+\item odr-uses~(\ref{basic.def.odr}) the entity (in the case of a variable),
+\item odr-uses~(\ref{basic.def.odr}) \tcode{this}
+(in the case of the object designated by \tcode{*this}), or
 \item names the entity in a potentially-evaluated
 expression~(\ref{basic.def.odr}) where the enclosing full-expression depends on
 a generic lambda parameter declared within the reaching scope of the
@@ -973,7 +1067,7 @@ in implicit capture. \exitnote
 \pnum
 An entity is \defn{captured} if it is captured explicitly or implicitly. An entity
 captured by a \grammarterm{lambda-expression} is odr-used~(\ref{basic.def.odr}) in the scope
-containing the \grammarterm{lambda-expression}. If \tcode{this} is captured by a local
+containing the \grammarterm{lambda-expression}. If \tcode{*this} is captured by a local
 lambda expression, its nearest enclosing function shall be a non-static member function.
 If a \grammarterm{lambda-expression} or an instantiation of the function call
 operator template of a generic lambda odr-uses~(\ref{basic.def.odr}) \tcode{this} or a
@@ -982,6 +1076,7 @@ entity shall be captured by the \grammarterm{lambda-expression}. If a
 \grammarterm{lambda-expression} captures an entity and that entity is not defined or
 captured in the immediately enclosing lambda expression or function, the program is
 ill-formed. \enterexample
+\indextext{Bond!James Bond}%
 \begin{codeblock}
 void f1(int i) {
   int const N = 20;
@@ -1012,6 +1107,22 @@ void f1(int i) {
     }
   };
 }
+
+struct s2 {
+  double ohseven = .007;
+  auto f() {
+    return [this] {
+      return [*this] {
+          return ohseven; // OK
+      }
+    }();
+  }
+  auto g() {
+    return [] {
+      return [*this] { }; // error: \tcode{*this} not captured by outer \grammarterm{lambda-expression}
+    }();
+  }
+};
 \end{codeblock}
 \exitexample
 
@@ -1032,23 +1143,65 @@ void f2() {
 \exitexample
 
 \pnum
-An entity is \defnx{captured by copy}{captured!by~copy} if it is implicitly captured and the
-\grammarterm{capture-default} is \tcode{=} or if it is explicitly captured with a
-capture that is not of the form \tcode{\&} \grammarterm{identifier} or
+An entity is \defnx{captured by copy}{captured!by~copy} if
+\begin{itemize}
+\item
+it is implicitly captured,
+the \grammarterm{capture-default} is \tcode{=}, and
+the captured entity is not \tcode{*this}, or
+\item
+it is explicitly captured with a capture that is not of the form
+\tcode{this},
+\tcode{\&} \grammarterm{identifier}, or
 \tcode{\&} \grammarterm{identifier} \grammarterm{initializer}.
+\end{itemize}
 For each entity captured by copy, an
 unnamed non-static data member is declared in the closure type. The declaration order of
-these members is unspecified. The type of such a data member is the type of the
-corresponding captured entity if the entity is not a reference to an object, or the
-referenced type otherwise. \enternote If the captured entity is a reference to a
-function, the corresponding data member is also a reference to a function. \exitnote
+these members is unspecified. The type of such a data member is
+the referenced type if the entity is a reference to an object,
+an lvalue reference to the referenced function type if the entity is a reference to a function, or
+the type of the corresponding captured entity otherwise.
 A member of an anonymous union shall not be captured by copy.
+
+\pnum
+Every \grammarterm{id-expression} within the \grammarterm{compound-statement} of a
+\grammarterm{lambda-expression} that is an odr-use~(\ref{basic.def.odr}) of an
+entity captured by copy is transformed into an access to the corresponding unnamed data
+member of the closure type.
+\enternote An \grammarterm{id-expression} that is not an odr-use refers to
+the original entity, never to a member of the closure type. Furthermore, such
+an \grammarterm{id-expression} does not cause the implicit capture of the
+entity. \exitnote
+If \tcode{*this} is captured by copy, each odr-use of \tcode{this} is
+transformed into a pointer to the corresponding unnamed data member of the closure type,
+cast~(\ref{expr.cast}) to the type of \tcode{this}. \enternote The cast ensures that the
+transformed expression is a prvalue. \exitnote \enterexample
+\begin{codeblock}
+void f(const int*);
+void g() {
+  const int N = 10;
+  [=] {
+    int arr[N];             // OK: not an odr-use, refers to automatic variable
+    f(&N);                  // OK: causes \tcode{N} to be captured; \tcode{\&N} points to the
+                            // corresponding member of the closure type
+  };
+}
+\end{codeblock}
+\exitexample
 
 \pnum
 An entity is \defnx{captured by reference}{captured!by~reference} if it is implicitly or explicitly
 captured but not captured by copy. It is unspecified whether additional unnamed
 non-static data members are declared in the closure type for entities captured by
-reference. A member of an anonymous union shall not be captured by reference.
+reference.
+If declared, such non-static data members shall be of literal type.
+\enterexample
+\begin{codeblock}
+// The inner closure type must be a literal type regardless of how reference captures are represented.
+static_assert([](int n) { return [&n] { return ++n; }(); }(3) == 4);
+\end{codeblock}
+\exitexample
+A member of an anonymous union shall not be captured by reference.
 
 \pnum
 If a \grammarterm{lambda-expression} \tcode{m2} captures an entity and that entity is
@@ -1080,33 +1233,6 @@ auto m1 = [a, &b, &c]() mutable {
 a = 2; b = 2; c = 2;
 m1();
 std::cout << a << b << c;
-\end{codeblock}
-\exitexample
-
-
-\pnum
-Every \grammarterm{id-expression} within the \grammarterm{compound-statement} of a
-\grammarterm{lambda-expression} that is an odr-use~(\ref{basic.def.odr}) of an
-entity captured by copy is transformed into an access to the corresponding unnamed data
-member of the closure type.
-\enternote An \grammarterm{id-expression} that is not an odr-use refers to
-the original entity, never to a member of the closure type. Furthermore, such
-an \grammarterm{id-expression} does not cause the implicit capture of the
-entity. \exitnote
-If \tcode{this} is captured, each odr-use of \tcode{this} is
-transformed into an access to the corresponding unnamed data member of the closure type,
-cast~(\ref{expr.cast}) to the type of \tcode{this}. \enternote The cast ensures that the
-transformed expression is a prvalue. \exitnote \enterexample
-\begin{codeblock}
-void f(const int*);
-void g() {
-  const int N = 10;
-  [=] {
-    int arr[N];             // OK: not an odr-use, refers to automatic variable
-    f(&N);                  // OK: causes \tcode{N} to be captured; \tcode{\&N} points to the
-                            // corresponding member of the closure type
-  };
-}
 \end{codeblock}
 \exitexample
 
@@ -1261,9 +1387,9 @@ Postfix expressions group left-to-right.
 \nontermdef{postfix-expression}\br
     primary-expression\br
     postfix-expression \terminal{[} expr-or-braced-init-list \terminal{]}\br
-    postfix-expression \terminal{(} expression-list\opt \terminal{)}\br
-    simple-type-specifier \terminal{(} expression-list\opt \terminal{)}\br
-    typename-specifier \terminal{(} expression-list\opt \terminal{)}\br
+    postfix-expression \terminal{(} expression-list\opt{} \terminal{)}\br
+    simple-type-specifier \terminal{(} expression-list\opt{} \terminal{)}\br
+    typename-specifier \terminal{(} expression-list\opt{} \terminal{)}\br
     simple-type-specifier braced-init-list\br
     typename-specifier braced-init-list\br
     postfix-expression \terminal{. template}\opt id-expression\br
@@ -2037,14 +2163,15 @@ away constness~(\ref{expr.const.cast}).
 \indextext{cast!reference}%
 An lvalue of type ``\cvqual{cv1} \tcode{B}'', where \tcode{B} is a class
 type, can be cast to type ``reference to \cvqual{cv2} \tcode{D}'', where
-\tcode{D} is a class derived (Clause~\ref{class.derived}) from
-\tcode{B}, if a valid standard conversion from ``pointer to \tcode{D}''
-to ``pointer to \tcode{B}'' exists~(\ref{conv.ptr}), \cvqual{cv2} is the
+\tcode{D} is a class derived (Clause~\ref{class.derived}) from \tcode{B},
+if \cvqual{cv2} is the
 same cv-qualification as, or greater cv-qualification than,
-\cvqual{cv1}, and \tcode{B} is neither a virtual base class of \tcode{D}
-nor a base class of a virtual base class of \tcode{D}. The result has
-type ``\cvqual{cv2} \tcode{D}''. An xvalue of type
-``\cvqual{cv1} \tcode{B}'' may be cast to type ``rvalue reference to
+\cvqual{cv1}. If \tcode{B} is a virtual base class of \tcode{D}
+or a base class of a virtual base class of \tcode{D},
+or if no valid standard conversion from ``pointer to \tcode{D}''
+to ``pointer to \tcode{B}'' exists~(\ref{conv.ptr}), the program is ill-formed.
+An xvalue of type
+``\cvqual{cv1} \tcode{B}'' can be cast to type ``rvalue reference to
 \cvqual{cv2} \tcode{D}'' with the same constraints as for an lvalue of
 type ``\cvqual{cv1} \tcode{B}''. If the object
 of type ``\cvqual{cv1} \tcode{B}'' is actually a subobject of an object
@@ -2077,14 +2204,24 @@ ambiguous~(\ref{class.member.lookup}) base class of \tcode{T1},
 a program that necessitates such a cast is ill-formed.
 
 \pnum
-An expression \tcode{e} can be explicitly converted to a type
-\tcode{T} using a \tcode{static_cast} of the form
-\tcode{static_cast<T>(e)} if the declaration \tcode{T t(e);} is
-well-formed, for some invented temporary variable
-\tcode{t}~(\ref{dcl.init}). The effect of such an explicit conversion is
-the same as performing the declaration and initialization and then using
-the temporary variable as the result of the conversion. The expression
-\tcode{e} is used as a glvalue if and
+An expression \tcode{e} can be explicitly converted to a type \tcode{T}
+if there is an implicit conversion sequence~(\ref{over.best.ics})
+from \tcode{e} to \tcode{T}, or
+if overload resolution for a direct-initialization~(\ref{dcl.init})
+of an object or reference of type \tcode{T} from \tcode{e}
+would find at least one viable function~(\ref{over.match.viable}). 
+The effect of such an explicit conversion is
+the same as performing the declaration and initialization
+\begin{codeblock}
+ T t(e);
+\end{codeblock}
+for some invented temporary variable \tcode{t}~(\ref{dcl.init})
+and then using the temporary variable as the result of the conversion.
+\enternote 
+The conversion is ill-formed when attempting to convert an
+expression of class type to an inaccessible or ambiguous base class.
+\exitnote 
+The expression \tcode{e} is used as a glvalue if and
 only if the initialization uses it as a glvalue.
 
 \pnum
@@ -2165,12 +2302,14 @@ the enumeration type.
 A prvalue of type ``pointer to \cvqual{cv1} \tcode{B}'', where \tcode{B}
 is a class type, can be converted to a prvalue of type ``pointer to
 \cvqual{cv2} \tcode{D}'', where \tcode{D} is a class derived
-(Clause~\ref{class.derived}) from \tcode{B}, if a valid standard
-conversion from ``pointer to \tcode{D}'' to ``pointer to \tcode{B}''
-exists~(\ref{conv.ptr}), \cvqual{cv2} is the same cv-qualification as,
-or greater cv-qualification than, \cvqual{cv1}, and \tcode{B} is neither
-a virtual base class of \tcode{D} nor a base class of a virtual base
-class of \tcode{D}. The null pointer value~(\ref{conv.ptr}) is converted
+(Clause~\ref{class.derived}) from \tcode{B},
+if \cvqual{cv2} is the same cv-qualification as,
+or greater cv-qualification than, \cvqual{cv1}.
+If \tcode{B} is a virtual base class of \tcode{D} or
+a base class of a virtual base class of \tcode{D}, or
+if no valid standard conversion from ``pointer to \tcode{D}''
+to ``pointer to \tcode{B}'' exists~(\ref{conv.ptr}), the program is ill-formed. 
+The null pointer value~(\ref{conv.ptr}) is converted
 to the null pointer value of the destination type. If the prvalue of type
 ``pointer to \cvqual{cv1} \tcode{B}'' points to a \tcode{B} that is
 actually a subobject of an object of type \tcode{D}, the resulting
@@ -2181,14 +2320,16 @@ behavior is undefined.
 \indextext{cast!pointer-to-member}%
 A prvalue of type ``pointer to member of \tcode{D} of type \cvqual{cv1}
 \tcode{T}'' can be converted to a prvalue of type ``pointer to member of
-\tcode{B}'' of type \cvqual{cv2} \tcode{T}, where \tcode{B} is a base
-class (Clause~\ref{class.derived}) of \tcode{D}, if a valid standard
-conversion from ``pointer to member of \tcode{B} of type \tcode{T}'' to
-``pointer to member of \tcode{D} of type \tcode{T}''
-exists~(\ref{conv.mem}), and \cvqual{cv2} is the same cv-qualification
+\tcode{B} of type \cvqual{cv2} \tcode{T}'', where \tcode{B} is a base
+class (Clause~\ref{class.derived}) of \tcode{D},
+if \cvqual{cv2} is the same cv-qualification
 as, or greater cv-qualification than, \cvqual{cv1}.\footnote{Function types
 (including those used in pointer to member function
 types) are never cv-qualified; see~\ref{dcl.fct}.}
+If no valid standard conversion
+from ``pointer to member of \tcode{B} of type \tcode{T}''
+to ``pointer to member of \tcode{D} of type \tcode{T}''
+exists~(\ref{conv.mem}), the program is ill-formed.
 The null member pointer value~(\ref{conv.mem}) is converted to the null
 member pointer value of the destination type. If class \tcode{B}
 contains the original member, or is a base or derived class of the class
@@ -2527,8 +2668,8 @@ Expressions with unary operators group right-to-left.
 \indextext{\idxcode{+}|see{operator, unary~plus}}%
 \indextext{operator!logical negation}%
 \indextext{\idxcode{"!}|see{operator, logical~negation}}%
-\indextext{operator!one's~complement}%
-\indextext{~@\tcode{\tilde}|see{operator, one's~complement}}%
+\indextext{operator!ones'~complement}%
+\indextext{~@\tcode{\tilde}|see{operator, ones'~complement}}%
 \indextext{operator!increment}%
 \indextext{operator!decrement}%
 %
@@ -2655,9 +2796,9 @@ if the converted operand is \tcode{false} and \tcode{false} otherwise.
 The type of the result is \tcode{bool}.
 
 \pnum
-\indextext{operator!one's~complement}%
+\indextext{operator!ones'~complement}%
 The operand of \tcode{\~{}} shall have integral or unscoped enumeration type; the
-result is the one's complement of its operand. Integral promotions are
+result is the ones' complement of its operand. Integral promotions are
 performed. The type of the result is the type of the promoted operand.
 There is an ambiguity
 in the grammar when \tcode{\~{}} is followed by
@@ -2819,8 +2960,8 @@ object created by the \grammarterm{new-expression} has a cv-qualified type.
 
 \begin{bnf}
 \nontermdef{new-expression}\br
-    \terminal{::}\opt \terminal{new} new-placement\opt new-type-id new-initializer\opt \br
-    \terminal{::}\opt \terminal{new} new-placement\opt \terminal{(} type-id \terminal{)} new-initializer\opt
+    \terminal{::}\opt{} \terminal{new} new-placement\opt new-type-id new-initializer\opt \br
+    \terminal{::}\opt{} \terminal{new} new-placement\opt{} \terminal{(} type-id \terminal{)} new-initializer\opt
 \end{bnf}
 
 \indextext{\idxcode{new}!storage allocation}%
@@ -2849,7 +2990,7 @@ object created by the \grammarterm{new-expression} has a cv-qualified type.
 
 \begin{bnf}
 \nontermdef{new-initializer}\br
-    \terminal{(} expression-list\opt \terminal{)}\br
+    \terminal{(} expression-list\opt{} \terminal{)}\br
     braced-init-list
 \end{bnf}
 
@@ -2937,7 +3078,7 @@ new (int (*[10])());
 \end{codeblock}
 
 allocates an array of \tcode{10} pointers to functions (taking no
-argument and returning \tcode{int}.
+argument and returning \tcode{int}).
 \exitexample 
 \exitnote 
 
@@ -2999,18 +3140,31 @@ terminating \tcode{'\textbackslash 0'} in a string literal~(\ref{lex.string})) e
 number of elements to initialize.
 \end{itemize}
 
-If the \grammarterm{expression}, after converting to \tcode{std::size_t}, is a
-core constant expression and the expression is erroneous, the program is
-ill-formed. Otherwise, a \grammarterm{new-expression} with an erroneous
-expression does not call an allocation function and terminates by throwing an
+If the \grammarterm{expression} is erroneous after converting to \tcode{std::size_t}:
+\begin{itemize}
+\item
+if the \grammarterm{expression} is a core constant expression,
+the program is ill-formed;
+\item
+otherwise, an allocation function is not called; instead
+\begin{itemize}
+\item
+if the allocation function that would have been called
+has a non-throwing exception specification~(\ref{except.spec}),
+the value of the \grammarterm{new-expression}
+is the null pointer value of the required result type;
+\item
+otherwise, the \grammarterm{new-expression} terminates by throwing an
 exception of a type that would match a handler~(\ref{except.handle}) of type
 \tcode{std::bad_array_new_length}~(\ref{new.badlength}).
+\end{itemize}
+\end{itemize}
 When the value of the \grammarterm{expression} is zero, the allocation
 function is called to allocate an array with no elements.
 
 \pnum
 A \grammarterm{new-expression} may obtain storage for the object by calling an
-\term{allocation function}~(\ref{basic.stc.dynamic.allocation}). If
+allocation function~(\ref{basic.stc.dynamic.allocation}). If
 the \grammarterm{new-expression} terminates by throwing an exception, it
 may release storage by calling a deallocation
 function~(\ref{basic.stc.dynamic.deallocation}). If the allocated type
@@ -3325,8 +3479,8 @@ object~(\ref{intro.object}) or array created by a
 
 \begin{bnf}
 \nontermdef{delete-expression}\br
-    \terminal{::}\opt \terminal{delete} cast-expression\br
-    \terminal{::}\opt \terminal{delete [ ]} cast-expression
+    \terminal{::}\opt{} \terminal{delete} cast-expression\br
+    \terminal{::}\opt{} \terminal{delete [ ]} cast-expression
 \end{bnf}
 
 The first alternative is for non-array objects, and the second is for arrays. Whenever
@@ -3434,18 +3588,15 @@ shall be passed as the first argument to the deallocation function.
 
 \item
 Otherwise, the \grammarterm{delete-expression} will not call a
-\indextext{function!deallocation}%
-\indextext{deallocation|see{\tcode{delete}}}%
-\indextext{\idxcode{delete}}%
-\term{deallocation function}~(\ref{basic.stc.dynamic.deallocation}).
+deallocation function.
 \end{itemize}
-
-Otherwise, it is unspecified whether the deallocation function will be
-called.
 \enternote
 The deallocation function is called regardless of whether the destructor
 for the object or some element of the array throws an exception.
 \exitnote
+If the value of the operand of the \grammarterm{delete-expression} is a
+null pointer value, it is unspecified whether a deallocation function will be
+called as described above.
 
 \pnum
 \enternote 
@@ -4316,45 +4467,49 @@ includes the case where both operands are \grammarterm{throw-expression}{s}.
 \end{itemize}
 
 \pnum
+Otherwise, if the second and third operand are glvalue bit-fields
+of the same value category and
+of types \cvqual{cv1} \tcode{T} and \cvqual{cv2} \tcode{T}, respectively,
+the operands are considered to be of type \cvqual{cv} \tcode{T}
+for the remainder of this section,
+where \cvqual{cv} is the union of \cvqual{cv1} and \cvqual{cv2}.
+
+\pnum
 Otherwise, if the second and third operand have different types and
 either has (possibly cv-qualified) class type, or if both
 are glvalues of the same value category and the same type except for
 cv-qualification, an attempt is made to
-convert each of those operands to the type of the other. The process for
-determining whether an operand expression \tcode{E1} of type \tcode{T1}
-can be converted to match an operand expression \tcode{E2} of type
-\tcode{T2} is defined as follows:
+form an implicit conversion sequence~(\ref{over.best.ics}) from
+each of those operands to the type of the other.
+\enternote
+Properties such as access, whether an operand is a bit-field, or whether
+a conversion function is deleted are ignored for that determination.
+\exitnote
+Attempts are made to form an implicit conversion sequence
+from an operand expression \tcode{E1} of type \tcode{T1}
+to a target type related to the type \tcode{T2}
+of the operand expression \tcode{E2} as follows:
 
 \begin{itemize}
-\item If \tcode{E2} is an lvalue: \tcode{E1} can be converted to match
-\tcode{E2} if \tcode{E1} can be implicitly converted (Clause~\ref{conv})
-to the type ``lvalue reference to \tcode{T2}'', subject to the
+\item If \tcode{E2} is an lvalue, the target type is 
+``lvalue reference to \tcode{T2}'', subject to the
 constraint that in the conversion the reference must bind
 directly~(\ref{dcl.init.ref}) to an lvalue.
 
-\item If \tcode{E2} is an xvalue: \tcode{E1} can be converted to match \tcode{E2}
-if \tcode{E1} can be implicitly converted to the type ``rvalue reference to \tcode{T2}'',
+\item If \tcode{E2} is an xvalue, the target type is
+``rvalue reference to \tcode{T2}'',
 subject to the constraint that the reference must bind directly.
 
-\item If \tcode{E2} is a prvalue or if neither of the conversions above can be
-done and at least one of the operands has (possibly cv-qualified) class type:
+\item If \tcode{E2} is a prvalue or if neither of the conversion sequences above can be
+formed and at least one of the operands has (possibly cv-qualified) class type:
 
 \begin{itemize}
-\item if \tcode{E1} and \tcode{E2} have class type, and the underlying
-class types are the same or one is a base class of the other: \tcode{E1}
-can be converted to match \tcode{E2} if the class of \tcode{T2} is the
-same type as, or a base class of, the class of \tcode{T1}, and the
-cv-qualification of \tcode{T2} is the same cv-qualification as, or a
-greater cv-qualification than, the cv-qualification of \tcode{T1}. If
-the conversion is applied, \tcode{E1} is changed to a prvalue of type
-\tcode{T2} by copy-initializing a temporary of type \tcode{T2} from
-\tcode{E1} and using that temporary as the converted operand.
-
-\item Otherwise (if \tcode{E1} or \tcode{E2} has a non-class type,
-or if they both have class types but the underlying classes are not
-the same and neither is a base class of the other): \tcode{E1} can be
-converted to match \tcode{E2} if \tcode{E1} can be implicitly converted
-to the type that \tcode{E2} would have
+\item if \tcode{T1} and \tcode{T2} are the same class type
+(ignoring cv-qualification), or one is a base class of the other, and
+\tcode{T2} is at least as cv-qualified as \tcode{T1},
+the target type is \tcode{T2},
+    
+\item otherwise, the target type is the type that \tcode{E2} would have
 after applying the
 lvalue-to-rvalue~(\ref{conv.lval}),
 array-to-pointer~(\ref{conv.array}), and
@@ -4363,15 +4518,21 @@ standard conversions.
 \end{itemize}
 \end{itemize}
 
-Using this process, it is determined whether the second operand can be
-converted to match the third operand, and whether the third operand can
-be converted to match the second operand. If both can be converted, or
-one can be converted but the conversion is ambiguous, the program is
-ill-formed. If neither can be converted, the operands are left unchanged
-and further checking is performed as described below. If exactly one
-conversion is possible, that conversion is applied to the chosen operand
+Using this process, it is determined whether an implicit conversion
+sequence can be formed from the second operand 
+to the target type determined for the third operand, and vice versa.
+If both sequences can be formed, or one can be formed but it is the
+ambiguous conversion sequence, the program is ill-formed.
+If no conversion sequence can be formed, the operands are left unchanged
+and further checking is performed as described below.
+Otherwise, if exactly one conversion sequence can be formed,
+that conversion is applied to the chosen operand
 and the converted operand is used in place of the original operand for
 the remainder of this section.
+\enternote
+The conversion might be ill-formed even if an implicit conversion
+sequence could be formed.
+\exitnote
 
 \pnum
 If the second and third operands are glvalues of the same value category
@@ -4673,7 +4834,7 @@ machine~(\ref{intro.execution}), would evaluate one of the following expressions
 
 \begin{itemize}
 \item
-\tcode{this}~(\ref{expr.prim.general}), except in a \tcode{constexpr}
+\tcode{this}~(\ref{expr.prim.this}), except in a \tcode{constexpr}
 function or a \tcode{constexpr} constructor that is being evaluated as part
 of \tcode{e};
 
@@ -4690,6 +4851,12 @@ an invocation of an undefined \tcode{constexpr} function or an
 undefined \tcode{constexpr} constructor;
 
 \item
+an invocation of an instantiated \tcode{constexpr} function or
+\tcode{constexpr} constructor that fails to satisfy the requirements
+for a \tcode{constexpr} function or
+\tcode{constexpr} constructor~(\ref{dcl.constexpr});
+
+\item
 an expression that would exceed the implementation-defined
 limits (see Annex~\ref{implimits});
 
@@ -4701,9 +4868,6 @@ for example, signed integer overflow~(Clause \ref{expr}), certain
 pointer arithmetic~(\ref{expr.add}), division by
 zero~(\ref{expr.mul}), or certain shift operations~(\ref{expr.shift})
 \exitnote;
-
-\item
-a \grammarterm{lambda-expression}~(\ref{expr.prim.lambda});
 
 \item
 an lvalue-to-rvalue conversion~(\ref{conv.lval}) unless
@@ -4745,8 +4909,7 @@ unless the reference has a preceding initialization and either
   it is initialized with a constant expression or
 
   \item
-  it is a non-static data member of an object whose lifetime
-  began within the evaluation of \tcode{e};
+  its lifetime began within the evaluation of \tcode{e};
 \end{itemize}
 
 \item
@@ -4755,6 +4918,36 @@ a reference to \tcode{this} or to a variable with
 automatic storage duration defined outside that
 \grammarterm{lambda-expression}, where
 the reference would be an odr-use~(\ref{basic.def.odr}, \ref{expr.prim.lambda});
+\enterexample
+\begin{codeblock}
+void g() {
+  const int n = 0;
+  [=] {
+    constexpr int i = n;   // OK, \tcode{n} is not odr-used and not captured here
+    constexpr int j = *&n; // ill-formed, \tcode{\&n} would be an odr-use of \tcode{n}
+  };
+}
+\end{codeblock}
+\exitexample
+\enternote
+If the odr-use occurs in an invocation
+of a function call operator of a closure type,
+it no longer refers to \tcode{this} or to an enclosing automatic variable
+due to the transformation~(\ref{expr.prim.lambda})
+of the \grammarterm{id-expression} into
+an access of the corresponding data member.
+\enterexample
+\begin{codeblock}
+auto monad = [](auto v) { return [=] { return v; }; };
+auto bind = [](auto m) {
+  return [=](auto fvm) { return fvm(m()); };
+};
+
+// OK to have captures to automatic objects created during constant expression evaluation.
+static_assert(bind(monad(2))(monad)() == monad(2)());
+\end{codeblock}
+\exitexample
+\exitnote
 
 \item
 a conversion from type \cv{} \tcode{void *} to a pointer-to-object type;
@@ -4849,8 +5042,7 @@ is an expression of integral or
 unscoped enumeration type, implicitly converted to a prvalue, where the converted expression is a core constant expression.
 \enternote
 Such expressions may be
-used as array bounds~(\ref{dcl.array}, \ref{expr.new}),
-as bit-field lengths~(\ref{class.bit}), as enumerator
+used as bit-field lengths~(\ref{class.bit}), as enumerator
 initializers if the underlying type is not fixed~(\ref{dcl.enum}),
 and as alignments~(\ref{dcl.align}).
 \exitnote
@@ -4884,26 +5076,37 @@ fixed~(\ref{dcl.enum}), as array bounds~(\ref{dcl.array}), and
 as non-type template
 arguments~(\ref{temp.arg}). 
 \exitnote
+\indextext{contextually converted constant expression of type \tcode{bool}|see{conversion, contextual}}%
+\indextext{conversion!contextual to constant expression of type \tcode{bool}}%
+A \term{contextually converted constant expression of type \tcode{bool}} is
+an expression, contextually converted to \tcode{bool}~(Clause\ref{conv}),
+where the converted expression is a constant expression and
+the conversion sequence contains only the conversions above.
 
 \pnum
 \indextext{expression!constant}%
 A \term{constant expression} is either
 a glvalue core constant expression whose value refers to
 an entity that is a permitted result of a constant expression (as defined below), or
-a prvalue core constant expression whose value is an object where, for that
-object and its subobjects:
+a prvalue core constant expression whose value
+satisfies the following constraints:
 
 \begin{itemize}
   \item
+  if the value is an object of class type,
   each non-static data member of reference type refers to
-  an entity that is a permitted result of a constant expression, and
+  an entity that is a permitted result of a constant expression,
 
   \item
-  if the object or subobject is of pointer type, it contains
+  if the value is of pointer type, it contains
   the address of an object with static storage duration,
   the address past the end of such an object~(\ref{expr.add}),
   the address of a function,
-  or a null pointer value.
+  or a null pointer value, and
+
+  \item
+  if the value is an object of class or array type,
+  each subobject satisfies these constraints for the value.
 \end{itemize}
 An entity is a
 \defnx{permitted result of a constant expression}{constant expression!permitted result~of}

@@ -209,7 +209,7 @@ m.try_lock()
 
 \begin{itemdescr}
 \pnum
-\effects attempts to acquire a lock for the current execution agent without blocking. If an
+\effects Attempts to acquire a lock for the current execution agent without blocking. If an
 exception is thrown then a lock shall not have been acquired for the current execution agent.
 
 \pnum
@@ -234,7 +234,7 @@ m.try_lock_for(rel_time)
 
 \begin{itemdescr}
 \pnum
-\effects attempts to acquire a lock for the current execution agent within the relative
+\effects Attempts to acquire a lock for the current execution agent within the relative
 timeout~(\ref{thread.req.timing}) specified by \tcode{rel_time}. The function shall not return
 within the timeout specified by \tcode{rel_time} unless it has obtained a lock on \tcode{m}
 for the current execution agent. If an exception is thrown then a lock shall not have been
@@ -253,7 +253,7 @@ m.try_lock_until(abs_time)
 
 \begin{itemdescr}
 \pnum
-\effects attempts to acquire a lock for the current execution agent before the absolute
+\effects Attempts to acquire a lock for the current execution agent before the absolute
 timeout~(\ref{thread.req.timing}) specified by \tcode{abs_time}. The function shall not return
 before the timeout specified by \tcode{abs_time} unless it has obtained a lock on \tcode{m} for
 the current execution agent. If an exception is thrown then a lock shall not have been acquired
@@ -731,7 +731,7 @@ void swap(thread& x, thread& y) noexcept;
 \end{itemdecl}
 
 \begin{itemdescr}
-\pnum\effects \tcode{x.swap(y)}
+\pnum\effects As if by \tcode{x.swap(y)}.
 \end{itemdescr}
 
 \rSec2[thread.thread.this]{Namespace \tcode{this_thread}}
@@ -1836,7 +1836,7 @@ explicit unique_lock(mutex_type& m);
 \effects Constructs an object of type \tcode{unique_lock} and calls \tcode{m.lock()}.
 
 \pnum
-\postconditions \tcode{pm == \&m} and \tcode{owns == true}.
+\postconditions \tcode{pm == addressof(m)} and \tcode{owns == true}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{unique_lock}!constructor}%
@@ -1849,7 +1849,7 @@ unique_lock(mutex_type& m, defer_lock_t) noexcept;
 \effects Constructs an object of type \tcode{unique_lock}.
 
 \pnum
-\postconditions \tcode{pm == \&m} and \tcode{owns == false}.
+\postconditions \tcode{pm == addressof(m)} and \tcode{owns == false}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{unique_lock}!constructor}%
@@ -1868,8 +1868,8 @@ If \tcode{mutex_type} is not a recursive mutex the calling thread does not own t
 \effects Constructs an object of type \tcode{unique_lock} and calls \tcode{m.try_lock()}.
 
 \pnum
-\postconditions \tcode{pm == \&m} and \tcode{owns == res}, where \tcode{res} is
-the value returned by the call to \tcode{m.try_lock()}.
+\postconditions \tcode{pm == addressof(m)} and \tcode{owns == res},
+where \tcode{res} is the value returned by the call to \tcode{m.try_lock()}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{unique_lock}!constructor}%
@@ -1879,13 +1879,13 @@ unique_lock(mutex_type& m, adopt_lock_t);
 
 \begin{itemdescr}
 \pnum
-\precondition The calling thread own the mutex.
+\precondition The calling thread owns the mutex.
 
 \pnum
 \effects Constructs an object of type \tcode{unique_lock}.
 
 \pnum
-\postconditions \tcode{pm == \&m} and \tcode{owns == true}.
+\postconditions \tcode{pm == addressof(m)} and \tcode{owns == true}.
 
 \pnum
 \throws Nothing.
@@ -1907,7 +1907,8 @@ does not own the mutex. The supplied \tcode{Mutex} type shall meet the
 \effects Constructs an object of type \tcode{unique_lock} and calls \tcode{m.try_lock_until(abs_time)}.
 
 \pnum
-\postconditions \tcode{pm == \&m} and \tcode{owns == res}, where \tcode{res} is
+\postconditions \tcode{pm == addressof(m)} and \tcode{owns == res},
+where \tcode{res} is
 the value returned by the call to \tcode{m.try_lock_until(abs_time)}.
 \end{itemdescr}
 
@@ -1926,7 +1927,8 @@ The supplied \tcode{Mutex} type shall meet the \tcode{TimedLockable} requirement
 \effects Constructs an object of type \tcode{unique_lock} and calls \tcode{m.try_lock_for(rel_time)}.
 
 \pnum
-\postconditions \tcode{pm == \&m} and \tcode{owns == res}, where \tcode{res} is the value returned by the call to \tcode{m.try_lock_for(rel_time)}.
+\postconditions \tcode{pm == addressof(m)} and \tcode{owns == res},
+where \tcode{res} is the value returned by the call to \tcode{m.try_lock_for(rel_time)}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{unique_lock}!constructor}%
@@ -1975,7 +1977,7 @@ void lock();
 
 \begin{itemdescr}
 \pnum
-\effects \tcode{pm->lock()}
+\effects As if by \tcode{pm->lock()}.
 
 \pnum
 \postcondition \tcode{owns == true}
@@ -2001,7 +2003,7 @@ bool try_lock();
 requirements~(\ref{thread.req.lockable.req}).
 
 \pnum
-\effects \tcode{pm->try_lock()}
+\effects As if by \tcode{pm->try_lock()}.
 
 \pnum\returns The value returned by the call to \tcode{try_lock()}.
 
@@ -2030,7 +2032,7 @@ template <class Clock, class Duration>
 requirements~(\ref{thread.req.lockable.timed}).
 
 \pnum
-\effects \tcode{pm->try_lock_until(abs_time)}
+\effects As if by \tcode{pm->try_lock_until(abs_time)}.
 
 \pnum
 \returns The value returned by the call to \tcode{try_lock_until(abs_time)}.
@@ -2059,7 +2061,7 @@ template <class Rep, class Period>
 \requires The supplied \tcode{Mutex} type shall meet the \tcode{TimedLockable} requirements~(\ref{thread.req.lockable.timed}).
 
 \pnum
-\effects \tcode{pm->try_lock_for(rel_time)}.
+\effects As if by \tcode{pm->try_lock_for(rel_time)}.
 
 \pnum
 \returns The value returned by the call to \tcode{try_lock_until(rel_time)}.
@@ -2082,7 +2084,7 @@ void unlock();
 \end{itemdecl}
 
 \begin{itemdescr}
-\pnum\effects \tcode{pm->unlock()}
+\pnum\effects As if by \tcode{pm->unlock()}.
 
 \pnum\postcondition \tcode{owns == false}
 
@@ -2127,7 +2129,7 @@ template <class Mutex>
 \end{itemdecl}
 
 \begin{itemdescr}
-\pnum\effects \tcode{x.swap(y)}
+\pnum\effects As if by \tcode{x.swap(y)}.
 \end{itemdescr}
 
 \rSec4[thread.lock.unique.obs]{\tcode{unique_lock} observers}
@@ -2264,7 +2266,7 @@ explicit shared_lock(mutex_type& m);
 \effects Constructs an object of type \tcode{shared_lock} and calls \tcode{m.lock_shared()}.
 
 \pnum
-\postconditions \tcode{pm == \&m} and \tcode{owns == true}.
+\postconditions \tcode{pm == addressof(m)} and \tcode{owns == true}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{shared_lock}!constructor}%
@@ -2277,7 +2279,7 @@ shared_lock(mutex_type& m, defer_lock_t) noexcept;
 \effects Constructs an object of type \tcode{shared_lock}.
 
 \pnum
-\postconditions \tcode{pm == \&m} and \tcode{owns == false}.
+\postconditions \tcode{pm == addressof(m)} and \tcode{owns == false}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{shared_lock}!constructor}%
@@ -2293,7 +2295,8 @@ shared_lock(mutex_type& m, try_to_lock_t);
 \effects Constructs an object of type \tcode{shared_lock} and calls \tcode{m.try_lock_shared()}.
 
 \pnum
-\postconditions \tcode{pm == \&m} and \tcode{owns == res} where \tcode{res} is the
+\postconditions \tcode{pm == addressof(m)} and \tcode{owns == res}
+where \tcode{res} is the
 value returned by the call to \tcode{m.try_lock_shared()}.
 \end{itemdescr}
 
@@ -2310,7 +2313,7 @@ shared_lock(mutex_type& m, adopt_lock_t);
 \effects Constructs an object of type \tcode{shared_lock}.
 
 \pnum
-\postconditions \tcode{pm == \&m} and \tcode{owns == true}.
+\postconditions \tcode{pm == addressof(m)} and \tcode{owns == true}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{shared_lock}!constructor}%
@@ -2329,7 +2332,8 @@ template <class Clock, class Duration>
 \tcode{m.try_lock_shared_until(abs_time)}.
 
 \pnum
-\postconditions \tcode{pm == \&m} and \tcode{owns == res} where \tcode{res}
+\postconditions \tcode{pm == addressof(m)} and \tcode{owns == res}
+where \tcode{res}
 is the value returned by the call to \tcode{m.try_lock_shared_until(abs_time)}.
 \end{itemdescr}
 
@@ -2349,7 +2353,8 @@ template <class Rep, class Period>
 \tcode{m.try_lock_shared_for(rel_time)}.
 
 \pnum
-\postconditions \tcode{pm == \&m} and \tcode{owns == res} where \tcode{res} is
+\postconditions \tcode{pm == addressof(m)} and \tcode{owns == res}
+where \tcode{res} is
 the value returned by the call to \tcode{m.try_lock_shared_for(rel_time)}.
 \end{itemdescr}
 
@@ -2400,7 +2405,7 @@ void lock();
 
 \begin{itemdescr}
 \pnum
-\effects \tcode{pm->lock_shared()}.
+\effects As if by \tcode{pm->lock_shared()}.
 
 \pnum
 \postconditions \tcode{owns == true}.
@@ -2422,7 +2427,7 @@ bool try_lock();
 
 \begin{itemdescr}
 \pnum
-\effects \tcode{pm->try_lock_shared()}.
+\effects As if by \tcode{pm->try_lock_shared()}.
 
 \pnum
 \returns The value returned by the call to \tcode{pm->try_lock_shared()}.
@@ -2451,7 +2456,7 @@ template <class Clock, class Duration>
 
 \begin{itemdescr}
 \pnum
-\effects \tcode{pm->try_lock_shared_until(abs_time)}.
+\effects As if by \tcode{pm->try_lock_shared_until(abs_time)}.
 
 \pnum
 \returns The value returned by the call to
@@ -2479,7 +2484,7 @@ template <class Rep, class Period>
 
 \begin{itemdescr}
 \pnum
-\effects \tcode{pm->try_lock_shared_for(rel_time)}.
+\effects As if by \tcode{pm->try_lock_shared_for(rel_time)}.
 
 \pnum
 \returns The value returned by the call to \tcode{pm->try_lock_shared_for(rel_time)}.
@@ -2499,7 +2504,7 @@ void unlock();
 
 \begin{itemdescr}
 \pnum
-\effects \tcode{pm->unlock_shared()}.
+\effects As if by \tcode{pm->unlock_shared()}.
 
 \pnum
 \postconditions \tcode{owns == false}.
@@ -2551,7 +2556,7 @@ template <class Mutex>
 
 \begin{itemdescr}
 \pnum
-\effects \tcode{x.swap(y)}.
+\effects As if by \tcode{x.swap(y)}.
 \end{itemdescr}
 
 \rSec4[thread.lock.shared.obs]{\tcode{shared_lock} observers}
@@ -2798,10 +2803,10 @@ or \tcode{wait_until}) threads.
 \end{itemize}
 
 \pnum
-\effects transfers ownership of the lock associated with \tcode{lk} into
+\effects Transfers ownership of the lock associated with \tcode{lk} into
 internal storage and schedules \tcode{cond} to be notified when the current
 thread exits, after all objects of thread storage duration associated with
-the current thread have been destroyed. This notification shall be as if
+the current thread have been destroyed. This notification shall be as if:
 \begin{codeblock}
 lk.unlock();
 cond.notify_all();
@@ -2955,7 +2960,7 @@ or a call to \tcode{notify_all()}, or spuriously.
 \end{itemize}
 
 \pnum
-\notes
+\remarks
 If the function fails to meet the postcondition, \tcode{std::terminate()}
 shall be called~(\ref{except.terminate}).
 \enternote This can happen if the re-locking of the mutex throws an exception. \exitnote
@@ -2995,7 +3000,7 @@ while (!pred())
 \end{codeblock}
 
 \pnum
-\notes
+\remarks
 If the function fails to meet the postcondition, \tcode{std::terminate()}
 shall be called~(\ref{except.terminate}).
 \enternote This can happen if the re-locking of the mutex throws an exception. \exitnote
@@ -3047,7 +3052,7 @@ If the function exits via an exception, \tcode{lock.lock()} shall be called prio
 \end{itemize}
 
 \pnum
-\notes
+\remarks
 If the function fails to meet the postcondition, \tcode{std::terminate()}
 shall be called~(\ref{except.terminate}).
 \enternote This can happen if the re-locking of the mutex throws an exception. \exitnote
@@ -3087,7 +3092,6 @@ supplied by all concurrently waiting (via \tcode{wait}, \tcode{wait_for}, or
 
 \pnum
 \effects Equivalent to:
-
 \begin{codeblock}
 return wait_until(lock, chrono::steady_clock::now() + rel_time);
 \end{codeblock}
@@ -3098,7 +3102,7 @@ the relative timeout~(\ref{thread.req.timing}) specified by \tcode{rel_time} exp
 otherwise \tcode{cv_status::no_timeout}.
 
 \pnum
-\notes
+\remarks
 If the function fails to meet the postcondition, \tcode{std::terminate()}
 shall be called~(\ref{except.terminate}).
 \enternote This can happen if the re-locking of the mutex throws an exception. \exitnote
@@ -3144,7 +3148,7 @@ return true;
 \end{codeblock}
 
 \pnum
-\notes
+\remarks
 If the function fails to meet the postcondition, \tcode{std::terminate()}
 shall be called~(\ref{except.terminate}).
 \enternote This can happen if the re-locking of the mutex throws an exception. \exitnote
@@ -3188,7 +3192,6 @@ supplied by all concurrently waiting (via \tcode{wait}, \tcode{wait_for}, or
 
 \pnum
 \effects Equivalent to:
-
 \begin{codeblock}
 return wait_until(lock, chrono::steady_clock::now() + rel_time, std::move(pred));
 \end{codeblock}
@@ -3198,7 +3201,7 @@ return wait_until(lock, chrono::steady_clock::now() + rel_time, std::move(pred))
 timeout has already expired. \exitnote
 
 \pnum
-\notes
+\remarks
 If the function fails to meet the postcondition, \tcode{std::terminate()}
 shall be called~(\ref{except.terminate}).
 \enternote This can happen if the re-locking of the mutex throws an exception. \exitnote
@@ -3346,7 +3349,7 @@ a call to \tcode{notify_all()}, or spuriously.
 \end{itemize}
 
 \pnum
-\notes
+\remarks
 If the function fails to meet the postcondition, \tcode{std::terminate()}
 shall be called~(\ref{except.terminate}).
 \enternote This can happen if the re-locking of the mutex throws an exception. \exitnote
@@ -3400,7 +3403,7 @@ If the function exits via an exception, \tcode{lock.lock()} shall be called prio
 \end{itemize}
 
 \pnum
-\notes
+\remarks
 If the function fails to meet the postcondition, \tcode{std::terminate()}
 shall be called~(\ref{except.terminate}).
 \enternote This can happen if the re-locking of the mutex throws an exception. \exitnote
@@ -3429,7 +3432,6 @@ template <class Lock, class Rep, class Period>
 \begin{itemdescr}
 \pnum
 \effects Equivalent to:
-
 \begin{codeblock}
 return wait_until(lock, chrono::steady_clock::now() + rel_time);
 \end{codeblock}
@@ -3440,7 +3442,7 @@ the relative timeout~(\ref{thread.req.timing}) specified by \tcode{rel_time} exp
 otherwise \tcode{cv_status::no_timeout}.
 
 \pnum
-\notes
+\remarks
 If the function fails to meet the postcondition, \tcode{std::terminate()}
 shall be called~(\ref{except.terminate}).
 \enternote This can happen if the re-locking of the mutex throws an exception. \exitnote
@@ -3490,7 +3492,6 @@ template <class Lock, class Rep, class Period, class Predicate>
 \begin{itemdescr}
 \pnum
 \effects Equivalent to:
-
 \begin{codeblock}
 return wait_until(lock, chrono::steady_clock::now() + rel_time, std::move(pred));
 \end{codeblock}
@@ -3800,7 +3801,6 @@ namespace std {
     void set_exception(exception_ptr p);
 
     // setting the result with deferred notification
-    void set_value_at_thread_exit(const R& r);
     void set_value_at_thread_exit(@\seebelow@);
     void set_exception_at_thread_exit(exception_ptr p);
   };
@@ -3814,7 +3814,8 @@ namespace std {
 \pnum
 The implementation shall provide the template \tcode{promise} and two specializations,
 \tcode{promise<R\&>} and \tcode{promise<\brk{}void>}. These differ only in the argument type
-of the member function \tcode{set_value}, as set out in its description, below.
+of the member functions \tcode{set_value} and \tcode{set_value_at_thread_exit},
+as set out in their descriptions, below.
 
 \pnum
 The \tcode{set_value}, \tcode{set_exception}, \tcode{set_value_at_thread_exit},
@@ -3944,7 +3945,7 @@ void promise<void>::set_value();
 
 \begin{itemdescr}
 \pnum
-\effects atomically stores the value \tcode{r} in the shared state and
+\effects Atomically stores the value \tcode{r} in the shared state and
 makes that state ready~(\ref{futures.state}).
 
 \pnum
@@ -3974,7 +3975,10 @@ void set_exception(exception_ptr p);
 
 \begin{itemdescr}
 \pnum
-\effects atomically stores the exception pointer \tcode{p} in the shared state
+\requires \tcode{p} is not null.
+
+\pnum
+\effects Atomically stores the exception pointer \tcode{p} in the shared state
 and makes that state ready~(\ref{futures.state}).
 
 \pnum
@@ -4034,6 +4038,9 @@ void set_exception_at_thread_exit(exception_ptr p);
 
 \begin{itemdescr}
 \pnum
+\requires \tcode{p} is not null.
+
+\pnum
 \effects Stores the exception pointer \tcode{p} in the shared state without
 making that state ready immediately. Schedules that state to be made ready when
 the current thread exits, after all objects of thread storage duration
@@ -4060,7 +4067,7 @@ template <class R>
 
 \begin{itemdescr}
 \pnum
-\effects \tcode{x.swap(y)}.
+\effects As if by \tcode{x.swap(y)}.
 \end{itemdescr}
 
 \rSec2[futures.unique_future]{Class template \tcode{future}}
@@ -4132,7 +4139,7 @@ future() noexcept;
 
 \begin{itemdescr}
 \pnum
-\effects constructs an \indexdefn{empty \tcode{future} object}\term{empty}
+\effects Constructs an \indexdefn{empty \tcode{future} object}\term{empty}
 \tcode{future} object that does not refer to a
 shared state.
 
@@ -4147,7 +4154,7 @@ future(future&& rhs) noexcept;
 
 \begin{itemdescr}
 \pnum
-\effects move constructs a \tcode{future} object that refers to the shared
+\effects Move constructs a \tcode{future} object that refers to the shared
 state that
 was originally referred to by \tcode{rhs} (if any).
 
@@ -4170,8 +4177,7 @@ constructor invocation.
 \effects
 \begin{itemize}
 \item
-releases any shared state~(\ref{futures.state});
-
+Releases any shared state~(\ref{futures.state});
 \item
 destroys \tcode{*this}.
 \end{itemize}
@@ -4188,8 +4194,7 @@ future& operator=(future&& rhs) noexcept;
 \effects
 \begin{itemize}
 \item
-releases any shared state~(\ref{futures.state}).
-
+Releases any shared state~(\ref{futures.state}).
 \item
 move assigns the contents of \tcode{rhs} to \tcode{*this}.
 \end{itemize}
@@ -4278,7 +4283,7 @@ void wait() const;
 \begin{itemdescr}
 \pnum
 \effects
-blocks until the shared state is ready.
+Blocks until the shared state is ready.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{future}!\idxcode{wait_for}}%
@@ -4291,7 +4296,7 @@ template <class Rep, class Period>
 \begin{itemdescr}
 \pnum
 \effects
-none if the shared state contains a deferred function~(\ref{futures.async}),
+None if the shared state contains a deferred function~(\ref{futures.async}),
 otherwise
 blocks until the shared state is ready or until
 the relative timeout~(\ref{thread.req.timing}) specified by \tcode{rel_time} has expired.
@@ -4325,7 +4330,7 @@ template <class Clock, class Duration>
 \begin{itemdescr}
 \pnum
 \effects
-none if the shared state contains a deferred function~(\ref{futures.async}),
+None if the shared state contains a deferred function~(\ref{futures.async}),
 otherwise
 blocks until the shared state is ready or until
 the absolute timeout~(\ref{thread.req.timing}) specified by \tcode{abs_time} has expired.
@@ -4368,7 +4373,7 @@ object that shares the same shared state.
 
 \pnum
 \enternote Member functions of \tcode{shared_future} do not synchronize with themselves,
-but they synchronize with the shared shared state. \exitnote
+but they synchronize with the shared state. \exitnote
 
 \pnum
 The effect of calling any member function other than the destructor, the move-assignment
@@ -4418,7 +4423,7 @@ shared_future() noexcept;
 
 \begin{itemdescr}
 \pnum
-\effects constructs an \indexdefn{empty \tcode{shared_future}
+\effects Constructs an \indexdefn{empty \tcode{shared_future}
 object}\term{empty} \tcode{shared_future} object that does not refer to a
 shared state.
 
@@ -4433,7 +4438,7 @@ shared_future(const shared_future& rhs);
 
 \begin{itemdescr}
 \pnum
-\effects constructs a \tcode{shared_future} object that refers to the same
+\effects Constructs a \tcode{shared_future} object that refers to the same
 shared state as \tcode{rhs} (if any).
 
 \pnum
@@ -4448,7 +4453,7 @@ shared_future(shared_future&& rhs) noexcept;
 
 \begin{itemdescr}
 \pnum
-\effects move constructs a \tcode{shared_future} object that refers to the
+\effects Move constructs a \tcode{shared_future} object that refers to the
 shared state that was originally referred to by \tcode{rhs} (if any).
 
 \pnum
@@ -4470,8 +4475,7 @@ the constructor invocation.
 \effects
 \begin{itemize}
 \item
-releases any shared state~(\ref{futures.state});
-
+Releases any shared state~(\ref{futures.state});
 \item
 destroys \tcode{*this}.
 \end{itemize}
@@ -4488,8 +4492,7 @@ shared_future& operator=(shared_future&& rhs) noexcept;
 \effects
 \begin{itemize}
 \item
-releases any shared state~(\ref{futures.state});
-
+Releases any shared state~(\ref{futures.state});
 \item
 move assigns the contents of \tcode{rhs} to \tcode{*this}.
 \end{itemize}
@@ -4517,8 +4520,7 @@ shared_future& operator=(const shared_future& rhs);
 \effects
 \begin{itemize}
 \item
-releases any shared state~(\ref{futures.state});
-
+Releases any shared state~(\ref{futures.state});
 \item
 assigns the contents of \tcode{rhs} to \tcode{*this}. \enternote As a result,
 \tcode{*this} refers to the same shared state as \tcode{rhs}
@@ -4594,7 +4596,7 @@ void wait() const;
 \begin{itemdescr}
 \pnum
 \effects
-blocks until the shared state is ready.
+Blocks until the shared state is ready.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{shared_future}!\idxcode{wait_for}}%
@@ -4607,7 +4609,7 @@ template <class Rep, class Period>
 \begin{itemdescr}
 \pnum
 \effects
-none if the shared state contains a deferred function~(\ref{futures.async}),
+None if the shared state contains a deferred function~(\ref{futures.async}),
 otherwise
 blocks until the shared state is ready or until
 the relative timeout~(\ref{thread.req.timing}) specified by
@@ -4642,7 +4644,7 @@ template <class Clock, class Duration>
 \begin{itemdescr}
 \pnum
 \effects
-none if the shared state contains a deferred function~(\ref{futures.async}),
+None if the shared state contains a deferred function~(\ref{futures.async}),
 otherwise
 blocks until the shared state is ready or until the
 absolute timeout~(\ref{thread.req.timing}) specified by
@@ -4898,7 +4900,7 @@ packaged_task() noexcept;
 
 \begin{itemdescr}
 \pnum
-\effects constructs a \tcode{packaged_task} object with no shared state and no stored task.
+\effects Constructs a \tcode{packaged_task} object with no shared state and no stored task.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{packaged_task}!constructor}%
@@ -4922,7 +4924,7 @@ These constructors shall not participate in overload resolution if \tcode{decay_
 is the same type as \tcode{std::packaged_task<R(ArgTypes...)>}.
 
 \pnum
-\effects constructs a new \tcode{packaged_task} object with a shared state and
+\effects Constructs a new \tcode{packaged_task} object with a shared state and
 initializes the object's stored task with \tcode{std::forward<F>(f)}. The constructors that
 take an \tcode{Allocator} argument use it to allocate memory needed to store the
 internal data structures.
@@ -4940,7 +4942,7 @@ packaged_task(packaged_task&& rhs) noexcept;
 
 \begin{itemdescr}
 \pnum
-\effects constructs a new \tcode{packaged_task} object and transfers ownership of
+\effects Constructs a new \tcode{packaged_task} object and transfers ownership of
 \tcode{rhs}'s shared state to \tcode{*this}, leaving \tcode{rhs} with no
 shared state. Moves the stored task from \tcode{rhs} to \tcode{*this}.
 
@@ -4957,13 +4959,11 @@ packaged_task& operator=(packaged_task&& rhs) noexcept;
 \begin{itemdescr}
 \pnum
 \effects
-
 \begin{itemize}
 \item
-releases any shared state~(\ref{futures.state}).
-
+Releases any shared state~(\ref{futures.state});
 \item
-\tcode{packaged_task(std::move(rhs)).swap(*this)}.
+calls \tcode{packaged_task(std::move(rhs)).swap(*this)}.
 \end{itemize}
 \end{itemdescr}
 
@@ -4975,7 +4975,7 @@ releases any shared state~(\ref{futures.state}).
 \begin{itemdescr}
 \pnum
 \effects
-Abandons any shared state.~(\ref{futures.state}).
+Abandons any shared state~(\ref{futures.state}).
 \end{itemdescr}
 
 \indexlibrary{\idxcode{packaged_task}!\idxcode{swap}}%
@@ -4986,7 +4986,7 @@ void swap(packaged_task& other) noexcept;
 
 \begin{itemdescr}
 \pnum
-\effects exchanges the shared states and stored tasks of \tcode{*this} and \tcode{other}.
+\effects Exchanges the shared states and stored tasks of \tcode{*this} and \tcode{other}.
 
 \pnum
 \postcondition \tcode{*this} has the same shared state
@@ -5037,7 +5037,8 @@ void operator()(ArgTypes... args);
 
 \begin{itemdescr}
 \pnum
-\effects \tcode{\textit{INVOKE}(f, t1, t2, ..., tN, R)}, where \tcode{f} is the
+\effects As if by \tcode{\textit{INVOKE}(f, t1, t2, ..., tN, R)},
+where \tcode{f} is the
 stored task of \tcode{*this} and
 \tcode{t1, t2, ..., tN} are the values in \tcode{args...}. If the task returns normally,
 the return value is stored as the asynchronous result in the shared state of
@@ -5067,8 +5068,8 @@ void make_ready_at_thread_exit(ArgTypes... args);
 
 \begin{itemdescr}
 \pnum
-\effects \tcode{\textit{INVOKE}(f, t1, t2, ..., tN, R)}, where \tcode{f} is the
-stored task and
+\effects As if by \tcode{\textit{INVOKE}(f, t1, t2, ..., tN, R)},
+where \tcode{f} is the stored task and
 \tcode{t1, t2, ..., tN} are the values in \tcode{args...}. If the task returns normally,
 the return value is stored as the asynchronous result in the shared state of
 \tcode{*this}, otherwise the exception thrown by the task is stored. In either
@@ -5097,7 +5098,7 @@ void reset();
 
 \begin{itemdescr}
 \pnum
-\effects as if \tcode{*this = packaged_task(std::move(f))}, where
+\effects As if \tcode{*this = packaged_task(std::move(f))}, where
 \tcode{f} is the task stored in
 \tcode{*this}. \enternote This constructs a new shared state for \tcode{*this}. The
 old state is abandoned~(\ref{futures.state}). \exitnote
@@ -5124,7 +5125,7 @@ template <class R, class... ArgTypes>
 
 \begin{itemdescr}
 \pnum
-\effects \tcode{x.swap(y)}
+\effects As if by \tcode{x.swap(y)}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{uses_allocator}}%

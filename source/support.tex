@@ -31,6 +31,7 @@ as summarized in Table~\ref{tab:lang.sup.lib.summary}.
 \ref{support.dynamic}     & Dynamic memory management &   \tcode{<new>}       \\ \rowsep
 \ref{support.rtti}        & Type identification       &   \tcode{<typeinfo>}  \\ \rowsep
 \ref{support.exception}   & Exception handling        &   \tcode{<exception>} \\ \rowsep
+\ref{support.exception.list} & Exception lists        &   \tcode{<exception_list>} \\ \rowsep
 \ref{support.initlist}    & Initializer lists & \tcode{<initializer_list>}    \\ \rowsep
                           &                           &   \tcode{<csignal>}   \\
                           &                           &   \tcode{<csetjmp>}   \\
@@ -91,8 +92,8 @@ is overloaded for any of the types involved.}
 The expression \tcode{offsetof}(\textit{type}, \grammarterm{member-designator})
 is never type-dependent~(\ref{temp.dep.expr}) and it is
 value-dependent~(\ref{temp.dep.constexpr}) if and only if \textit{type} is
-dependent. The result of applying the \tcode{offsetof} macro to a field that
-is a static data member or a function member is undefined.
+dependent. The result of applying the \tcode{offsetof} macro to
+a static data member or a function member is undefined.
 No operation invoked by the \tcode{offsetof} macro shall throw an exception and
 \tcode{noexcept(offsetof(type, member-designator))} shall be \tcode{true}.
 
@@ -1520,6 +1521,10 @@ namespace std {
   typedef void (*new_handler)();
   new_handler get_new_handler() noexcept;
   new_handler set_new_handler(new_handler new_p) noexcept;
+
+  // \ref{hardware.interference}, hardware interference size
+  static constexpr size_t hardware_destructive_interference_size = @\impdef{}@;
+  static constexpr size_t hardware_constructive_interference_size = @\impdef{}@;
 }
 
 void* operator new(std::size_t size);
@@ -1561,7 +1566,7 @@ void* operator new(std::size_t size);
 \pnum
 \effects
 The
-\term{allocation function}~(\ref{basic.stc.dynamic.allocation})
+allocation function~(\ref{basic.stc.dynamic.allocation})
 called by a
 \grammarterm{new-expression}~(\ref{expr.new})
 to allocate
@@ -1667,7 +1672,7 @@ void operator delete(void* ptr, std::size_t size) noexcept;
 \pnum
 \effects
 The
-\term{deallocation function}~(\ref{basic.stc.dynamic.deallocation})
+deallocation function~(\ref{basic.stc.dynamic.deallocation})
 called by a
 \grammarterm{delete-expression}
 to render the value of \tcode{ptr} invalid.
@@ -1725,7 +1730,7 @@ If \tcode{ptr} is null, does nothing. Otherwise, reclaims the
 storage allocated by the earlier call to \tcode{operator new}.
 
 \pnum
-\notes
+\remarks
 It is unspecified under what conditions part or all of such
 \indextext{unspecified}%
 reclaimed storage will be allocated by subsequent
@@ -1749,7 +1754,7 @@ void operator delete(void* ptr, const std::nothrow_t&) noexcept;
 \pnum
 \effects
 The
-\term{deallocation function}~(\ref{basic.stc.dynamic.deallocation})
+deallocation function~(\ref{basic.stc.dynamic.deallocation})
 called by the implementation
 to render the value of \tcode{ptr} invalid
 when the constructor invoked from a nothrow
@@ -1784,7 +1789,7 @@ void* operator new[](std::size_t size);
 \pnum
 \effects
 The
-\term{allocation function}~(\ref{basic.stc.dynamic.allocation})
+allocation function~(\ref{basic.stc.dynamic.allocation})
 called by the array form of a
 \grammarterm{new-expression}~(\ref{expr.new})
 to allocate \tcode{size} bytes of storage suitably aligned to represent any array
@@ -1867,7 +1872,7 @@ void operator delete[](void* ptr, std::size_t size) noexcept;
 \pnum
 \effects
 The
-\term{deallocation function}~(\ref{basic.stc.dynamic.deallocation})
+deallocation function~(\ref{basic.stc.dynamic.deallocation})
 called by the array form of a
 \grammarterm{delete-expression}
 to render the value of \tcode{ptr} invalid.
@@ -1893,7 +1898,7 @@ or
 \tcode{operator new[](std::size_t,const std::nothrow_t\&)}
 which has not been invalidated by an intervening call to
 \tcode{operator delete[](void*)} or
-\tcode{operator delete[](void*, std::size_t)}.
+\tcode{operator delete[](\brk{}void*, std::size_t)}.
 
 \pnum
 \requires If present, the \tcode{std::size_t size} argument must equal the size
@@ -1914,7 +1919,7 @@ then \tcode{ptr} shall be a safely-derived pointer.
 \pnum
 \default
 \tcode{operator delete[](void* ptr, std::size_t size)} calls
-\tcode{operator delete[](ptr)}, and
+\tcode{operator delete[](\brk{}ptr)}, and
 \tcode{operator delete[](void* ptr)} calls
 \tcode{operator delete(ptr)}.
 \end{itemdescr}
@@ -1928,7 +1933,7 @@ void operator delete[](void* ptr, const std::nothrow_t&) noexcept;
 \pnum
 \effects
 The
-\term{deallocation function}~(\ref{basic.stc.dynamic.deallocation})
+deallocation function~(\ref{basic.stc.dynamic.deallocation})
 called by the implementation
 to render the value of \tcode{ptr} invalid
 when the constructor invoked from a nothrow
@@ -1971,7 +1976,7 @@ void* operator new(std::size_t size, void* ptr) noexcept;
 \tcode{ptr}.
 
 \pnum
-\notes
+\remarks
 Intentionally performs no other action.
 
 \pnum
@@ -1996,7 +2001,7 @@ void* operator new[](std::size_t size, void* ptr) noexcept;
 \tcode{ptr}.
 
 \pnum
-\notes
+\remarks
 Intentionally performs no other action.
 \end{itemdescr}
 
@@ -2016,7 +2021,7 @@ If an implementation has strict pointer safety~(\ref{basic.stc.dynamic.safety})
 then \tcode{ptr} shall be a safely-derived pointer.
 
 \pnum
-\notes
+\remarks
 Default function called when any part of the initialization in a
 placement \grammarterm{new-expression} that invokes the library's
 non-array placement operator new
@@ -2039,7 +2044,7 @@ If an implementation has strict pointer safety~(\ref{basic.stc.dynamic.safety})
 then \tcode{ptr} shall be a safely-derived pointer.
 
 \pnum
-\notes
+\remarks
 Default function called when any part of the initialization in a
 placement \grammarterm{new-expression} that invokes the library's
 array placement operator new
@@ -2246,6 +2251,56 @@ new_handler get_new_handler() noexcept;
 \enternote This may be a null pointer value. \exitnote
 \end{itemdescr}
 
+\rSec2[hardware.interference]{Hardware interference size}
+
+\indexlibrary{\idxcode{hardware_destructive_interference_size}}%
+\begin{codeblock}
+constexpr size_t hardware_destructive_interference_size = @\impdef{}@;
+\end{codeblock}
+
+\pnum
+This number is the minimum recommended offset
+between two concurrently-accessed objects
+to avoid additional performance degradation due to contention
+introduced by the implementation.
+It shall be at least \tcode{alignof(max_align_t)}.
+
+\indextext{cats!interfering with canines}%
+\enterexample
+\begin{codeblock}
+struct keep_apart {
+  alignas(hardware_destructive_interference_size) atomic<int> cat;
+  alignas(hardware_destructive_interference_size) atomic<int> dog;
+};
+\end{codeblock}
+\exitexample
+
+\indexlibrary{\idxcode{hardware_constructive_interference_size}}%
+\begin{codeblock}
+constexpr size_t hardware_constructive_interference_size = @\impdef{}@;
+\end{codeblock}
+
+\pnum
+This number is the maximum recommended size of contiguous memory
+occupied by two objects accessed with temporal locality by concurrent threads.
+It shall be at least \tcode{alignof(max_align_t)}.
+
+\indextext{dogs!obliviousness to interference}%
+\enterexample
+\begin{codeblock}
+struct together {
+  atomic<int> dog;
+  int puppy;
+};
+struct kennel {
+  // Other data members...
+  alignas(sizeof(together)) together pack;
+  // Other data members...
+};
+static_assert(sizeof(together) <= hardware_constructive_interference_size);
+\end{codeblock}
+\exitexample
+
 \rSec1[support.rtti]{Type identification}
 
 \pnum
@@ -2376,7 +2431,7 @@ An \impldef{return value of \tcode{type_info::name()}} \ntbs.
 \indexlibrary{\idxcode{type_info::name}!implementation-defined}
 
 \pnum
-\notes
+\remarks
 The message may be a null-terminated multibyte string~(\ref{multibyte.strings}),
 suitable for conversion and display as a
 \tcode{wstring}~(\ref{string.classes}, \ref{locale.codecvt})
@@ -2444,7 +2499,7 @@ An \impldef{return value of \tcode{bad_cast::what}} \ntbs.%
 \indexlibrary{\idxcode{bad_cast::what}!implementation-defined}
 
 \pnum
-\notes
+\remarks
 The message may be a null-terminated multibyte string~(\ref{multibyte.strings}),
 suitable for conversion and display as a
 \tcode{wstring}~(\ref{string.classes}, \ref{locale.codecvt})
@@ -2512,7 +2567,7 @@ An \impldef{return value of \tcode{bad_typeid::what}} \ntbs.%
 \indextext{\idxcode{bad_typeid::what}!implementation-defined}
 
 \pnum
-\notes
+\remarks
 The message may be a null-terminated multibyte string~(\ref{multibyte.strings}),
 suitable for conversion and display as a
 \tcode{wstring}~(\ref{string.classes}, \ref{locale.codecvt})
@@ -2649,7 +2704,7 @@ virtual const char* what() const noexcept;
 An \impldef{result of \tcode{exception::what}} \ntbs.
 
 \pnum
-\notes
+\remarks
 The message may be a null-terminated multibyte string~(\ref{multibyte.strings}),
 suitable for conversion and display as a
 \tcode{wstring}~(\ref{string.classes}, \ref{locale.codecvt}).
@@ -2717,7 +2772,7 @@ An \impldef{return value of \tcode{bad_exception::what}} \ntbs.%
 \indexlibrary{\idxcode{bad_exception::what}!implementation-defined}
 
 \pnum
-\notes
+\remarks
 The message may be a null-terminated multibyte string~(\ref{multibyte.strings}),
 suitable for conversion and display as a
 \tcode{wstring}~(\ref{string.classes}, \ref{locale.codecvt}).
@@ -2824,7 +2879,7 @@ int uncaught_exceptions() noexcept;
 The number of uncaught exceptions~(\ref{except.uncaught}).
 
 \pnum
-\notes
+\remarks
 When \tcode{uncaught_exceptions() > 0},
 throwing an exception can result in a call of\\
 \tcode{std::terminate()}~(\ref{except.terminate}).
@@ -2919,7 +2974,7 @@ template<class E> exception_ptr make_exception_ptr(E e) noexcept;
 
 \begin{itemdescr}
 \pnum
-\effects Creates an \tcode{exception_ptr} object that refers to a copy of \tcode{e}, as if
+\effects Creates an \tcode{exception_ptr} object that refers to a copy of \tcode{e}, as if:
 \begin{codeblock}
 try {
   throw e;
@@ -3014,7 +3069,7 @@ Let \tcode{U} be \tcode{remove_reference_t<T>}.
 
 \pnum
 \throws
-if \tcode{is_class<U>::value \&\& !is_final<U>::value \&\& !is_base_of<nested_exception, U>::value}
+if \tcode{is_class_v<U> \&\& !is_final_v<U> \&\& !is_base_of_v<nested_exception, U>}
 is \tcode{true},
 an exception of unspecified type that is publicly derived from both
 \tcode{U} and \tcode{nested_exception}
@@ -3034,10 +3089,106 @@ template <class E> void rethrow_if_nested(const E& e);
 If \tcode{E} is not a polymorphic class type, there is no effect.
 Otherwise, if the static type or the dynamic type of \tcode{e}
 is \tcode{nested_exception} or is publicly and unambiguously derived from
-\tcode{nested_exception}, calls
-\tcode{dynamic_cast<const} \tcode{nested_exception\&>(e).rethrow_nested()}.
+\tcode{nested_exception}, calls:
+\begin{codeblock}
+dynamic_cast<const nested_exception&>(e).rethrow_nested();
+\end{codeblock}
 \end{itemdescr}
 
+\rSec2[support.exception.list]{Exception lists}
+
+\rSec3[exception.list.syn]{Header \tcode{<exception_list>} synopsis}
+
+\indexlibrary{\idxhdr{exception_list}}%
+\begin{codeblock}
+namespace std {
+  // \ref{exception.list}, class \tcode{exception_list}
+  class exception_list;
+}
+\end{codeblock}
+
+\rSec3[exception.list]{Class \tcode{exception_list}}
+
+\indexlibrary{\idxcode{exception_list}}
+\begin{codeblock}
+namespace std {
+  class exception_list : public exception {
+  public:
+    typedef @\unspec@ iterator;
+
+    size_t size() const noexcept;
+    iterator begin() const noexcept;
+    iterator end() const noexcept;
+
+    virtual const char* what() const noexcept;
+  };
+}
+\end{codeblock}
+
+\pnum
+The class \tcode{exception_list} owns a sequence of \tcode{exception_ptr}
+objects. Parallel algorithms use the \tcode{exception_list} to communicate
+uncaught exceptions encountered during parallel execution to the caller of the
+algorithm.
+
+\pnum
+The type \tcode{exception_list::iterator} is a constant iterator that meets the
+requirements of \tcode{ForwardIterator}.
+
+\indexlibrary{\idxcode{exception_list}!\idxcode{size}}
+\indexlibrary{\idxcode{size}!\idxcode{exception_list}}
+\begin{itemdecl}
+size_t size() const noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns
+The number of \tcode{exception_ptr} objects contained within the
+\tcode{exception_list}.
+
+\pnum
+\complexity
+Constant time.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{exception_list}!\idxcode{begin}}
+\indexlibrary{\idxcode{begin}!\idxcode{exception_list}}
+\begin{itemdecl}
+iterator begin() const noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns
+An iterator referring to the first \tcode{exception_ptr} object contained
+within the \tcode{exception_list}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{exception_list}!\idxcode{end}}
+\indexlibrary{\idxcode{end}!\idxcode{exception_list}}
+\begin{itemdecl}
+iterator end() const noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns
+An iterator that is the past-the-end value of the owned sequence.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{exception_list}!\idxcode{what}}
+\indexlibrary{\idxcode{what}!\idxcode{exception_list}}
+\begin{itemdecl}
+virtual const char* what() const noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns
+An \impldef{return value of \tcode{exception_list::what}} \ntbs.
+\indexlibrary{\idxcode{exception_list::what}!implementation-defined}
+\end{itemdescr}
 
 \rSec1[support.initlist]{Initializer lists}
 
@@ -3186,7 +3337,7 @@ Headers
 \tcode{<csignal>} (signal handling),
 \tcode{<cstdalign> (alignment),}
 \tcode{<cstdarg>} (variable arguments),
-\tcode{<cstdbool>} (\tcode{\xname{bool_true_false_are_defined}}).
+\tcode{<cstdbool>} (\xname{bool_true_false_are_defined}).
 \tcode{<cstdlib>} (runtime environment \tcode{getenv(), system()}),
 and
 \tcode{<ctime>} (system clock \tcode{clock(), time()})

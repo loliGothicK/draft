@@ -250,16 +250,16 @@ widespread commercially.
 Common.
 
 \ref{expr.sizeof}, \ref{expr.cast}
-\change Types must be declared in declarations, not in expressions
-In C, a sizeof expression or cast expression may create a new type.
+\change Types must be defined in declarations, not in expressions\\
+In C, a sizeof expression or cast expression may define a new type.
 For example,
 \begin{codeblock}
 p = (void*)(struct x {int i;} *)0;
 \end{codeblock}
-declares a new type, struct x .
+defines a new type, struct \tcode{x} .
 \rationale
 This prohibition helps to clarify the location of
-declarations in the source code.
+definitions in the source code.
 \effect
 Deletion of a semantically well-defined feature.
 \difficulty
@@ -668,7 +668,7 @@ inconsistent definitions of template specializations. For consistency,
 the implementation freedom was eliminated for non-dependent types,
 too.
 \effect
-The choice is implementation-defined in C, but not so in C++.
+The choice is implementation-defined in C, but not so in \Cpp.
 \difficulty
 Syntactic transformation.
 \howwide
@@ -906,7 +906,7 @@ Valid \CppIII code that uses integer division rounds the result toward 0 or
 toward negative infinity, whereas this International Standard always rounds
 the result toward 0.
 
-\ref{expr.log.or}
+\ref{expr.log.and}
 \change \tcode{\&\&} is valid in a \grammarterm{type-name}
 \rationale Required for new features.
 \effect 
@@ -1144,7 +1144,7 @@ that interacts with newer \Cpp code using regions declared reachable may
 have different runtime behavior.
 
 \ref{refwrap}, \ref{arithmetic.operations}, \ref{comparisons},
-\ref{logical.operations}, \ref{bitwise.operations}, \ref{negators}
+\ref{logical.operations}, \ref{bitwise.operations}, \ref{depr.negators}
 \change Standard function object types no longer derived from
 \tcode{std::unary_function} or \tcode{std::binary_function}
 \rationale Superseded by new feature; \tcode{unary_function} and
@@ -1369,17 +1369,6 @@ might match a predefined usual (non-placement)
 program is ill-formed, as it was for class member allocation functions and
 deallocation functions~(\ref{expr.new}).
 
-\rSec2[diff.cpp11.expr]{Clause \ref{expr}: expressions}
-
-\ref{expr.post.incr}, \ref{expr.pre.incr}
-\change
-Remove increment operator with \tcode{bool} operand.
-\rationale Obsolete feature with occasionally surprising semantics.
-\effect A valid \CppXIV expression utilizing the increment operator on
-a \tcode{bool} lvalue is ill-formed in this International Standard.
-Note that this might occur when the lvalue has a type given by a template
-parameter.
-
 \rSec2[diff.cpp11.dcl.dcl]{Clause \ref{dcl.dcl}: declarations}
 
 \ref{dcl.constexpr}
@@ -1488,6 +1477,17 @@ translate trigraphs as specified in \CppXIV if they appear outside of a raw
 string literal, as part of the implementation-defined mapping from physical
 source file characters to the basic source character set.
 
+\rSec2[diff.cpp14.expr]{Clause \ref{expr}: expressions}
+
+\ref{expr.post.incr}, \ref{expr.pre.incr}
+\change
+Remove increment operator with \tcode{bool} operand.
+\rationale Obsolete feature with occasionally surprising semantics.
+\effect A valid \CppXIV expression utilizing the increment operator on
+a \tcode{bool} lvalue is ill-formed in this International Standard.
+Note that this might occur when the lvalue has a type given by a template
+parameter.
+
 \rSec2[diff.cpp14.dcl.dcl]{Clause \ref{dcl.dcl}: declarations}
 
 \ref{dcl.stc}
@@ -1498,6 +1498,17 @@ source file characters to the basic source character set.
 A valid \CppXIV declaration utilizing the \tcode{register}
 \grammarterm{storage-class-specifier} is ill-formed in this International Standard.
 The specifier can simply be removed to retain the original meaning.
+
+\ref{dcl.spec.auto}
+\change \tcode{auto} deduction from \grammarterm{braced-init-list}.
+\rationale More intuitive deduction behavior.
+\effect
+Valid \CppXIV code may fail to compile or may change meaning
+in this International Standard. For example:
+\begin{codeblock}
+auto x1{1};    // was \tcode{std::initializer_list<int>}, now \tcode{int}
+auto x2{1, 2}; // was \tcode{std::initializer_list<int>}, now ill-formed
+\end{codeblock}
 
 \rSec2[diff.cpp14.decl]{Clause \ref{dcl.decl}: declarators}
 
@@ -1513,6 +1524,49 @@ void g1() noexcept;
 void g2();
 template<class T> int f(T *, T *);
 int x = f(g1, g2);    // ill-formed; previously well-formed
+\end{codeblock}
+
+\ref{dcl.init.aggr}
+\change Definition of an aggregate is extended
+to apply to user-defined types with base classes.
+\rationale To increase convenience of aggregate initialization.
+\effect
+Valid \CppXIV code may fail to compile or produce different results in this
+International Standard; initialization from an empty initializer list will
+perform aggregate initialization instead of invoking a default constructor
+for the affected types:
+\begin{codeblock}
+struct derived;
+struct base {
+  friend struct derived;
+private: 
+  base();
+};
+struct derived : base {};
+
+derived d1{};       // Error. The code was well-formed before.
+derived d2;         // still OK
+\end{codeblock}
+
+\rSec2[diff.cpp14.string]{Clause \ref{strings}: strings library}
+
+\ref{basic.string}
+\change Non-const \tcode{.data()} member added.
+\rationale The lack of a non-const \tcode{.data()}
+differed from the similar member of \tcode{std::vector}.
+This change regularizes behavior for this International Standard.
+\effect
+Overloaded functions which have differing code paths
+for \tcode{char*} and \tcode{const char*} arguments
+will execute differently
+when called with a non-const string's \tcode{.data()} member
+in this International Standard.
+
+\begin{codeblock}
+int f(char *) = delete;
+int f(const char *);
+string s;
+int x = f(s.data()); // ill-formed; previously well-formed
 \end{codeblock}
 
 \rSec2[diff.cpp14.depr]{Annex~\ref{depr}: compatibility features}

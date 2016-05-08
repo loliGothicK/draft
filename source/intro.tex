@@ -76,6 +76,11 @@ Architecture and Basic Multilingual Plane}
 Programming languages, their environments and system software interfaces
 --- Extensions for the programming language C to support new character
 data types}
+%\item IEC 60559:1989, \doccite{Binary floating-point arithmetic for
+%microprocessor systems}
+\item ISO 80000-2:2009, \doccite{Quantities and units ---
+Part 2: Mathematical signs and symbols
+to be used in the natural sciences and technology}
 \end{itemize}
 
 \pnum
@@ -104,7 +109,12 @@ hereinafter called \defn{ECMA-262}.
 
 \pnum
 \indextext{definitions|(}%
-For the purposes of this document, the following definitions apply.
+For the purposes of this document,
+the terms and definitions
+given in ISO/IEC 2382-1:1993 and
+the terms, definitions, and symbols
+given in ISO 80000-2:2009 apply,
+as do the following definitions.
 
 \pnum
 \ref{definitions}
@@ -118,29 +128,29 @@ defined.
 
 \indexdefn{access}%
 \definition{access}{defns.access}
-<execution-time action> to read or modify the value of an object
+\defncontext{execution-time action} to read or modify the value of an object
 
 \indexdefn{argument}%
 \indexdefn{argument!function call expression}
 \definition{argument}{defns.argument}
-<function call expression> expression in the
+\defncontext{function call expression} expression in the
 comma-separated list bounded by the parentheses~(\ref{expr.call})
 
 \indexdefn{argument}%
 \indexdefn{argument!function-like macro}%
 \definition{argument}{defns.argument.macro}
-<function-like macro> sequence of preprocessing tokens in the
+\defncontext{function-like macro} sequence of preprocessing tokens in the
 comma-separated list bounded by the parentheses~(\ref{cpp.replace})
 
 \indexdefn{argument}%
 \indexdefn{argument!throw expression}%
 \definition{argument}{defns.argument.throw}
-<throw expression> the operand of \tcode{throw}~(\ref{expr.throw})
+\defncontext{throw expression} the operand of \tcode{throw}~(\ref{expr.throw})
 
 \indexdefn{argument}%
 \indexdefn{argument!template instantiation}%
 \definition{argument}{defns.argument.templ}
-<template instantiation>
+\defncontext{template instantiation}
 \grammarterm{constant-expression},
 \grammarterm{type-id}, or
 \grammarterm{id-expression} in the comma-separated
@@ -159,7 +169,7 @@ implementation's output messages
 
 \indexdefn{type!dynamic}%
 \definition{dynamic type}{defns.dynamic.type}
-<glvalue> type of the most derived object~(\ref{intro.object}) to which the
+\defncontext{glvalue} type of the most derived object~(\ref{intro.object}) to which the
 glvalue refers\\
 \enterexample
 if a pointer~(\ref{dcl.ptr}) \tcode{p} whose static type is ``pointer to
@@ -171,7 +181,7 @@ treated similarly.
 
 \indexdefn{type!dynamic}%
 \definition{dynamic type}{defns.dynamic.type.prvalue}
-<prvalue> static type of the prvalue expression
+\defncontext{prvalue} static type of the prvalue expression
 
 \indexdefn{program!ill-formed}%
 \definition{ill-formed program}{defns.ill.formed}
@@ -203,53 +213,53 @@ set~(\ref{lex.charset}).\exitnote
 \indexdefn{parameter!function}%
 \indexdefn{parameter!catch clause}%
 \definition{parameter}{defns.parameter}
-<function or catch clause> object or reference declared as part of a function declaration or
+\defncontext{function or catch clause} object or reference declared as part of a function declaration or
 definition or in the catch clause of an exception handler that
 acquires a value on entry to the function or handler
 
 \indexdefn{parameter}%
 \indexdefn{parameter!function-like macro}%
 \definition{parameter}{defns.parameter.macro}
-<function-like macro> identifier from
+\defncontext{function-like macro} identifier from
 the comma-separated list bounded by the parentheses immediately
 following the macro name
 
 \indexdefn{parameter}%
 \indexdefn{parameter!template}%
 \definition{parameter}{defns.parameter.templ}
-<template> \grammarterm{template-parameter}
+\defncontext{template} \grammarterm{template-parameter}
 
 \indexdefn{signature}%
 \definition{signature}{defns.signature}
-<function> name, parameter type list~(\ref{dcl.fct}), and enclosing namespace (if any)\\
+\defncontext{function} name, parameter type list~(\ref{dcl.fct}), and enclosing namespace (if any)\\
 \enternote Signatures are used as a basis for
 name mangling and linking.\exitnote
 
 \indexdefn{signature}%
 \definition{signature}{defns.signature.templ}
-<function template> name, parameter type list~(\ref{dcl.fct}), enclosing namespace (if any),
+\defncontext{function template} name, parameter type list~(\ref{dcl.fct}), enclosing namespace (if any),
 return type, and template parameter list
 
 \indexdefn{signature}%
 \definition{signature}{defns.signature.spec}
-<function template specialization> signature of the template of which it is a specialization
+\defncontext{function template specialization} signature of the template of which it is a specialization
 and its template arguments (whether explicitly specified or deduced)
 
 \indexdefn{signature}%
 \definition{signature}{defns.signature.member}
-<class member function> name, parameter type list~(\ref{dcl.fct}), class of which the
+\defncontext{class member function} name, parameter type list~(\ref{dcl.fct}), class of which the
 function is a member, \cv-qualifiers (if any),
 and \grammarterm{ref-qualifier} (if any)
 
 \indexdefn{signature}%
 \definition{signature}{defns.signature.member.templ}
-<class member function template> name, parameter type list~(\ref{dcl.fct}), class of which the
+\defncontext{class member function template} name, parameter type list~(\ref{dcl.fct}), class of which the
 function is a member, \cv-qualifiers (if any),
-\grammarterm{ref-qualifier} (if any), return type, and template parameter list
+\grammarterm{ref-qualifier} (if any), return type (if any), and template parameter list
 
 \indexdefn{signature}%
 \definition{signature}{defns.signature.member.spec}
-<class member function template specialization> signature of the member function template
+\defncontext{class member function template specialization} signature of the member function template
 of which it is a specialization and its template arguments (whether explicitly specified or deduced)
 
 \indexdefn{type!static}%
@@ -432,7 +442,7 @@ An optional terminal or non-terminal symbol is indicated by the subscript
 ``\opt'', so
 
 \begin{ncbnf}
-\terminal{\{} expression\opt \terminal{\}}
+\terminal{\{} expression\opt{} \terminal{\}}
 \end{ncbnf}
 
 indicates an optional expression enclosed in braces.%
@@ -482,7 +492,7 @@ sequence of adjacent bit-fields all having non-zero width. \enternote Various
 features of the language, such as references and virtual functions, might
 involve additional memory locations that are not accessible to programs but are
 managed by the implementation. \exitnote Two or more threads of
-execution~(\ref{intro.multithread}) can update and access separate memory
+execution~(\ref{intro.multithread}) can access separate memory
 locations without interfering with each other.
 
 \pnum
@@ -530,7 +540,7 @@ created by a \grammarterm{definition}~(\ref{basic.def}), by a
 \grammarterm{new-expression}~(\ref{expr.new}) or by the
 implementation~(\ref{class.temporary}) when needed. The properties of an
 object are determined when the object is created. An object can have a
-\grammarterm{name}~(Clause~\ref{basic}). An object has a \term{storage
+\term{name}~(Clause~\ref{basic}). An object has a \term{storage
 duration}~(\ref{basic.stc}) which influences its
 \term{lifetime}~(\ref{basic.life}). An object has a
 \term{type}~(\ref{basic.types}). The term \defn{object type} refers to
@@ -873,9 +883,9 @@ evaluations. \exitnote The value computations of the operands of an
 operator are sequenced before the value computation of the result of the
 operator. If a
 \indextext{side effects}%
-side effect on a scalar object is unsequenced relative to
-either another side effect on the same scalar object or a value
-computation using the value of the same scalar object,
+side effect on a memory location~(\ref{intro.memory}) is unsequenced
+relative to either another side effect on the same memory location or
+a value computation using the value of any object in the same memory location,
 and they are not potentially concurrent~(\ref{intro.multithread}),
 the behavior is undefined.
 \enternote
@@ -899,6 +909,7 @@ void g(int i, int* v) {
 \end{codeblock}
 \exitexample
 
+\pnum
 When calling a function (whether or not the function is inline), every
 \indextext{value computation}%
 value computation and

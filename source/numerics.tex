@@ -17,6 +17,7 @@ and facilities included from the ISO C library,
 as summarized in Table~\ref{tab:numerics.lib.summary}.
 
 \begin{libsumtab}{Numerics library summary}{tab:numerics.lib.summary}
+\ref{numerics.defns}        & Definitions  &           \\
 \ref{numeric.requirements}  & Requirements &           \\ \rowsep
 \ref{cfenv}           & Floating-Point Environment & \tcode{<cfenv>}  \\ \rowsep
 \ref{complex.numbers} & Complex Numbers & \tcode{<complex>} \\ \rowsep
@@ -28,6 +29,28 @@ as summarized in Table~\ref{tab:numerics.lib.summary}.
               &                        & \tcode{<tgmath.h>}\\
               &                        & \tcode{<cstdlib>} \\
 \end{libsumtab}
+
+\rSec1[numerics.defns]{Definitions}
+
+\indexlibrary{generalized_noncommutative_sum@\tcode{\textit{GENERALIZED_NONCOMMUTATIVE_SUM}}}%
+\pnum
+Define \tcode{\textit{GENERALIZED_NONCOMMUTATIVE_SUM}(op, a1, ..., aN)} as follows:
+\begin{itemize}
+\item
+\tcode{a1} when \tcode{N} is \tcode{1}, otherwise
+
+\item
+\tcode{op(\textit{GENERALIZED_NONCOMMUTATIVE_SUM}(op, a1, ..., aK),} \\
+\tcode{\phantom{op(}\textit{GENERALIZED_NONCOMMUTATIVE_SUM}(op, aM, ..., aN))}
+for any \tcode{K} where $1 < \mathtt{K}+1 = \mathtt{M} \leq \mathtt{N}$.
+\end{itemize}
+
+\indexlibrary{generalized_sum@\tcode{\textit{GENERALIZED_SUM}}}%
+\pnum
+Define \tcode{\textit{GENERALIZED_SUM}(op, a1, ..., aN)} as
+\tcode{\textit{GENERALIZED_NONCOMMUTATIVE_SUM}(op, b1, ..., bN)}
+where
+\tcode{b1, ..., bN} may be any permutation of \tcode{a1, ..., aN}.
 
 \rSec1[numeric.requirements]{Numeric type requirements}
 \indextext{requirements!numeric type}
@@ -307,7 +330,7 @@ namespace std {
   template<class T> T norm(const complex<T>&);
 
   template<class T> complex<T> conj(const complex<T>&);
-  template <class T> complex<T> proj(const complex<T>&);
+  template<class T> complex<T> proj(const complex<T>&);
   template<class T> complex<T> polar(const T&, const T& = 0);
 
   // \ref{complex.transcendentals}, transcendentals:
@@ -325,9 +348,9 @@ namespace std {
   template<class T> complex<T> log  (const complex<T>&);
   template<class T> complex<T> log10(const complex<T>&);
 
-  template<class T> complex<T> pow(const complex<T>&, const T&);
-  template<class T> complex<T> pow(const complex<T>&, const complex<T>&);
-  template<class T> complex<T> pow(const T&, const complex<T>&);
+  template<class T> complex<T> pow  (const complex<T>&, const T&);
+  template<class T> complex<T> pow  (const complex<T>&, const complex<T>&);
+  template<class T> complex<T> pow  (const T&, const complex<T>&);
 
   template<class T> complex<T> sin  (const complex<T>&);
   template<class T> complex<T> sinh (const complex<T>&);
@@ -696,7 +719,7 @@ template<class T> complex<T> operator+(const complex<T>& lhs);
 
 \begin{itemdescr}
 \pnum
-\notes
+\remarks
 unary operator.
 
 \pnum
@@ -724,7 +747,7 @@ template<class T> complex<T> operator-(const complex<T>& lhs);
 
 \begin{itemdescr}
 \pnum
-\notes
+\remarks
 unary operator.
 
 \pnum
@@ -790,7 +813,7 @@ template<class T> constexpr bool operator==(const T& lhs, const complex<T>& rhs)
 \tcode{lhs.real() == rhs.real() \&\& lhs.imag() == rhs.imag()}.
 
 \pnum
-\notes
+\remarks
 The imaginary part is assumed to be
 \tcode{T()},
 or 0.0, for the
@@ -812,7 +835,8 @@ template<class T> constexpr bool operator!=(const T& lhs, const complex<T>& rhs)
 \tcode{rhs.real() != lhs.real() || rhs.imag() != lhs.imag()}.
 \end{itemdescr}
 
-\indexlibrary{operator>>@\tcode{operator\shr}!\idxcode{complex}}%
+\indexlibrary{\idxcode{operator\shr}!\idxcode{complex}}%
+\indexlibrary{\idxcode{complex}!\idxcode{operator\shr}}%
 \begin{itemdecl}
 template<class T, class charT, class traits>
 basic_istream<charT, traits>&
@@ -848,14 +872,15 @@ If bad input is encountered, calls
 \tcode{is}.
 
 \pnum
-\notes
+\remarks
 This extraction is performed as a series of simpler
 extractions.
 Therefore, the skipping of whitespace is specified to be
 the same for each of the simpler extractions.
 \end{itemdescr}
 
-\indexlibrary{operator<<@\tcode{operator\shl}!\idxcode{complex}}%
+\indexlibrary{\idxcode{operator\shl}!\idxcode{complex}}%
+\indexlibrary{\idxcode{complex}!\idxcode{operator\shl}}%
 \begin{itemdecl}
 template<class T, class charT, class traits>
 basic_ostream<charT, traits>&
@@ -1119,7 +1144,7 @@ template<class T> complex<T> exp(const complex<T>& x);
 \begin{itemdescr}
 \pnum
 \returns
-The complex base e exponential of \tcode{x}.
+The complex base-$e$ exponential of \tcode{x}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{log}!\idxcode{complex}}%
@@ -1129,19 +1154,14 @@ template<class T> complex<T> log(const complex<T>& x);
 
 \begin{itemdescr}
 \pnum
-\notes
-the branch cuts are along the negative real axis.
+\remarks
+The branch cuts are along the negative real axis.
 
 \pnum
 \returns
-The complex natural (base e) logarithm of \tcode{x},
-in the range of a strip mathematically unbounded along the
-real axis and in the interval \crange{-i times pi}{i times pi}
-along the imaginary axis.
-When \tcode{x} is a negative real
-number,
-\tcode{imag(log(x))}
-is pi.
+The complex natural (base-$e$) logarithm of \tcode{x}. For all \tcode{x},
+\tcode{imag(log(x))} lies in the interval \crange{$-\pi$}{$\pi$}, and
+when \tcode{x} is a negative real number, \tcode{imag(log(x))} is $\pi$.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{log10}!\idxcode{complex}}%
@@ -1151,41 +1171,40 @@ template<class T> complex<T> log10(const complex<T>& x);
 
 \begin{itemdescr}
 \pnum
-\notes
-the branch cuts are along the negative real axis.
+\remarks
+The branch cuts are along the negative real axis.
 
 \pnum
 \returns
-The complex common (base 10) logarithm of \tcode{x}, defined as
-\tcode{log(x)/log(10)}.
+The complex common (base-$10$) logarithm of \tcode{x}, defined as
+\tcode{log(x) / log(10)}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{pow}!\idxcode{complex}}%
 \begin{itemdecl}
-template<class T>
-  complex<T> pow(const complex<T>& x, const complex<T>& y);
-template<class T> complex<T> pow  (const complex<T>& x, const T& y);
-template<class T> complex<T> pow  (const T& x, const complex<T>& y);
+template<class T> complex<T> pow(const complex<T>& x, const complex<T>& y);
+template<class T> complex<T> pow(const complex<T>& x, const T& y);
+template<class T> complex<T> pow(const T& x, const complex<T>& y);
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\notes
-the branch cuts are along the negative real axis.
+\remarks
+The branch cuts are along the negative real axis.
 
 \pnum
 \returns
-The complex power of base \tcode{x} raised to the \tcode{y}-th power,
+The complex power of base \tcode{x} raised to the \tcode{y}$^\text{th}$ power,
 defined as
-\tcode{exp(y*log(x))}.
+\tcode{exp(y * log(x))}.
 The value returned for
-\tcode{pow(0,0)}
+\tcode{pow(0, 0)}
 is implementation-defined.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{sin}!\idxcode{complex}}%
 \begin{itemdecl}
-template<class T> complex<T> sin  (const complex<T>& x);
+template<class T> complex<T> sin(const complex<T>& x);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -1196,7 +1215,7 @@ The complex sine of \tcode{x}.
 
 \indexlibrary{\idxcode{sinh}!\idxcode{complex}}%
 \begin{itemdecl}
-template<class T> complex<T> sinh (const complex<T>& x);
+template<class T> complex<T> sinh(const complex<T>& x);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -1207,13 +1226,13 @@ The complex hyperbolic sine of \tcode{x}.
 
 \indexlibrary{\idxcode{sqrt}!\idxcode{complex}}%
 \begin{itemdecl}
-template<class T> complex<T> sqrt (const complex<T>& x);
+template<class T> complex<T> sqrt(const complex<T>& x);
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\notes
-the branch cuts are along the negative real axis.
+\remarks
+The branch cuts are along the negative real axis.
 
 \pnum
 \returns
@@ -1225,7 +1244,7 @@ value returned lies on the positive imaginary axis.
 
 \indexlibrary{\idxcode{tan}!\idxcode{complex}}%
 \begin{itemdecl}
-template<class T> complex<T> tan  (const complex<T>& x);
+template<class T> complex<T> tan(const complex<T>& x);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -1236,7 +1255,7 @@ The complex tangent of \tcode{x}.
 
 \indexlibrary{\idxcode{tanh}!\idxcode{complex}}%
 \begin{itemdecl}
-template<class T> complex<T> tanh (const complex<T>& x);
+template<class T> complex<T> tanh(const complex<T>& x);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3750,7 +3769,7 @@ typedef @\textit{implementation-defined}@
 \end{itemdecl}
 
 \begin{itemdescr}
-\pnum\note
+\pnum\remark
 The choice of engine type
 named by this \tcode{typedef}
 is implementation-defined.
@@ -3833,7 +3852,8 @@ explicit random_device(const string& token = @\textit{implementation-defined}@);
 \pnum\effects Constructs a \tcode{random_device}
  non-deterministic uniform random number generator object.
  The semantics and default value of the \tcode{token}
- parameter are implementation-defined.\footnote{   The parameter is intended
+ parameter are implementation-defined.
+ \footnote{The parameter is intended
    to allow an implementation to differentiate
    between different sources of randomness.
  }
@@ -6579,7 +6599,7 @@ and replacement types shall be added.
 In particular, an implementation shall allow a
 \tcode{valarray<T>}
 to be constructed from such replacement types and shall allow assignments
-and computed assignments of such types to
+and compound assignments of such types to
 \tcode{valarray<T>},
 \tcode{slice_array<T>},
 \tcode{gslice_array<T>},
@@ -6649,7 +6669,7 @@ namespace std {
     valarray operator~() const;
     valarray<bool> operator!() const;
 
-    // \ref{valarray.cassign} computed assignment:
+    // \ref{valarray.cassign} compound assignment:
     valarray& operator*= (const T&);
     valarray& operator/= (const T&);
     valarray& operator%= (const T&);
@@ -6898,7 +6918,7 @@ valarray& operator=(initializer_list<T> il);
 
 \begin{itemdescr}
 \pnum
-\effects \tcode{*this = valarray(il)}.
+\effects As if by: \tcode{*this = valarray(il);}
 
 \pnum
 \returns \tcode{*this}.
@@ -7219,7 +7239,7 @@ Each element of the returned array is initialized with the result of
 applying the indicated operator to the corresponding element of the array.
 \end{itemdescr}
 
-\rSec3[valarray.cassign]{\tcode{valarray} computed assignment}
+\rSec3[valarray.cassign]{\tcode{valarray} compound assignment}
 
 \indexlibrary{\idxcode{operator*=}!\idxcode{valarray}}%
 \indexlibrary{\idxcode{operator/=}!\idxcode{valarray}}%
@@ -7230,7 +7250,9 @@ applying the indicated operator to the corresponding element of the array.
 \indexlibrary{\idxcode{operator\&=}!\idxcode{valarray}}%
 \indexlibrary{\idxcode{operator"|=}!\idxcode{valarray}}%
 \indexlibrary{\idxcode{operator\shl=}!\idxcode{valarray}}%
+\indexlibrary{\idxcode{valarray}!\idxcode{operator\shl=}}%
 \indexlibrary{\idxcode{operator\shr=}!\idxcode{valarray}}%
+\indexlibrary{\idxcode{valarray}!\idxcode{operator\shr=}}%
 \begin{itemdecl}
 valarray& operator*= (const valarray&);
 valarray& operator/= (const valarray&);
@@ -7259,11 +7281,11 @@ The array is then returned by reference.
 If the array and the
 argument array do not have the same length, the behavior is undefined.%
 \indextext{undefined}
-The appearance of an array on the left-hand side of a computed assignment
+The appearance of an array on the left-hand side of a compound assignment
 does \tcode{not} invalidate references or pointers.
 
 \pnum
-If the value of an element in the left-hand side of a valarray computed
+If the value of an element in the left-hand side of a valarray compound
 assignment operator depends on the value of another element in that left
 hand side, the resulting behavior is undefined.
 \end{itemdescr}
@@ -7314,7 +7336,7 @@ of the array and the non-array argument.
 The array is then returned by reference.
 
 \pnum
-The appearance of an array on the left-hand side of a computed assignment
+The appearance of an array on the left-hand side of a compound assignment
 does
 \textit{not}
 invalidate references or pointers to the elements of the array.
@@ -7439,11 +7461,14 @@ If the argument has the value -2,
 the first two elements of the result will be value-initialized~(\ref{dcl.init}); the third element of the result will be assigned the value
 of the first element of the argument; etc.
 \exitexample
+\end{itemdescr}
+
 \indexlibrary{\idxcode{cshift}!\idxcode{valarray}}%
 \begin{itemdecl}
 valarray cshift(int n) const;
 \end{itemdecl}
 
+\begin{itemdescr}
 \pnum
 This function returns an object of class
 \tcode{valarray<T>}
@@ -7464,12 +7489,14 @@ These functions return an array whose length is equal to the array.
 Each element of the returned array is assigned
 the value returned by applying the argument function to the
 corresponding element of the array.
+\end{itemdescr}
 
 \indexlibrary{\idxcode{resize}!\idxcode{valarray}}%
 \begin{itemdecl}
 void resize(size_t sz, T c = T());
 \end{itemdecl}
 
+\begin{itemdescr}
 \pnum
 This member function changes the length of the
 \tcode{*this}
@@ -7492,7 +7519,9 @@ Resizing invalidates all pointers and references to elements in the array.
 \indexlibrary{\idxcode{operator\&}!\idxcode{valarray}}%
 \indexlibrary{\idxcode{operator"|}!\idxcode{valarray}}%
 \indexlibrary{\idxcode{operator\shl}!\idxcode{valarray}}%
+\indexlibrary{\idxcode{valarray}!\idxcode{operator\shl}}%
 \indexlibrary{\idxcode{operator\shr}!\idxcode{valarray}}%
+\indexlibrary{\idxcode{valarray}!\idxcode{operator\shr}}%
 \indexlibrary{\idxcode{operator\&\&}!\idxcode{valarray}}%
 \indexlibrary{\idxcode{operator"|"|}!\idxcode{valarray}}%
 \begin{itemdecl}
@@ -7755,7 +7784,7 @@ template <class T> void swap(valarray<T>& x, valarray<T>& y) noexcept;
 
 \begin{itemdescr}
 \pnum
-\effects \tcode{x.swap(y)}.
+\effects As if by \tcode{x.swap(y)}.
 \end{itemdescr}
 
 
@@ -7917,7 +7946,7 @@ object to which the
 object refers.
 \end{itemdescr}
 
-\rSec3[slice.arr.comp.assign]{\tcode{slice_array} computed assignment}
+\rSec3[slice.arr.comp.assign]{\tcode{slice_array} compound assignment}
 
 \indexlibrary{\idxcode{operator*=}!\idxcode{slice_array}}%
 \indexlibrary{\idxcode{operator/=}!\idxcode{slice_array}}%
@@ -7928,7 +7957,9 @@ object refers.
 \indexlibrary{\idxcode{operator\&=}!\idxcode{slice_array}}%
 \indexlibrary{\idxcode{operator"|=}!\idxcode{slice_array}}%
 \indexlibrary{\idxcode{operator\shl=}!\idxcode{slice_array}}%
+\indexlibrary{\idxcode{slice_array}!\idxcode{operator\shl=}}%
 \indexlibrary{\idxcode{operator\shr=}!\idxcode{slice_array}}%
+\indexlibrary{\idxcode{slice_array}!\idxcode{operator\shr=}}%
 \begin{itemdecl}
 void operator*= (const valarray<T>&) const;
 void operator/= (const valarray<T>&) const;
@@ -7944,7 +7975,7 @@ void operator>>=(const valarray<T>&) const;
 
 \begin{itemdescr}
 \pnum
-These computed assignments have reference semantics, applying the
+These compound assignments have reference semantics, applying the
 indicated operation to the elements of the argument array
 and selected elements of the
 \tcode{valarray<T>}
@@ -8203,7 +8234,7 @@ object to which the
 refers.
 \end{itemdescr}
 
-\rSec3[gslice.array.comp.assign]{\tcode{gslice_array}}
+\rSec3[gslice.array.comp.assign]{\tcode{gslice_array} compound assignment}
 
 \indexlibrary{\idxcode{operator*=}!\idxcode{gslice_array}}%
 \indexlibrary{\idxcode{operator/=}!\idxcode{gslice_array}}%
@@ -8214,7 +8245,9 @@ refers.
 \indexlibrary{\idxcode{operator\&=}!\idxcode{gslice_array}}%
 \indexlibrary{\idxcode{operator"|=}!\idxcode{gslice_array}}%
 \indexlibrary{\idxcode{operator\shl=}!\idxcode{gslice_array}}%
+\indexlibrary{\idxcode{gslice_array}!\idxcode{operator\shl=}}%
 \indexlibrary{\idxcode{operator\shr=}!\idxcode{gslice_array}}%
+\indexlibrary{\idxcode{gslice_array}!\idxcode{operator\shr=}}%
 \begin{itemdecl}
 void operator*= (const valarray<T>&) const;
 void operator/= (const valarray<T>&) const;
@@ -8230,7 +8263,7 @@ void operator>>=(const valarray<T>&) const;
 
 \begin{itemdescr}
 \pnum
-These computed assignments have reference semantics, applying the
+These compound assignments have reference semantics, applying the
 indicated operation to the elements of the argument array and selected
 elements of the
 \tcode{valarray<T>}
@@ -8331,7 +8364,7 @@ of the argument array elements to selected elements of the
 object to which it refers.
 \end{itemdescr}
 
-\rSec3[mask.array.comp.assign]{\tcode{mask_array} computed assignment}
+\rSec3[mask.array.comp.assign]{\tcode{mask_array} compound assignment}
 
 \indexlibrary{\idxcode{operator*=}!\idxcode{mask_array}}%
 \indexlibrary{\idxcode{operator/=}!\idxcode{mask_array}}%
@@ -8342,7 +8375,9 @@ object to which it refers.
 \indexlibrary{\idxcode{operator\&=}!\idxcode{mask_array}}%
 \indexlibrary{\idxcode{operator"|=}!\idxcode{mask_array}}%
 \indexlibrary{\idxcode{operator\shl=}!\idxcode{mask_array}}%
+\indexlibrary{\idxcode{mask_array}!\idxcode{operator\shl=}}%
 \indexlibrary{\idxcode{operator\shr=}!\idxcode{mask_array}}%
+\indexlibrary{\idxcode{mask_array}!\idxcode{operator\shr=}}%
 \begin{itemdecl}
 void operator*= (const valarray<T>&) const;
 void operator/= (const valarray<T>&) const;
@@ -8358,7 +8393,7 @@ void operator>>=(const valarray<T>&) const;
 
 \begin{itemdescr}
 \pnum
-These computed assignments have reference semantics, applying the
+These compound assignments have reference semantics, applying the
 indicated operation to the elements of the argument array and selected elements
 of the
 \tcode{valarray<T>}
@@ -8474,7 +8509,7 @@ indirection.
 \exitexample
 \end{itemdescr}
 
-\rSec3[indirect.array.comp.assign]{\tcode{indirect_array} computed assignment}
+\rSec3[indirect.array.comp.assign]{\tcode{indirect_array} compound assignment}
 
 \indexlibrary{\idxcode{operator*=}!\idxcode{indirect_array}}%
 \indexlibrary{\idxcode{operator*=}!\idxcode{indirect_array}}%
@@ -8487,7 +8522,9 @@ indirection.
 \indexlibrary{\idxcode{operator\&=}!\idxcode{indirect_array}}%
 \indexlibrary{\idxcode{operator"|=}!\idxcode{indirect_array}}%
 \indexlibrary{\idxcode{operator\shl=}!\idxcode{indirect_array}}%
+\indexlibrary{\idxcode{indirect_array}!\idxcode{operator\shl=}}%
 \indexlibrary{\idxcode{operator\shr=}!\idxcode{indirect_array}}%
+\indexlibrary{\idxcode{indirect_array}!\idxcode{operator\shr=}}%
 \begin{itemdecl}
 void operator*= (const valarray<T>&) const;
 void operator/= (const valarray<T>&) const;
@@ -8503,7 +8540,7 @@ void operator>>=(const valarray<T>&) const;
 
 \begin{itemdescr}
 \pnum
-These computed assignments have reference semantics, applying the indicated
+These compound assignments have reference semantics, applying the indicated
 operation to the elements of the argument array and selected elements of the
 \tcode{valarray<T>}
 object to which the
@@ -8597,6 +8634,35 @@ namespace std {
     T accumulate(InputIterator first, InputIterator last, T init,
                  BinaryOperation binary_op);
 
+  template<class InputIterator>
+    typename iterator_traits<InputIterator>::value_type
+      reduce(InputIterator first, InputIterator last);
+  template<class InputIterator, class T>
+    T reduce(InputIterator first, InputIterator last, T init);
+  template<class InputIterator, class T, class BinaryOperation>
+    T reduce(InputIterator first, InputIterator last, T init,
+             BinaryOperation binary_op);
+  template<class ExecutionPolicy, class InputIterator>
+    typename iterator_traits<InputIterator>::value_type
+      reduce(ExecutionPolicy&& exec, // see \ref{algorithms.parallel.overloads}
+             InputIterator first, InputIterator last);
+  template<class ExecutionPolicy, class InputIterator, class T>
+    T reduce(ExecutionPolicy&& exec, // see \ref{algorithms.parallel.overloads}
+             InputIterator first, InputIterator last, T init);
+  template<class ExecutionPolicy, class InputIterator, class T, class BinaryOperation>
+    T reduce(ExecutionPolicy&& exec, // see \ref{algorithms.parallel.overloads}
+             InputIterator first, InputIterator last, T init,
+             BinaryOperation binary_op);
+
+  template<class InputIterator, class UnaryFunction, class T, class BinaryOperation>
+    T transform_reduce(InputIterator first, InputIterator last,
+                       UnaryOperation unary_op, T init, BinaryOperation binary_op);
+  template<class ExecutionPolicy, class InputIterator,
+           class UnaryFunction, class T, class BinaryOperation>
+    T transform_reduce(ExecutionPolicy&& exec, // see \ref{algorithms.parallel.overloads}
+                       InputIterator first, InputIterator last,
+                       UnaryOperation unary_op, T init, BinaryOperation binary_op);
+
   template <class InputIterator1, class InputIterator2, class T>
     T inner_product(InputIterator1 first1, InputIterator1 last1,
                     InputIterator2 first2, T init);
@@ -8606,25 +8672,140 @@ namespace std {
                     InputIterator2 first2, T init,
                     BinaryOperation1 binary_op1,
                     BinaryOperation2 binary_op2);
+  template <class ExecutionPolicy, class InputIterator1, class InputIterator2,
+            class T>
+    T inner_product(ExecutionPolicy&& exec, // see \ref{algorithms.parallel.overloads}
+                    InputIterator1 first1, InputIterator1 last1,
+                    InputIterator2 first2, T init);
+  template <class ExecutionPolicy, class InputIterator1, class InputIterator2,
+            class T, class BinaryOperation1, class BinaryOperation2>
+    T inner_product(ExecutionPolicy&& exec, // see \ref{algorithms.parallel.overloads}
+                    InputIterator1 first1, InputIterator1 last1,
+                    InputIterator2 first2, T init,
+                    BinaryOperation1 binary_op1,
+                    BinaryOperation2 binary_op2);
 
   template <class InputIterator, class OutputIterator>
     OutputIterator partial_sum(InputIterator first,
                                InputIterator last,
                                OutputIterator result);
-  template <class InputIterator, class OutputIterator,
-            class BinaryOperation>
+  template <class InputIterator, class OutputIterator, class BinaryOperation>
     OutputIterator partial_sum(InputIterator first,
                                InputIterator last,
                                OutputIterator result,
                                BinaryOperation binary_op);
 
+  template<class InputIterator, class OutputIterator, class T>
+    OutputIterator exclusive_scan(InputIterator first, InputIterator last,
+                                  OutputIterator result,
+                                  T init);
+  template<class InputIterator, class OutputIterator, class T, class BinaryOperation>
+    OutputIterator exclusive_scan(InputIterator first, InputIterator last,
+                                  OutputIterator result,
+                                  T init, BinaryOperation binary_op);
+  template<class ExecutionPolicy, class InputIterator, class OutputIterator, class T>
+    OutputIterator exclusive_scan(ExecutionPolicy&& exec, // see \ref{algorithms.parallel.overloads}
+                                  InputIterator first, InputIterator last,
+                                  OutputIterator result,
+                                  T init);
+  template<class ExecutionPolicy, class InputIterator, class OutputIterator, class T,
+           class BinaryOperation>
+    OutputIterator exclusive_scan(ExecutionPolicy&& exec, // see \ref{algorithms.parallel.overloads}
+                                  InputIterator first, InputIterator last,
+                                  OutputIterator result,
+                                  T init, BinaryOperation binary_op);
+  template<class InputIterator, class OutputIterator>
+    OutputIterator inclusive_scan(InputIterator first, InputIterator last,
+                                  OutputIterator result);
+  template<class InputIterator, class OutputIterator, class BinaryOperation>
+    OutputIterator inclusive_scan(InputIterator first, InputIterator last,
+                                  OutputIterator result,
+                                  BinaryOperation binary_op);
+  template<class InputIterator, class OutputIterator, class BinaryOperation, class T>
+    OutputIterator inclusive_scan(InputIterator first, InputIterator last,
+                                  OutputIterator result,
+                                  BinaryOperation binary_op, T init);
+  template<class ExecutionPolicy, class InputIterator, class OutputIterator>
+    OutputIterator inclusive_scan(ExecutionPolicy&& exec, // see \ref{algorithms.parallel.overloads}
+                                  InputIterator first, InputIterator last,
+                                  OutputIterator result);
+  template<class ExecutionPolicy, class InputIterator, class OutputIterator,
+           class BinaryOperation>
+    OutputIterator inclusive_scan(ExecutionPolicy&& exec, // see \ref{algorithms.parallel.overloads}
+                                  InputIterator first, InputIterator last,
+                                  OutputIterator result,
+                                  BinaryOperation binary_op);
+  template<class ExecutionPolicy, class InputIterator, class OutputIterator,
+           class BinaryOperation, class T>
+    OutputIterator inclusive_scan(ExecutionPolicy&& exec, // see \ref{algorithms.parallel.overloads}
+                                  InputIterator first, InputIterator last,
+                                  OutputIterator result,
+                                  BinaryOperation binary_op, T init);
+
+  template<class InputIterator, class OutputIterator,
+           class UnaryOperation,
+           class T, class BinaryOperation>
+    OutputIterator transform_exclusive_scan(InputIterator first, InputIterator last,
+                                            OutputIterator result,
+                                            UnaryOperation unary_op,
+                                            T init, BinaryOperation binary_op);
+  template<class ExecutionPolicy, class InputIterator, class OutputIterator,
+           class UnaryOperation,
+           class T, class BinaryOperation>
+    OutputIterator transform_exclusive_scan(ExecutionPolicy&& exec, // see \ref{algorithms.parallel.overloads}
+                                            InputIterator first, InputIterator last,
+                                            OutputIterator result,
+                                            UnaryOperation unary_op,
+                                            T init, BinaryOperation binary_op);
+  template<class InputIterator, class OutputIterator,
+           class UnaryOperation,
+           class BinaryOperation>
+  OutputIterator transform_inclusive_scan(InputIterator first, InputIterator last,
+                                          OutputIterator result,
+                                          UnaryOperation unary_op,
+                                          BinaryOperation binary_op);
+  template<class InputIterator, class OutputIterator,
+           class UnaryOperation,
+           class BinaryOperation, class T>
+  OutputIterator transform_inclusive_scan(InputIterator first, InputIterator last,
+                                          OutputIterator result,
+                                          UnaryOperation unary_op,
+                                          BinaryOperation binary_op, T init);
+  template<class ExecutionPolicy, class InputIterator, class OutputIterator,
+           class UnaryOperation,
+           class BinaryOperation>
+  OutputIterator transform_inclusive_scan(ExecutionPolicy&& exec, // see \ref{algorithms.parallel.overloads}
+                                          InputIterator first, InputIterator last,
+                                          OutputIterator result,
+                                          UnaryOperation unary_op,
+                                          BinaryOperation binary_op);
+  template<class ExecutionPolicy, class InputIterator, class OutputIterator,
+           class UnaryOperation,
+           class BinaryOperation, class T>
+  OutputIterator transform_inclusive_scan(ExecutionPolicy&& exec, // see \ref{algorithms.parallel.overloads}
+                                          InputIterator first, InputIterator last,
+                                          OutputIterator result,
+                                          UnaryOperation unary_op,
+                                          BinaryOperation binary_op, T init);
+
   template <class InputIterator, class OutputIterator>
     OutputIterator adjacent_difference(InputIterator first,
                                        InputIterator last,
                                        OutputIterator result);
-  template <class InputIterator, class OutputIterator,
-            class BinaryOperation>
+  template <class InputIterator, class OutputIterator, class BinaryOperation>
     OutputIterator adjacent_difference(InputIterator first,
+                                       InputIterator last,
+                                       OutputIterator result,
+                                       BinaryOperation binary_op);
+  template <class ExecutionPolicy, class InputIterator, class OutputIterator>
+    OutputIterator adjacent_difference(ExecutionPolicy&& exec, // see \ref{algorithms.parallel.overloads}
+                                       InputIterator first,
+                                       InputIterator last,
+                                       OutputIterator result);
+  template <class ExecutionPolicy, class InputIterator, class OutputIterator,
+            class BinaryOperation>
+    OutputIterator adjacent_difference(ExecutionPolicy&& exec, // see \ref{algorithms.parallel.overloads}
+                                       InputIterator first,
                                        InputIterator last,
                                        OutputIterator result,
                                        BinaryOperation binary_op);
@@ -8680,6 +8861,89 @@ shall neither modify elements nor invalidate iterators or subranges.\footnote{Th
 }
 \end{itemdescr}
 
+\rSec2[reduce]{Reduce}
+
+\indexlibrary{\idxcode{reduce}}%
+\begin{itemdecl}
+template<class InputIterator>
+  typename iterator_traits<InputIterator>::value_type
+    reduce(InputIterator first, InputIterator last);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Equivalent to: \tcode{return reduce(first, last, typename iterator_traits<InputIterator>::value_type\{\});}
+\end{itemdescr}
+
+\begin{itemdecl}
+template<class InputIterator, class T>
+  T reduce(InputIterator first, InputIterator last, T init);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Equivalent to: \tcode{return reduce(first, last, init, plus<>());}
+\end{itemdescr}
+
+\begin{itemdecl}
+template<class InputIterator, class T, class BinaryOperation>
+  T reduce(InputIterator first, InputIterator last, T init,
+           BinaryOperation binary_op);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns
+\tcode{\textit{GENERALIZED_SUM}(binary_op, init, *i, ...)} for every \tcode{i} in \range{first}{last}.
+
+\pnum
+\requires
+\tcode{binary_op} shall neither invalidate iterators or subranges, nor modify
+elements in the range \range{first}{last}.
+
+\pnum
+\complexity
+\bigoh{\tcode{last - first}} applications of \tcode{binary_op}.
+
+\pnum
+\realnotes
+The difference between \tcode{reduce} and \tcode{accumulate} is that
+\tcode{reduce} applies \tcode{binary_op} in an unspecified order, which yields
+a non-deterministic result for non-associative or non-commutative
+\tcode{binary_op} such as floating-point addition.
+\end{itemdescr}
+
+\rSec2[transform.reduce]{Transform reduce}
+
+\indexlibrary{\idxcode{transform_reduce}}%
+\begin{itemdecl}
+template<class InputIterator, class UnaryFunction, class T, class BinaryOperation>
+  T transform_reduce(InputIterator first, InputIterator last,
+                     UnaryOperation unary_op, T init, BinaryOperation binary_op);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns
+\tcode{\textit{GENERALIZED_SUM}(binary_op, init, unary_op(*i), ...)} for every \tcode{i} in \range{first}{last}.
+
+\pnum
+\requires
+Neither \tcode{unary_op} nor \tcode{binary_op} shall invalidate subranges, or
+modify elements in the range \range{first}{last}.
+
+\pnum
+\complexity
+\bigoh{\tcode{last - first}} applications each of \tcode{unary_op} and
+\tcode{binary_op}.
+
+\pnum
+\realnotes
+\tcode{transform_reduce} does not apply \tcode{unary_op} to \tcode{init}.
+\end{itemdescr}
+
 \rSec2[inner.product]{Inner product}
 \indexlibrary{\idxcode{inner_product}}%
 
@@ -8689,9 +8953,9 @@ template <class InputIterator1, class InputIterator2, class T>
   T inner_product(InputIterator1 first1, InputIterator1 last1,
                   InputIterator2 first2, T init);
 template <class InputIterator1, class InputIterator2, class T,
-    class BinaryOperation1, class BinaryOperation2>
+          class BinaryOperation1, class BinaryOperation2>
   T inner_product(InputIterator1 first1, InputIterator1 last1,
-                  InputIterator2 first2, T init,
+                  Inputgterator2 first2, T init,
                   BinaryOperation1 binary_op1,
                   BinaryOperation2 binary_op2);
 \end{itemdecl}
@@ -8739,11 +9003,10 @@ template <class InputIterator, class OutputIterator>
   OutputIterator partial_sum(
     InputIterator first, InputIterator last,
     OutputIterator result);
-template
-  <class InputIterator, class OutputIterator, class BinaryOperation>
-    OutputIterator partial_sum(
-      InputIterator first, InputIterator last,
-      OutputIterator result, BinaryOperation binary_op);
+template <class InputIterator, class OutputIterator, class BinaryOperation>
+  OutputIterator partial_sum(
+    InputIterator first, InputIterator last,
+    OutputIterator result, BinaryOperation binary_op);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -8781,10 +9044,253 @@ shall neither modify elements nor invalidate iterators or subranges.\footnote{Th
 }
 
 \pnum
-\notes
+\remarks
 \tcode{result}
 may be equal to
 \tcode{first}.
+\end{itemdescr}
+
+\rSec2[exclusive.scan]{Exclusive scan}
+
+\indexlibrary{\idxcode{exclusive_scan}}%
+\begin{itemdecl}
+template<class InputIterator, class OutputIterator, class T>
+  OutputIterator exclusive_scan(InputIterator first, InputIterator last,
+                                OutputIterator result,
+                                T init);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Equivalent to: \tcode{return exclusive_scan(first, last, result, init, plus<>());}
+\end{itemdescr}
+
+\begin{itemdecl}
+template<class InputIterator, class OutputIterator, class T, class BinaryOperation>
+  OutputIterator exclusive_scan(InputIterator first, InputIterator last,
+                                OutputIterator result,
+                                T init, BinaryOperation binary_op);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Assigns through each iterator \tcode{i} in \range{result}{result + (last - first)} the value of
+\begin{itemize}
+\item
+\tcode{init}, if \tcode{i} is \tcode{result}, otherwise
+
+\item
+\tcode{\textit{GENERALIZED_NONCOMMUTATIVE_SUM}(binary_op, init, *j, ...)} for every \tcode{j} in \range{first}{first + (i - result) - 1}.
+\end{itemize}
+
+\pnum
+\returns
+The end of the resulting range beginning at \tcode{result}.
+
+\pnum
+\requires
+\tcode{binary_op} shall neither invalidate iterators or subranges, nor modify
+elements in the
+ranges \range{first}{last} or \range{result}{result + (last - first)}.
+
+\pnum
+\complexity
+\bigoh{\tcode{last - first}} applications of \tcode{binary_op}.
+
+\pnum
+\realnotes
+The difference between \tcode{exclusive_scan} and \tcode{inclusive_scan} is
+that \tcode{exclusive_scan} excludes the \tcode{i}th input element from the
+\tcode{i}th sum. If \tcode{binary_op} is not mathematically associative, the
+behavior of \tcode{exclusive_scan} may be non-deterministic.
+
+\pnum
+\remarks
+\tcode{result} may be equal to \tcode{first}.
+\end{itemdescr}
+
+\rSec2[inclusive.scan]{Inclusive scan}
+
+\indexlibrary{\idxcode{inclusive_scan}}%
+\begin{itemdecl}
+template<class InputIterator, class OutputIterator>
+  OutputIterator inclusive_scan(InputIterator first, InputIterator last,
+                                OutputIterator result);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Equivalent to: \tcode{return inclusive_scan(first, last, result, plus<>());}
+\end{itemdescr}
+
+\begin{itemdecl}
+template<class InputIterator, class OutputIterator, class BinaryOperation>
+  OutputIterator inclusive_scan(InputIterator first, InputIterator last,
+                                OutputIterator result,
+                                BinaryOperation binary_op);
+template<class InputIterator, class OutputIterator, class BinaryOperation, class T>
+  OutputIterator inclusive_scan(InputIterator first, InputIterator last,
+                                OutputIterator result,
+                                BinaryOperation binary_op, T init);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Assigns through each iterator \tcode{i} in \range{result}{result + (last - first)} the value of
+\begin{itemize}
+\item
+\tcode{\textit{GENERALIZED_NONCOMMUTATIVE_SUM}(binary_op, init, *j, ...)} for every \tcode{j} in \range{first}{first + (i - result)}
+if \tcode{init} is provided, or
+\item
+\tcode{\textit{GENERALIZED_NONCOMMUTATIVE_SUM}(binary_op, *j, ...)} for every \tcode{j} in \range{first}{first + (i - result)} otherwise.
+\end{itemize}
+
+\pnum
+\returns
+The end of the resulting range beginning at \tcode{result}.
+
+\pnum
+\requires
+\tcode{binary_op} shall not invalidate iterators or subranges, nor modify
+elements in the ranges \range{first}{last} or \range{result}{result + (last -
+first)}.
+
+\pnum
+\complexity
+\bigoh{\tcode{last - first}} applications of \tcode{binary_op}.
+
+\pnum
+\remarks
+\tcode{result} may be equal to \tcode{first}.
+
+\pnum
+\realnotes
+The difference between \tcode{exclusive_scan} and \tcode{inclusive_scan} is
+that \tcode{inclusive_scan} includes the \tcode{i}th input element in the
+\tcode{i}th sum.  If \tcode{binary_op} is not mathematically associative, the
+behavior of \tcode{inclusive_scan} may be non-deterministic.
+\end{itemdescr}
+
+\rSec2[transform.exclusive.scan]{Transform exclusive scan}
+
+\indexlibrary{\idxcode{transform_exclusive_scan}}%
+\begin{itemdecl}
+template<class InputIterator, class OutputIterator,
+         class UnaryOperation,
+         class T, class BinaryOperation>
+  OutputIterator transform_exclusive_scan(InputIterator first, InputIterator last,
+                                          OutputIterator result,
+                                          UnaryOperation unary_op,
+                                          T init, BinaryOperation binary_op);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Assigns through each iterator \tcode{i} in \range{result}{result + (last - first)} the value of
+\begin{itemize}
+\item
+\tcode{init}, if \tcode{i} is \tcode{result}, otherwise
+
+\item
+\tcode{\textit{GENERALIZED_NONCOMMUTATIVE_SUM}(binary_op, init, unary_op(*j), ...)} for every \tcode{j} in \range{first}{first + (i - result) - 1}.
+\end{itemize}
+
+\pnum
+\returns
+The end of the resulting range beginning at \tcode{result}.
+
+\pnum
+\requires
+Neither \tcode{unary_op} nor \tcode{binary_op} shall invalidate iterators or
+subranges, or modify elements in the ranges
+\range{first}{last} or
+\range{result}{result + (last - first)}.
+
+\pnum
+\complexity
+\bigoh{\tcode{last - first}} applications each of \tcode{unary_op} and
+\tcode{binary_op}.
+
+\pnum
+\remarks
+\tcode{result} may be equal to \tcode{first}.
+
+\pnum
+\realnotes
+The difference between \tcode{transform_exclusive_scan} and
+\tcode{transform_inclusive_scan} is that \tcode{transform_exclusive_scan}
+excludes the ith input element from the ith sum. If \tcode{binary_op} is not
+mathematically associative, the behavior of \tcode{transform_exclusive_scan}
+may be non-deterministic. \tcode{transform_exclusive_scan} does not apply
+\tcode{unary_op} to \tcode{init}.
+\end{itemdescr}
+
+\rSec2[transform.inclusive.scan]{Transform inclusive scan}
+
+\indexlibrary{\idxcode{transform_inclusive_scan}}%
+\begin{itemdecl}
+template<class InputIterator, class OutputIterator,
+         class UnaryOperation,
+         class BinaryOperation>
+  OutputIterator transform_inclusive_scan(InputIterator first, InputIterator last,
+                                          OutputIterator result,
+                                          UnaryOperation unary_op,
+                                          BinaryOperation binary_op);
+template<class InputIterator, class OutputIterator,
+         class UnaryOperation,
+         class BinaryOperation, class T>
+  OutputIterator transform_inclusive_scan(InputIterator first, InputIterator last,
+                                          OutputIterator result,
+                                          UnaryOperation unary_op,
+                                          BinaryOperation binary_op, T init);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Assigns through each iterator \tcode{i} in \range{result}{result + (last - first)} the value of
+\begin{itemize}
+\item
+\tcode{\textit{GENERALIZED_NONCOMMUTATIVE_SUM}(binary_op, init, unary_op(*j), ...)}
+for every \tcode{j} in \range{first}{first + (i - result)}
+if \tcode{init} is provided, or
+\item
+\tcode{\textit{GENERALIZED_NONCOMMUTATIVE_SUM}(binary_op, unary_op(*j), ...)}
+for every \tcode{j} in \range{first}{first + (i - result)} otherwise.
+\end{itemize}
+
+\pnum
+\returns
+The end of the resulting range beginning at \tcode{result}.
+
+\pnum
+\requires
+Neither \tcode{unary_op} nor \tcode{binary_op} shall invalidate iterators or
+subranges, or modify elements in the ranges \range{first}{last} or
+\range{result}{result + (last - first)}.
+
+\pnum
+\complexity
+\bigoh{\tcode{last - first}} applications each of \tcode{unary_op} and
+\tcode{binary_op}.
+
+\pnum
+\remarks
+\tcode{result} may be equal to \tcode{first}.
+
+\pnum
+\realnotes
+The difference between \tcode{transform_exclusive_scan} and
+\tcode{transform_inclusive_scan} is that \tcode{transform_inclusive_scan}
+includes the ith input element in the ith sum. If \tcode{binary_op} is not
+mathematically associative, the behavior of \tcode{transform_inclusive_scan}
+may be non-deterministic. \tcode{transform_inclusive_scan} does not apply
+\tcode{unary_op} to \tcode{init}.
 \end{itemdescr}
 
 \rSec2[adjacent.difference]{Adjacent difference}
@@ -8827,7 +9333,7 @@ shall neither modify elements nor invalidate iterators or
 subranges.\footnote{The use of fully closed ranges is intentional.}
 
 \pnum
-\notes
+\remarks
 \tcode{result}
 may be equal to
 \tcode{first}.
@@ -9056,6 +9562,33 @@ lldiv_t div(long long, long long);  // \tcode{lldiv()}
 \end{codeblock}
 
 \pnum
+To avoid ambiguities, \Cpp also adds the following overloads of \tcode{abs()}
+to \tcode{<cstdlib>}, with the semantics defined in \tcode{<cmath>}:
+\begin{codeblock}
+float abs(float);
+double abs(double);
+long double abs(long double);
+\end{codeblock}
+
+\pnum
+To avoid ambiguities, \Cpp also adds the following overloads of \tcode{abs()}
+to \tcode{<cmath>}, with the semantics defined in \tcode{<cstdlib>}:
+\begin{codeblock}
+int abs(int);
+long abs(long);
+long long abs(long long);
+\end{codeblock}
+
+\pnum
+If \tcode{abs()} is called with an argument of type \tcode{X}
+for which \tcode{is_unsigned<X>::value} is \tcode{true} and
+if \tcode{X} cannot be converted to \tcode{int}
+by integral promotion~(\ref{conv.prom}), the program is ill-formed.
+\enternote
+Arguments that can be promoted to \tcode{int} are permitted for compatibility with C.
+\exitnote
+
+\pnum
 In addition to the
 \tcode{double}
 versions of the math functions in
@@ -9249,6 +9782,15 @@ long double trunc(long double);
 \end{codeblock}
 
 \pnum
+\Cpp adds three-argument versions of certain math functions in \tcode{<cmath>}:
+\begin{codeblock}
+double hypot(double x, double y, double z);
+float hypot(float x, float y, float z);
+long double hypot(long double x, long double y, long double z);
+\end{codeblock}
+\returns $\sqrt{x^2+y^2+z^2} \mbox{.}$
+
+\pnum
 The classification/comparison functions behave the same as the C macros with the
 corresponding names defined in 7.12.3, Classification macros, and 7.12.14, Comparison
 macros in the C Standard. Each function is overloaded for the three floating-point
@@ -9333,3 +9875,1014 @@ Moreover, there shall be additional overloads sufficient to ensure:
 
 \xref
 ISO C 7.5, 7.10.2, 7.10.6.
+
+\indextext{special functions|(}
+
+\rSec1[sf.cmath]{Additions to header \tcode{<cmath>}}%
+
+\pnum
+Table~\ref{tab:mathspecial}
+summarizes the functions
+that are added
+to header \tcode{<cmath>}.
+
+\begin{floattable}
+  {Additions to header \tcode{<cmath>}}
+  {tab:mathspecial}
+  {lll}
+\topline\textbf{Functions} & & \\ \capsep
+\tcode{assoc_laguerre}	& \tcode{cyl_bessel_j}	& \tcode{hermite}	\\
+\tcode{assoc_legendre}	& \tcode{cyl_bessel_k}	& \tcode{legendre}	\\
+\tcode{beta}	        & \tcode{cyl_neumann}	& \tcode{laguerre}	\\
+\tcode{comp_ellint_1}	& \tcode{ellint_1}	& \tcode{riemann_zeta}	\\
+\tcode{comp_ellint_2}	& \tcode{ellint_2}	& \tcode{sph_bessel}	\\
+\tcode{comp_ellint_3}	& \tcode{ellint_3}	& \tcode{sph_legendre}	\\
+\tcode{cyl_bessel_i}	& \tcode{expint}	& \tcode{sph_neumann}	\\
+\end{floattable}
+
+\pnum
+Each of these functions
+is provided for arguments
+of types \tcode{float}, \tcode{double}, and \tcode{long double}.
+The detailed signatures
+added to header \tcode{<cmath>} are:
+
+\indexlibrary{\idxhdr{cmath}}%
+\begin{codeblock}
+namespace std {
+  // \ref{sf.cmath.assoc_laguerre}, associated Laguerre polynomials:
+  double       assoc_laguerre(unsigned n, unsigned m, double x);
+  float        assoc_laguerref(unsigned n, unsigned m, float x);
+  long double  assoc_laguerrel(unsigned n, unsigned m, long double x);
+
+  // \ref{sf.cmath.assoc_legendre}, associated Legendre polynomials:
+  double       assoc_legendre(unsigned l, unsigned m, double x);
+  float        assoc_legendref(unsigned l, unsigned m, float x);
+  long double  assoc_legendrel(unsigned l, unsigned m, long double x);
+
+  // \ref{sf.cmath.beta}, beta function:
+  double       beta(double x, double y);
+  float        betaf(float x, float y);
+  long double  betal(long double x, long double y);
+
+  // \ref{sf.cmath.comp_ellint_1}, (complete) elliptic integral of the first kind:
+  double       comp_ellint_1(double k);
+  float        comp_ellint_1f(float k);
+  long double  comp_ellint_1l(long double k);
+
+  // \ref{sf.cmath.comp_ellint_2}, (complete) elliptic integral of the second kind:
+  double       comp_ellint_2(double k);
+  float        comp_ellint_2f(float k);
+  long double  comp_ellint_2l(long double k);
+
+  // \ref{sf.cmath.comp_ellint_3}, (complete) elliptic integral of the third kind:
+  double       comp_ellint_3(double k, double nu);
+  float        comp_ellint_3f(float k, float nu);
+  long double  comp_ellint_3l(long double k, long double nu);
+
+  // \ref{sf.cmath.cyl_bessel}, regular modified cylindrical Bessel functions:
+  double       cyl_bessel_i(double nu, double x);
+  float        cyl_bessel_if(float nu, float x);
+  long double  cyl_bessel_il(long double nu, long double x);
+
+  // \ref{sf.cmath.cyl_bessel_j}, cylindrical Bessel functions (of the first kind):
+  double       cyl_bessel_j(double nu, double x);
+  float        cyl_bessel_jf(float nu, float x);
+  long double  cyl_bessel_jl(long double nu, long double x);
+
+  // \ref{sf.cmath.cyl_bessel_k}, irregular modified cylindrical Bessel functions:
+  double       cyl_bessel_k(double nu, double x);
+  float        cyl_bessel_kf(float nu, float x);
+  long double  cyl_bessel_kl(long double nu, long double x);
+
+  // \ref{sf.cmath.cyl_neumann}, cylindrical Neumann functions;
+  // cylindrical Bessel functions (of the second kind):
+  double       cyl_neumann(double nu, double x);
+  float        cyl_neumannf(float nu, float x);
+  long double  cyl_neumannl(long double nu, long double x);
+
+  // \ref{sf.cmath.ellint_1}, (incomplete) elliptic integral of the first kind:
+  double       ellint_1(double k, double phi);
+  float        ellint_1f(float k, float phi);
+  long double  ellint_1l(long double k, long double phi);
+
+  // \ref{sf.cmath.ellint_2}, (incomplete) elliptic integral of the second kind:
+  double       ellint_2(double k, double phi);
+  float        ellint_2f(float k, float phi);
+  long double  ellint_2l(long double k, long double phi);
+
+  // \ref{sf.cmath.ellint_3}, (incomplete) elliptic integral of the third kind:
+  double       ellint_3(double k, double nu, double phi);
+  float        ellint_3f(float k, float nu, float phi);
+  long double  ellint_3l(long double k, long double nu, long double phi);
+
+  // \ref{sf.cmath.expint}, exponential integral:
+  double       expint(double x);
+  float        expintf(float x);
+  long double  expintl(long double x);
+
+  // \ref{sf.cmath.hermite}, Hermite polynomials:
+  double       hermite(unsigned n, double x);
+  float        hermitef(unsigned n, float x);
+  long double  hermitel(unsigned n, long double x);
+
+  // \ref{sf.cmath.laguerre}, Laguerre polynomials:
+  double       laguerre(unsigned n, double x);
+  float        laguerref(unsigned n, float x);
+  long double  laguerrel(unsigned n, long double x);
+
+  // \ref{sf.cmath.legendre}, Legendre polynomials:
+  double       legendre(unsigned l, double x);
+  float        legendref(unsigned l, float x);
+  long double  legendrel(unsigned l, long double x);
+
+  // \ref{sf.cmath.riemann_zeta}, Riemann zeta function:
+  double       riemann_zeta(double x);
+  float        riemann_zetaf(float x);
+  long double  riemann_zetal(long double x);
+
+  // \ref{sf.cmath.sph_bessel}, spherical Bessel functions (of the first kind):
+  double       sph_bessel(unsigned n, double x);
+  float        sph_besself(unsigned n, float x);
+  long double  sph_bessell(unsigned n, long double x);
+
+  // \ref{sf.cmath.sph_legendre}, spherical associated Legendre functions:
+  double       sph_legendre(unsigned l, unsigned m, double theta);
+  float        sph_legendref(unsigned l, unsigned m, float theta);
+  long double  sph_legendrel(unsigned l, unsigned m, long double theta);
+
+  // \ref{sf.cmath.sph_neumann}, spherical Neumann functions;
+  // spherical Bessel functions (of the second kind):
+  double       sph_neumann(unsigned n, double x);
+  float        sph_neumannf(unsigned n, float x);
+  long double  sph_neumannl(unsigned n, long double x);
+}
+\end{codeblock}
+
+\pnum
+\indextext{overloads!floating point}%
+Moreover, there shall be additional overloads sufficient to ensure:
+
+\begin{itemize}
+  \item If any argument of arithmetic type
+    corresponding to a \tcode{double} parameter
+    has type \tcode{long double},
+    then all arguments of arithmetic type~(\ref{basic.fundamental})
+    corresponding to \tcode{double} parameters
+    are effectively cast to \tcode{long double}.
+  \item Otherwise, if any argument of arithmetic type
+    corresponding to a \tcode{double} parameter
+    has type \tcode{double}
+    or an integer type,
+    then all arguments of arithmetic type
+    corresponding to \tcode{double} parameters
+    are effectively cast to \tcode{double}.
+  \item Otherwise, all arguments of arithmetic type
+    corresponding to \tcode{double} parameters
+    have type \tcode{float}.
+\end{itemize}
+
+\pnum\indextext{NaN}\indextext{domain error}%
+If any argument value
+to any of the functions specified above
+is a NaN (Not a Number),
+the function shall return a NaN
+but it shall not report a domain error.
+Otherwise,
+the function shall report a domain error
+for just those argument values
+for which:
+
+\begin{itemize}
+  \item
+  the function description's \emph{Returns} clause
+  explicitly specifies a domain
+  and those argument values fall
+  outside the specified domain,
+  or
+
+  \item
+  the corresponding mathematical function value
+  has a non-zero imaginary component,
+  or
+
+  \item
+  the corresponding mathematical function
+  is not mathematically defined.\footnote{%
+    A mathematical function
+    is mathematically defined
+    for a given set of argument values
+    (a)
+      if it is explicitly defined
+      for that set of argument values,
+      or
+    (b)
+      if its limiting value exists
+      and does not depend
+      on the direction of approach.}
+\end{itemize}
+
+\pnum
+Unless otherwise specified,
+each function is defined
+for all finite values,
+for negative infinity,
+and for positive infinity.
+
+\rSec2[sf.cmath.assoc_laguerre]{Associated Laguerre polynomials}%
+\indexlibrary{\idxcode{assoc_laguerre}}%
+\indexlibrary{\idxcode{assoc_laguerref}}%
+\indexlibrary{\idxcode{assoc_laguerrel}}%
+\indextext{Laguerre polynomials!$\mathsf{L}_n^m$}%
+\indextext{L nm@$\mathsf{L}_n^m$ (associated Laguerre polynomials)}%
+\begin{itemdecl}
+double       assoc_laguerre(unsigned n, unsigned m, double x);
+float        assoc_laguerref(unsigned n, unsigned m, float x);
+long double  assoc_laguerrel(unsigned n, unsigned m, long double x);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum\effects
+These functions compute
+the associated Laguerre polynomials
+of their respective arguments
+\tcode{n}, \tcode{m}, and \tcode{x}.
+
+\pnum\returns
+\[%
+  \mathsf{L}_n^m(x) =
+  (-1)^m \frac{\mathsf{d} ^ m}
+	   {\mathsf{d}x ^ m} \, \mathsf{L}_{n+m}(x),
+	   \quad \mbox{for $x \ge 0$}
+\]
+where
+$n$ is \tcode{n},
+$m$ is \tcode{m}, and
+$x$ is \tcode{x}.
+
+\pnum\remark
+The effect of calling each of these functions
+is implementation-defined
+if \tcode{n >= 128} or if \tcode{m >= 128}.
+\end{itemdescr}
+
+\rSec2[sf.cmath.assoc_legendre]{Associated Legendre polynomials}%
+\indexlibrary{\idxcode{assoc_legendre}}%
+\indexlibrary{\idxcode{assoc_legendref}}%
+\indexlibrary{\idxcode{assoc_legendrel}}%
+\indextext{Legendre polynomials!$\mathsf{P}_\ell^m$}%
+\indextext{P lm@$\mathsf{P}_\ell^m$ (associated Legendre polynomials)}%
+\begin{itemdecl}
+double       assoc_legendre(unsigned l, unsigned m, double x);
+float        assoc_legendref(unsigned l, unsigned m, float x);
+long double  assoc_legendrel(unsigned l, unsigned m, long double x);
+\end{itemdecl}
+
+\begin{itemdescr}
+
+\pnum\effects
+These functions compute
+the associated Legendre functions
+of their respective arguments
+\tcode{l}, \tcode{m}, and \tcode{x}.
+
+\pnum\returns
+\[%
+  \mathsf{P}_\ell^m(x) =
+  (1 - x^2) ^ {m/2}
+  \:
+  \frac{ \mathsf{d} ^ m}
+       { \mathsf{d}x ^ m} \, \mathsf{P}_\ell(x),
+	   \quad \mbox{for $|x| \le 1$}
+\]
+where
+$l$ is \tcode{l},
+$m$ is \tcode{m}, and
+$x$ is \tcode{x}.
+
+\pnum\remark
+The effect of calling each of these functions
+is implementation-defined
+if \tcode{l >= 128}.
+\end{itemdescr}
+
+\rSec2[sf.cmath.beta]{Beta function}%
+\indexlibrary{\idxcode{beta}}%
+\indexlibrary{\idxcode{betaf}}%
+\indexlibrary{\idxcode{betal}}%
+\indextext{Eulerian integral of the first kind|see{\tcode{beta}}}%
+\indextext{beta functions $\mathsf{B}$}%
+\begin{itemdecl}
+double       beta(double x, double y);
+float        betaf(float x, float y);
+long double  betal(long double x, long double y);
+\end{itemdecl}
+
+\begin{itemdescr}
+
+\pnum\effects
+These functions compute
+the beta function
+of their respective arguments
+\tcode{x} and \tcode{y}.
+
+\pnum\returns
+\[%
+  \mathsf{B}(x, y) =
+  \frac{ \Gamma(x) \, \Gamma(y) }
+       { \Gamma(x+y) },
+       \quad \mbox{for $x > 0$,\, $y > 0$}
+\]
+where
+$x$ is \tcode{x} and
+$y$ is \tcode{y}.
+\end{itemdescr}
+
+\rSec2[sf.cmath.comp_ellint_1]{(Complete) elliptic integral of the first kind}%
+\indexlibrary{\idxcode{comp_ellint_1}}%
+\indexlibrary{\idxcode{comp_ellint_1f}}%
+\indexlibrary{\idxcode{comp_ellint_1l}}%
+\indextext{elliptic integrals!complete $\mathsf{K}$}%
+\indextext{K complete@$\mathsf{K}$ (complete elliptic integrals)}%
+\begin{itemdecl}
+double       comp_ellint_1(double k);
+float        comp_ellint_1f(float k);
+long double  comp_ellint_1l(long double k);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum\effects
+These functions compute
+the complete elliptic integral of the first kind
+of their respective arguments
+\tcode{k}.
+
+\pnum\returns
+\[%
+  \mathsf{K}(k) =
+  \mathsf{F}(k, \pi / 2),
+		      \quad \mbox{for $|k| \le 1$}
+\]
+where
+$k$ is \tcode{k}.
+
+\pnum See also \ref{sf.cmath.ellint_1}.
+\end{itemdescr}
+
+\rSec2[sf.cmath.comp_ellint_2]{(Complete) elliptic integral of the second kind}%
+\indexlibrary{\idxcode{comp_ellint_2}}%
+\indexlibrary{\idxcode{comp_ellint_2f}}%
+\indexlibrary{\idxcode{comp_ellint_2l}}%
+\indextext{elliptic integrals!complete $\mathsf{E}$}%
+\indextext{E complete@$\mathsf{E}$ (complete elliptic integrals)}%
+\begin{itemdecl}
+double       comp_ellint_2(double k);
+float        comp_ellint_2f(float k);
+long double  comp_ellint_2l(long double k);
+\end{itemdecl}
+
+\begin{itemdescr}
+
+\pnum\effects
+These functions compute
+the complete elliptic integral of the second kind
+of their respective arguments
+\tcode{k}.
+
+\pnum\returns
+\[%
+  \mathsf{E}(k) =
+  \mathsf{E}(k, \pi / 2),
+\quad \mbox{for $|k| \le 1$}
+\]
+where
+$k$ is \tcode{k}.
+
+\pnum See also \ref{sf.cmath.ellint_2}.
+\end{itemdescr}
+
+\rSec2[sf.cmath.comp_ellint_3]{(Complete) elliptic integral of the third kind}%
+\indexlibrary{\idxcode{comp_ellint_3}}%
+\indexlibrary{\idxcode{comp_ellint_3f}}%
+\indexlibrary{\idxcode{comp_ellint_3l}}%
+\indextext{elliptic integrals!complete $\mathsf{\Pi}$}%
+\indextext{Pi complete@$\mathsf{\Pi}$ (complete elliptic integrals)}%
+\begin{itemdecl}
+double       comp_ellint_3(double k, double nu);
+float        comp_ellint_3f(float k, float nu);
+long double  comp_ellint_3l(long double k, long double nu);
+\end{itemdecl}
+
+\begin{itemdescr}
+
+\pnum\effects
+These functions compute
+the complete elliptic integral of the third kind
+of their respective arguments
+\tcode{k} and \tcode{nu}.
+
+\pnum\returns
+\[%
+  \mathsf{\Pi}(\nu, k) = \mathsf{\Pi}(\nu, k, \pi / 2),
+		\quad \mbox{for $|k| \le 1$}
+\]
+where
+$k$ is \tcode{k} and
+$nu$ is \tcode{nu}.
+
+\pnum See also \ref{sf.cmath.ellint_3}.
+\end{itemdescr}
+
+\rSec2[sf.cmath.cyl_bessel]{Regular modified cylindrical Bessel functions}%
+\indexlibrary{\idxcode{cyl_bessel_i}}%
+\indexlibrary{\idxcode{cyl_bessel_if}}%
+\indexlibrary{\idxcode{cyl_bessel_il}}%
+\indextext{Bessel functions!$\mathsf{I}_\nu$}%
+\indextext{I nu@$\mathsf{I}_\nu$ (Bessell functions)}%
+\begin{itemdecl}
+double       cyl_bessel_i(double nu, double x);
+float        cyl_bessel_if(float nu, float x);
+long double  cyl_bessel_il(long double nu, long double x);
+\end{itemdecl}
+
+\begin{itemdescr}
+
+\pnum\effects
+These functions compute
+the regular modified cylindrical Bessel functions
+of their respective arguments
+\tcode{nu} and \tcode{x}.
+
+\pnum\returns
+\[%
+  \mathsf{I}_\nu(x) =
+  \mathrm{i}^{-\nu} \mathsf{J}_\nu(\mathrm{i}x)
+  =
+  \sum_{k=0}^\infty \frac{(x/2)^{\nu+2k}}
+			 {k! \: \Gamma(\nu+k+1)},
+	   \quad \mbox{for $x \ge 0$}
+\]
+where
+$nu$ is \tcode{nu} and
+$x$ is \tcode{x}.
+
+\pnum\remark
+The effect of calling each of these functions
+is implementation-defined
+if \tcode{nu >= 128}.
+
+\pnum See also \ref{sf.cmath.cyl_bessel_j}.
+\end{itemdescr}
+
+\rSec2[sf.cmath.cyl_bessel_j]{Cylindrical Bessel functions (of the first kind)}%
+\indexlibrary{\idxcode{cyl_bessel_j}}%
+\indexlibrary{\idxcode{cyl_bessel_jf}}%
+\indexlibrary{\idxcode{cyl_bessel_jl}}%
+\indextext{Bessel functions!$\mathsf{J}_\nu$}%
+\indextext{J nu@$\mathsf{J}_\nu$ (Bessell functions)}%
+\begin{itemdecl}
+double       cyl_bessel_j(double nu, double x);
+float        cyl_bessel_jf(float nu, float x);
+long double  cyl_bessel_jl(long double nu, long double x);
+\end{itemdecl}
+
+\begin{itemdescr}
+
+\pnum\effects
+These functions compute
+the cylindrical Bessel functions of the first kind
+of their respective arguments
+\tcode{nu} and \tcode{x}.
+
+\pnum\returns
+\[%
+  \mathsf{J}_\nu(x) =
+  \sum_{k=0}^\infty \frac{(-1)^k (x/2)^{\nu+2k}}
+			 {k! \: \Gamma(\nu+k+1)},
+	   \quad \mbox{for $x \ge 0$}
+\]
+where
+$nu$ is \tcode{nu} and
+$x$ is \tcode{x}.
+
+\pnum\remark
+The effect of calling each of these functions
+is implementation-defined
+if \tcode{nu >= 128}.
+\end{itemdescr}
+
+\rSec2[sf.cmath.cyl_bessel_k]{Irregular modified cylindrical Bessel functions}%
+\indexlibrary{\idxcode{cyl_bessel_k}}%
+\indexlibrary{\idxcode{cyl_bessel_kf}}%
+\indexlibrary{\idxcode{cyl_bessel_kl}}%
+\indextext{Bessel functions!$\mathsf{K}_\nu$}%
+\indextext{K nu@$\mathsf{K}_\nu$ (Bessell functions)}%
+\begin{itemdecl}
+double       cyl_bessel_k(double nu, double x);
+float        cyl_bessel_kf(float nu, float x);
+long double  cyl_bessel_kl(long double nu, long double x);
+\end{itemdecl}
+
+\begin{itemdescr}
+
+\pnum\effects
+These functions compute
+the irregular modified cylindrical Bessel functions
+of their respective arguments
+\tcode{nu} and \tcode{x}.
+
+\pnum\returns
+\[%
+  \mathsf{K}_\nu(x) =
+  (\pi/2)\mathrm{i}^{\nu+1} (            \mathsf{J}_\nu(\mathrm{i}x)
+			    + \mathrm{i} \mathsf{N}_\nu(\mathrm{i}x)
+			    )
+  =
+  \left\{
+  \begin{array}{cl}
+  \displaystyle
+  \frac{\pi}{2}
+  \frac{\mathsf{I}_{-\nu}(x) - \mathsf{I}_{\nu}(x)}
+       {\sin \nu\pi },
+  & \mbox{for $x \ge 0$ and non-integral $\nu$}
+  \\
+  \\
+  \displaystyle
+  \frac{\pi}{2}
+  \lim_{\mu \rightarrow \nu} \frac{\mathsf{I}_{-\mu}(x) - \mathsf{I}_{\mu}(x)}
+                                  {\sin \mu\pi },
+  & \mbox{for $x \ge 0$ and integral $\nu$}
+  \end{array}
+  \right.
+\]
+where
+$nu$ is \tcode{nu} and
+$x$ is \tcode{x}.
+
+\pnum\remark
+The effect of calling each of these functions
+is implementation-defined
+if \tcode{nu >= 128}.
+
+\pnum See also \ref{sf.cmath.cyl_bessel}.
+\end{itemdescr}
+
+\rSec2[sf.cmath.cyl_neumann]{Cylindrical Neumann functions}%
+\indexlibrary{\idxcode{cyl_neumann}}%
+\indexlibrary{\idxcode{cyl_neumannf}}%
+\indexlibrary{\idxcode{cyl_neumannl}}%
+\indextext{Bessel functions!$\mathsf{N}_\nu$}%
+\indextext{Neumann functions!$\mathsf{N}_\nu$}%
+\indextext{N nu@$\mathsf{N}_\nu$ (Neumann functions)}%
+\begin{itemdecl}
+double       cyl_neumann(double nu, double x);
+float        cyl_neumannf(float nu, float x);
+long double  cyl_neumannl(long double nu, long double x);
+\end{itemdecl}
+
+\begin{itemdescr}
+
+\pnum\effects
+These functions compute the cylindrical Neumann functions,
+also known as the cylindrical Bessel functions of the second kind,
+of their respective arguments
+\tcode{nu} and \tcode{x}.
+
+\pnum\returns
+\[%
+  \mathsf{N}_\nu(x) =
+  \left\{
+  \begin{array}{cl}
+  \displaystyle
+  \frac{\mathsf{J}_\nu(x) \cos \nu\pi - \mathsf{J}_{-\nu}(x)}
+       {\sin \nu\pi },
+  & \mbox{for $x \ge 0$ and non-integral $\nu$}
+  \\
+  \\
+  \displaystyle
+  \lim_{\mu \rightarrow \nu} \frac{\mathsf{J}_\mu(x) \cos \mu\pi - \mathsf{J}_{-\mu}(x)}
+                                {\sin \mu\pi },
+  & \mbox{for $x \ge 0$ and integral $\nu$}
+  \end{array}
+  \right.
+\]
+where
+$nu$ is \tcode{nu} and
+$x$ is \tcode{x}.
+
+\pnum\remark
+The effect of calling each of these functions
+is implementation-defined
+if \tcode{nu >= 128}.
+
+\pnum See also \ref{sf.cmath.cyl_bessel_j}.
+\end{itemdescr}
+
+\rSec2[sf.cmath.ellint_1]{(Incomplete) elliptic integral of the first kind}%
+\indexlibrary{\idxcode{ellint_1}}%
+\indexlibrary{\idxcode{ellint_1f}}%
+\indexlibrary{\idxcode{ellint_1l}}%
+\indextext{elliptic integrals!incomplete $\mathsf{F}$}%
+\indextext{F incomplete@$\mathsf{F}$ (incomplete elliptic integrals)}%
+\begin{itemdecl}
+double       ellint_1(double k, double phi);
+float        ellint_1f(float k, float phi);
+long double  ellint_1l(long double k, long double phi);
+\end{itemdecl}
+
+\begin{itemdescr}
+
+\pnum\effects
+These functions compute
+the incomplete elliptic integral of the first kind
+of their respective arguments
+\tcode{k} and \tcode{phi} (\tcode{phi} measured in radians).
+
+\pnum\returns
+\[%
+  \mathsf{F}(k, \phi) =
+  \int_0^\phi \! \frac{\mathsf{d}\theta}
+                      {\sqrt{1 - k^2 \sin^2 \theta}},
+	   \quad \mbox{for $|k| \le 1$}
+\]
+where
+$k$ is \tcode{k} and
+$phi$ is \tcode{phi}.
+\end{itemdescr}
+
+\rSec2[sf.cmath.ellint_2]{(Incomplete) elliptic integral of the second kind}%
+\indexlibrary{\idxcode{ellint_2}}%
+\indexlibrary{\idxcode{ellint_2f}}%
+\indexlibrary{\idxcode{ellint_2l}}%
+\indextext{elliptic integrals!incomplete $\mathsf{E}$}%
+\indextext{E incomplete@$\mathsf{E}$ (incomplete elliptic integrals)}%
+\begin{itemdecl}
+double       ellint_2(double k, double phi);
+float        ellint_2f(float k, float phi);
+long double  ellint_2l(long double k, long double phi);
+\end{itemdecl}
+
+\begin{itemdescr}
+
+\pnum\effects
+These functions compute
+the incomplete elliptic integral of the second kind
+of their respective arguments
+\tcode{k} and \tcode{phi} (\tcode{phi} measured in radians).
+
+\pnum\returns
+\[%
+  \mathsf{E}(k, \phi) =
+  \int_0^\phi \! \sqrt{1 - k^2 \sin^2 \theta} \, \mathsf{d}\theta,
+	   \quad \mbox{for $|k| \le 1$}
+\]
+where
+$k$ is \tcode{k} and
+$phi$ is \tcode{phi}.
+\end{itemdescr}
+
+\rSec2[sf.cmath.ellint_3]{(Incomplete) elliptic integral of the third kind}%
+\indexlibrary{\idxcode{ellint_3}}%
+\indexlibrary{\idxcode{ellint_3f}}%
+\indexlibrary{\idxcode{ellint_3l}}%
+\indextext{elliptic integrals!incomplete $\mathsf{\Pi}$}%
+\indextext{Pi incomplete@$\mathsf{\Pi}$ (incomplete elliptic integrals)}%
+\begin{itemdecl}
+double       ellint_3(double k, double nu, double phi);
+float        ellint_3f(float k, float nu, float phi);
+long double  ellint_3l(long double k, long double nu, long double phi);
+\end{itemdecl}
+
+\begin{itemdescr}
+
+\pnum\effects
+These functions compute
+the incomplete elliptic integral of the third kind
+of their respective arguments
+\tcode{k}, \tcode{nu}, and \tcode{phi} (\tcode{phi} measured in radians).
+
+\pnum\returns
+\[%
+  \mathsf{\Pi}(\nu, k, \phi) =
+  \int_0^\phi \! \frac{ \mathsf{d}\theta }
+                      { (1 - \nu \, \sin^2 \theta) \sqrt{1 - k^2 \sin^2 \theta} },
+	   \quad \mbox{for $|k| \le 1$}
+\]
+where
+$nu$ is \tcode{nu},
+$k$ is \tcode{k}, and
+$phi$ is \tcode{phi}.
+\end{itemdescr}
+
+\rSec2[sf.cmath.expint]{Exponential integral}%
+\indexlibrary{\idxcode{expint}}%
+\indexlibrary{\idxcode{expintf}}%
+\indexlibrary{\idxcode{expintl}}%
+\indextext{exponential integrals $\mathsf{Ei}$}%
+\indextext{Ei@$\mathsf{Ei}$ (exponential integrals)}%
+\begin{itemdecl}
+double       expint(double x);
+float        expintf(float x);
+long double  expintl(long double x);
+\end{itemdecl}
+
+\begin{itemdescr}
+
+\pnum\effects
+These functions compute the exponential integral
+of their respective arguments
+\tcode{x}.
+
+\pnum\returns
+\[%
+  \mathsf{Ei}(x) =
+  - \int_{-x}^\infty \frac{e^{-t}}
+                          {t     } \, \mathsf{d}t
+\;
+\]
+where
+$x$ is \tcode{x}.
+
+\end{itemdescr}
+
+\rSec2[sf.cmath.hermite]{Hermite polynomials}%
+\indexlibrary{\idxcode{hermite}}%
+\indexlibrary{\idxcode{hermitef}}%
+\indexlibrary{\idxcode{hermitel}}%
+\indextext{Hermite polynomials $\mathsf{H}_n$}%
+\indextext{H n@$\mathsf{H}_n$ (Hermite polynomials)}%
+\begin{itemdecl}
+double       hermite(unsigned n, double x);
+float        hermitef(unsigned n, float x);
+long double  hermitel(unsigned n, long double x);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum\effects
+These functions compute the Hermite polynomials
+of their respective arguments
+\tcode{n} and \tcode{x}.
+
+\pnum\returns
+\[%
+  \mathsf{H}_n(x) =
+  (-1)^n e^{x^2} \frac{ \mathsf{d} ^n}
+		      { \mathsf{d}x^n} \, e^{-x^2}
+\;
+\]
+where
+$n$ is \tcode{n} and
+$x$ is \tcode{x}.
+
+\pnum\remark
+The effect of calling each of these functions
+is implementation-defined
+if \tcode{n >= 128}.
+\end{itemdescr}
+
+\rSec2[sf.cmath.laguerre]{Laguerre polynomials}%
+\indexlibrary{\idxcode{laguerre}}%
+\indexlibrary{\idxcode{laguerref}}%
+\indexlibrary{\idxcode{laguerrel}}%
+\indextext{Laguerre polynomials!$\mathsf{L}_n$}%
+\indextext{L n@$\mathsf{L}_n$ (Laguerre polynomials)}%
+\begin{itemdecl}
+double       laguerre(unsigned n, double x);
+float        laguerref(unsigned n, float x);
+long double  laguerrel(unsigned n, long double x);
+\end{itemdecl}
+
+\begin{itemdescr}
+
+\pnum\effects
+These functions compute the Laguerre polynomials
+of their respective arguments
+\tcode{n} and \tcode{x}.
+
+\pnum\returns
+\[%
+  \mathsf{L}_n(x) =
+  \frac{e^x}{n!} \frac{ \mathsf{d} ^ n}
+		    { \mathsf{d}x ^ n} \, (x^n e^{-x}),
+	   \quad \mbox{for $x \ge 0$}
+\]
+where
+$n$ is \tcode{n} and
+$x$ is \tcode{x}.
+
+\pnum\remark
+The effect of calling each of these functions
+is implementation-defined
+if \tcode{n >= 128}.
+\end{itemdescr}
+
+\rSec2[sf.cmath.legendre]{Legendre polynomials}%
+\indexlibrary{\idxcode{legendre}}%
+\indexlibrary{\idxcode{legendref}}%
+\indexlibrary{\idxcode{legendrel}}%
+\indextext{Legendre polynomials!$\mathsf{P}_\ell$}%
+\indextext{P l@$\mathsf{P}_\ell$ (Legendre polynomials)}%
+\begin{itemdecl}
+double       legendre(unsigned l, double x);
+float        legendref(unsigned l, float x);
+long double  legendrel(unsigned l, long double x);
+\end{itemdecl}
+
+\begin{itemdescr}
+
+\pnum\effects
+These functions compute the Legendre polynomials of their
+respective arguments
+\tcode{l} and \tcode{x}.
+
+\pnum\returns
+\[%
+  \mathsf{P}_\ell(x) =
+  \frac{1}
+       {2^\ell \, \ell!}
+  \frac{ \mathsf{d} ^ \ell}
+       { \mathsf{d}x ^ \ell} \, (x^2 - 1) ^ \ell,
+	   \quad \mbox{for $|x| \le 1$}
+\]
+where
+$l$ is \tcode{l} and
+$x$ is \tcode{x}.
+
+\pnum\remark
+The effect of calling each of these functions
+is implementation-defined
+if \tcode{l >= 128}.
+\end{itemdescr}
+
+\rSec2[sf.cmath.riemann_zeta]{Riemann zeta function}%
+\indexlibrary{\idxcode{riemann_zeta}}%
+\indexlibrary{\idxcode{riemann_zetaf}}%
+\indexlibrary{\idxcode{riemann_zetal}}%
+\indextext{zeta functions $\zeta$}%
+\begin{itemdecl}
+double       riemann_zeta(double x);
+float        riemann_zetaf(float x);
+long double  riemann_zetal(long double x);
+\end{itemdecl}
+
+\begin{itemdescr}
+
+\pnum\effects
+These functions compute the Riemann zeta function
+of their respective arguments
+\tcode{x}.
+
+\pnum\returns
+\[%
+  \mathsf{\zeta}(x) =
+  \left\{
+  \begin{array}{cl}
+  \displaystyle
+  \sum_{k=1}^\infty k^{-x},
+  & \mbox{for $x > 1$}
+  \\
+  \\
+  \displaystyle
+  \frac{1}
+	{1 - 2^{1-x}}
+  \sum_{k=1}^\infty (-1)^{k-1} k^{-x},
+  & \mbox{for $0 \le x \le 1$}
+  \\
+  \\
+  \displaystyle
+  2^x \pi^{x-1} \sin(\frac{\pi x}{2}) \, \Gamma(1-x) \, \zeta(1-x),
+  & \mbox{for $x < 0$}
+  \end{array}
+  \right.
+\;
+\]
+where
+$x$ is \tcode{x}.
+\end{itemdescr}
+
+\rSec2[sf.cmath.sph_bessel]{Spherical Bessel functions (of the first kind)}%
+\indexlibrary{\idxcode{sph_bessel}}%
+\indexlibrary{\idxcode{sph_besself}}%
+\indexlibrary{\idxcode{sph_bessell}}%
+\indextext{Bessel functions!$\mathsf{j}_n$}%
+\indextext{j n@$\mathsf{j}_n$ (spherical Bessel functions)}%
+\begin{itemdecl}
+double       sph_bessel(unsigned n, double x);
+float        sph_besself(unsigned n, float x);
+long double  sph_bessell(unsigned n, long double x);
+\end{itemdecl}
+
+\begin{itemdescr}
+
+\pnum\effects
+These functions compute
+the spherical Bessel functions of the first kind
+of their respective arguments
+\tcode{n} and \tcode{x}.
+
+\pnum\returns
+\[%
+  \mathsf{j}_n(x) =
+  (\pi/2x)^{1\!/\!2} \mathsf{J}_{n + 1\!/\!2}(x),
+	   \quad \mbox{for $x \ge 0$}
+\]
+where
+$n$ is \tcode{n} and
+$x$ is \tcode{x}.
+
+\pnum\remark
+The effect of calling each of these functions
+is implementation-defined
+if \tcode{n >= 128}.
+
+\pnum See also \ref{sf.cmath.cyl_bessel_j}.
+\end{itemdescr}
+
+\rSec2[sf.cmath.sph_legendre]{Spherical associated Legendre functions}%
+\indexlibrary{\idxcode{sph_legendre}}%
+\indexlibrary{\idxcode{sph_legendref}}%
+\indexlibrary{\idxcode{sph_legendrel}}%
+\indextext{spherical harmonics $\mathsf{Y}_\ell^m$}%
+\indextext{Legendre functions $\mathsf{Y}_\ell^m$}%
+\indextext{Y lm@$\mathsf{Y}_\ell^m$ (spherical associated Legendre functions)}%
+\begin{itemdecl}
+double       sph_legendre(unsigned l, unsigned m, double theta);
+float        sph_legendref(unsigned l, unsigned m, float theta);
+long double  sph_legendrel(unsigned l, unsigned m, long double theta);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum\effects
+These functions compute the spherical associated Legendre functions
+of their respective arguments
+\tcode{l}, \tcode{m}, and \tcode{theta} (\tcode{theta} measured in radians).
+
+\pnum\returns
+\[%
+  \mathsf{Y}_\ell^m(\theta, 0)
+\;\]
+where
+\[%
+  \mathsf{Y}_\ell^m(\theta, \phi) =
+  (-1)^m \left[ \frac{(2 \ell + 1)}
+                     {4 \pi}
+	        \frac{(\ell - m)!}
+	             {(\ell + m)!}
+         \right]^{1/2}
+	 \mathsf{P}_\ell^m
+	 ( \cos\theta ) e ^ {i m \phi},
+	   \quad \mbox{for $|m| \le \ell$}
+\]
+and
+$l$ is \tcode{l},
+$m$ is \tcode{m}, and
+$theta$ is \tcode{theta}.
+
+\pnum\remark
+The effect of calling each of these functions
+is implementation-defined
+if \tcode{l >= 128}.
+
+\pnum See also \ref{sf.cmath.assoc_legendre}.
+\end{itemdescr}
+
+\rSec2[sf.cmath.sph_neumann]{Spherical Neumann functions}%
+\indexlibrary{\idxcode{sph_neumann}}%
+\indexlibrary{\idxcode{sph_neumannf}}%
+\indexlibrary{\idxcode{sph_neumannl}}%
+\indextext{Bessel functions!$\mathsf{n}_n$}%
+\indextext{Neumann functions!$\mathsf{n}_n$}%
+\indextext{n n spherical@$\mathsf{n}_n$ (spherical Neumann functions)}%
+\begin{itemdecl}
+double       sph_neumann(unsigned n, double x);
+float        sph_neumannf(unsigned n, float x);
+long double  sph_neumannl(unsigned n, long double x);
+\end{itemdecl}
+
+\begin{itemdescr}
+
+\pnum\effects
+These functions compute the spherical Neumann functions,
+also known as the spherical Bessel functions of the second kind,
+of their respective arguments
+\tcode{n} and \tcode{x}.
+
+\pnum\returns
+\[%
+  \mathsf{n}_n(x) =
+  (\pi/2x)^{1\!/\!2} \mathsf{N}_{n + 1\!/\!2}(x),
+	   \quad \mbox{for $x \ge 0$}
+\]
+where
+$n$ is \tcode{n} and
+$x$ is \tcode{x}.
+
+\pnum\remark
+The effect of calling each of these functions
+is implementation-defined
+if \tcode{n >= 128}.
+
+\pnum See also \ref{sf.cmath.cyl_neumann}.
+\end{itemdescr}
+
+\indextext{special functions|)}

@@ -225,7 +225,7 @@ denotes a non-const rvalue of type \tcode{X}.
 
 \tcode{a != b}                      &
  convertible to \tcode{bool}        &
- Equivalent to: \tcode{!(a == b)}   &
+ Equivalent to \tcode{!(a == b)}   &
                                     &
  linear                             \\ \rowsep
 
@@ -878,7 +878,7 @@ The complexities of the expressions are sequence dependent.
  \tcode{iterator}   &
  \requires\ For \tcode{vector} and \tcode{deque},
  \tcode{T} shall be \tcode{MoveAssignable}.\br
- \effects\ Erases the element pointed to by \tcode{q} \\ \rowsep
+ \effects\ Erases the element pointed to by \tcode{q}. \\ \rowsep
 
 \tcode{a.erase(q1,q2)}  &
  \tcode{iterator}   &
@@ -1371,7 +1371,7 @@ and \tcode{e} in \tcode{a};
                                     &
   \requires\ \tcode{key_compare} is \tcode{DefaultConstructible}.
   \tcode{value_type} is \tcode{EmplaceConstructible} into \tcode{X} from \tcode{*i}.\br
-  \effects\ Same as above, but uses \tcode{Compare()} as a comparison object  &
+  \effects\ Same as above, but uses \tcode{Compare()} as a comparison object.  &
   same as above                      \\ \rowsep
 
 \tcode{X(il);}            &
@@ -2479,6 +2479,11 @@ namespace std {
   template <class T, class Allocator>
     void swap(deque<T, Allocator>& x, deque<T, Allocator>& y)
       noexcept(noexcept(x.swap(y)));
+
+  namespace pmr {
+    template <class T>
+      using deque = std::deque<T, polymorphic_allocator<T>>;
+  }
 }
 \end{codeblock}
 
@@ -2507,6 +2512,11 @@ namespace std {
   template <class T, class Allocator>
     void swap(forward_list<T, Allocator>& x, forward_list<T, Allocator>& y)
       noexcept(noexcept(x.swap(y)));
+
+  namespace pmr {
+    template <class T>
+      using forward_list = std::forward_list<T, polymorphic_allocator<T>>;
+  }
 }
 \end{codeblock}
 
@@ -2535,6 +2545,11 @@ namespace std {
   template <class T, class Allocator>
     void swap(list<T, Allocator>& x, list<T, Allocator>& y)
       noexcept(noexcept(x.swap(y)));
+
+  namespace pmr {
+    template <class T>
+      using list = std::list<T, polymorphic_allocator<T>>;
+  }
 }
 \end{codeblock}
 
@@ -2570,6 +2585,11 @@ namespace std {
   // hash support
   template <class T> struct hash;
   template <class Allocator> struct hash<vector<bool, Allocator>>;
+
+  namespace pmr {
+    template <class T>
+      using vector = std::vector<T, polymorphic_allocator<T>>;
+  }
 }
 \end{codeblock}
 
@@ -2590,12 +2610,7 @@ so that \tcode{size() == N} is an invariant.
 \indextext{\idxcode{array}!initialization}%
 \indextext{\idxcode{array}!as aggregate}%
 An \tcode{array} is an aggregate~(\ref{dcl.init.aggr}) that can be
-initialized with the syntax
-\begin{codeblock}
-array<T, N> a = { @\textit{initializer-list}@ };
-\end{codeblock}
-
-where \textit{initializer-list} is a comma-separated list of up
+list-initialized with up
 to \tcode{N} elements whose types are convertible to \tcode{T}.
 
 \pnum
@@ -2641,23 +2656,23 @@ namespace std {
     // no explicit construct/copy/destroy for aggregate type
 
     void fill(const T& u);
-    void swap(array&) noexcept(noexcept(swap(declval<T&>(), declval<T&>())));
+    void swap(array&) noexcept(is_nothrow_swappable_v<T>);
 
     // iterators:
-    iterator               begin() noexcept;
-    const_iterator         begin() const noexcept;
-    iterator               end() noexcept;
-    const_iterator         end() const noexcept;
+    constexpr iterator               begin() noexcept;
+    constexpr const_iterator         begin() const noexcept;
+    constexpr iterator               end() noexcept;
+    constexpr const_iterator         end() const noexcept;
 
-    reverse_iterator       rbegin() noexcept;
-    const_reverse_iterator rbegin() const noexcept;
-    reverse_iterator       rend() noexcept;
-    const_reverse_iterator rend() const noexcept;
+    constexpr reverse_iterator       rbegin() noexcept;
+    constexpr const_reverse_iterator rbegin() const noexcept;
+    constexpr reverse_iterator       rend() noexcept;
+    constexpr const_reverse_iterator rend() const noexcept;
 
-    const_iterator         cbegin() const noexcept;
-    const_iterator         cend() const noexcept;
-    const_reverse_iterator crbegin() const noexcept;
-    const_reverse_iterator crend() const noexcept;
+    constexpr const_iterator         cbegin() const noexcept;
+    constexpr const_iterator         cend() const noexcept;
+    constexpr const_reverse_iterator crbegin() const noexcept;
+    constexpr const_reverse_iterator crend() const noexcept;
 
     // capacity:
     constexpr bool      empty() const noexcept;
@@ -2665,17 +2680,17 @@ namespace std {
     constexpr size_type max_size() const noexcept;
 
     // element access:
-    reference                 operator[](size_type n);
+    constexpr reference       operator[](size_type n);
     constexpr const_reference operator[](size_type n) const;
-    reference                 at(size_type n);
+    constexpr reference       at(size_type n);
     constexpr const_reference at(size_type n) const;
-    reference                 front();
+    constexpr reference       front();
     constexpr const_reference front() const;
-    reference                 back();
+    constexpr reference       back();
     constexpr const_reference back() const;
 
-    T *       data() noexcept;
-    const T * data() const noexcept;
+    constexpr T *       data() noexcept;
+    constexpr const T * data() const noexcept;
   };
 }
 \end{codeblock}
@@ -2709,10 +2724,12 @@ template <class T, size_t N>
 \end{itemdecl}
 
 \begin{itemdescr}
+\pnum\remarks
+This function shall not participate in overload resolution
+unless \tcode{N == 0} or \tcode{is_swappable_v<T>} is \tcode{true}.
+
 \pnum\effects
-\begin{codeblock}
-x.swap(y);
-\end{codeblock}
+As if by \tcode{x.swap(y)}.
 
 \pnum
 \complexity Linear in \tcode{N}.
@@ -2734,8 +2751,8 @@ template <class T, size_t N> constexpr size_type array<T, N>::size() const noexc
 \indexlibrary{\idxcode{array}!\idxcode{data}}%
 \indexlibrary{\idxcode{data}!\idxcode{array}}%
 \begin{itemdecl}
-T* data() noexcept;
-const T* data() const noexcept;
+constexpr T* data() noexcept;
+constexpr const T* data() const noexcept;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2752,7 +2769,7 @@ void fill(const T& u);
 
 \begin{itemdescr}
 \pnum
-\effects \tcode{fill_n(begin(), N, u)}
+\effects As if by \tcode{fill_n(begin(), N, u)}.
 \end{itemdescr}
 
 \rSec3[array.swap]{\tcode{array::swap}}
@@ -2760,12 +2777,12 @@ void fill(const T& u);
 \indexlibrary{\idxcode{array}!\idxcode{swap}}%
 \indexlibrary{\idxcode{swap}!\idxcode{array}}%
 \begin{itemdecl}
-void swap(array& y) noexcept(noexcept(swap(declval<T&>(), declval<T&>())));
+void swap(array& y) noexcept(is_nothrow_swappable_v<T>);
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\effects \tcode{swap_ranges(begin(), end(), y.begin())}
+\effects As if by \tcode{swap_ranges(begin(), end(), y.begin())}.
 
 \pnum
 \throws Nothing unless one of the element-wise swap calls throws an exception.
@@ -2845,12 +2862,11 @@ where indexing is zero-based.
 A
 \indexlibrary{\idxcode{deque}}%
 \tcode{deque}
-is a sequence container that, like a
-\tcode{vector}~(\ref{vector}), supports random access iterators.
+is a sequence container that supports random access iterators (\ref{random.access.iterators}).
 In addition, it supports constant time insert and erase operations at the beginning or the end;
 insert and erase in the middle take linear time.
 That is, a deque is especially optimized for pushing and popping elements at the beginning and end.
-As with vectors, storage management is handled automatically.
+Storage management is handled automatically.
 
 \pnum
 A
@@ -3151,7 +3167,7 @@ deque invalidates all the iterators to the deque, but has no effect on
 the validity of references to elements of the deque.
 
 \pnum
-\notes
+\remarks
 If an exception is thrown other than by the
 copy constructor, move constructor,
 assignment operator, or move assignment operator of
@@ -3217,9 +3233,7 @@ template <class T, class Allocator>
 \begin{itemdescr}
 \pnum
 \effects
-\begin{codeblock}
-x.swap(y);
-\end{codeblock}
+As if by \tcode{x.swap(y)}.
 \end{itemdescr}
 
 \rSec2[forwardlist]{Class template \tcode{forward_list}}
@@ -3545,7 +3559,7 @@ void pop_front();
 
 \begin{itemdescr}
 \pnum
-\effects \tcode{erase_after(before_begin())}
+\effects As if by \tcode{erase_after(before_begin())}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{insert_after}!\idxcode{forward_list}}%
@@ -3708,9 +3722,7 @@ void resize(size_type sz, const value_type& c);
 \pnum
 \effects If \tcode{sz < distance(begin(), end())}, erases the last \tcode{distance(begin(),
 end()) - sz} elements from the list. Otherwise, inserts \tcode{sz - distance(begin(), end())}  
-elements at the end of the list such that each new element, \tcode{e}, is initialized
-by a method equivalent to calling
-\tcode{allocator_traits<allocator_type>::construct(get_allocator(), std::addressof(e), c)}.
+copies of \tcode{c} at the end of the list.
 
 \pnum
 \requires \tcode{T} shall be \tcode{CopyInsertable} into \tcode{*this}.
@@ -3952,7 +3964,7 @@ template <class T, class Allocator>
 
 \begin{itemdescr}
 \pnum
-\effects \tcode{x.swap(y)}
+\effects As if by \tcode{x.swap(y)}.
 \end{itemdescr}
 
 \rSec2[list]{Class template \tcode{list}}
@@ -4238,7 +4250,7 @@ void resize(size_type sz);
 If \tcode{size() < sz},
 appends \tcode{sz - size()} default-inserted elements to the
 sequence.
-If \tcode{sz <= size()}, equivalent to
+If \tcode{sz <= size()}, equivalent to:
 
 \begin{codeblock}
 list<T>::iterator it = begin();
@@ -4260,6 +4272,7 @@ void resize(size_type sz, const T& c);
 \begin{itemdescr}
 \pnum
 \effects
+As if by:
 \begin{codeblock}
 if (sz > size())
   insert(end(), sz-size(), c);
@@ -4299,7 +4312,7 @@ void push_back(T&& x);
 
 \begin{itemdescr}
 \pnum
-\notes
+\remarks
 Does not affect the validity of iterators and references.
 If an exception is thrown there are no effects.
 
@@ -4655,9 +4668,7 @@ template <class T, class Allocator>
 \begin{itemdescr}
 \pnum
 \effects
-\begin{codeblock}
-x.swap(y);
-\end{codeblock}
+As if by \tcode{x.swap(y)}.
 \end{itemdescr}
 
 \rSec2[vector]{Class template \tcode{vector}}
@@ -4959,7 +4970,7 @@ max_size()}.\footnote{\tcode{reserve()} uses \tcode{Allocator::allocate()} which
 may throw an appropriate exception.}
 
 \pnum
-\notes
+\remarks
 Reallocation invalidates all the references, pointers, and iterators
 referring to the elements in the sequence.
 No reallocation shall take place during insertions that happen
@@ -4983,7 +4994,7 @@ void shrink_to_fit();
 \complexity Linear in the size of the sequence.
 
 \pnum
-\notes \tcode{shrink_to_fit} is a non-binding request to reduce \tcode{capacity()} to \tcode{size()}. \enternote The request is non-binding to allow latitude for implementation-specific optimizations. \exitnote
+\remarks \tcode{shrink_to_fit} is a non-binding request to reduce \tcode{capacity()} to \tcode{size()}. \enternote The request is non-binding to allow latitude for implementation-specific optimizations. \exitnote
 If an exception is thrown other than by the move constructor of a non-\tcode{CopyInsertable} \tcode{T} there are no effects.
 \end{itemdescr}
 
@@ -5024,7 +5035,7 @@ appends \tcode{sz - size()} default-inserted elements to the sequence.
 \tcode{MoveInsertable} and \tcode{DefaultInsertable} into \tcode{*this}.
 
 \pnum
-\notes If an exception is thrown other than by the move constructor of a non-\tcode{CopyInsertable}
+\remarks If an exception is thrown other than by the move constructor of a non-\tcode{CopyInsertable}
 \tcode{T} there are no effects.
 \end{itemdescr}
 
@@ -5044,7 +5055,7 @@ appends \tcode{sz - size()} copies of \tcode{c} to the sequence.
 \tcode{CopyInsertable} into \tcode{*this}.
 
 \pnum
-\notes If an exception is thrown there are no effects.
+\remarks If an exception is thrown there are no effects.
 \end{itemdescr}
 
 \rSec3[vector.data]{\tcode{vector} data}
@@ -5085,7 +5096,7 @@ void push_back(T&& x);
 
 \begin{itemdescr}
 \pnum
-\notes
+\remarks
 Causes reallocation if the new size is greater than the old capacity.
 If no reallocation happens, all the iterators and references before the insertion point remain valid.
 If an exception is thrown other than by
@@ -5145,9 +5156,7 @@ template <class T, class Allocator>
 \begin{itemdescr}
 \pnum
 \effects
-\begin{codeblock}
-x.swap(y);
-\end{codeblock}
+As if by \tcode{x.swap(y)}.
 \end{itemdescr}
 
 \rSec2[vector.bool]{Class \tcode{vector<bool>}}
@@ -5308,7 +5317,7 @@ static void swap(reference x, reference y) noexcept;
 
 \begin{itemdescr}
 \pnum
-\effects exchanges the contents of \tcode{x} and \tcode{y} as if by
+\effects Exchanges the contents of \tcode{x} and \tcode{y} as if by:
 
 \begin{codeblock}
 bool b = x;
@@ -5397,6 +5406,16 @@ namespace std {
     void swap(multimap<Key, T, Compare, Allocator>& x,
               multimap<Key, T, Compare, Allocator>& y)
       noexcept(noexcept(x.swap(y)));
+
+  namespace pmr {
+    template <class Key, class T, class Compare = less<Key>>
+      using map = std::map<Key, T, Compare,
+                           polymorphic_allocator<pair<const Key, T>>>;
+
+    template <class Key, class T, class Compare = less<Key>>
+      using multimap = std::multimap<Key, T, Compare,
+                                     polymorphic_allocator<pair<const Key, T>>>;
+  }
 }
 \end{codeblock}
 
@@ -5460,6 +5479,16 @@ namespace std {
     void swap(multiset<Key, Compare, Allocator>& x,
               multiset<Key, Compare, Allocator>& y)
       noexcept(noexcept(x.swap(y)));
+
+  namespace pmr {
+    template <class Key, class Compare = less<Key>>
+      using set = std::set<Key, Compare,
+                           polymorphic_allocator<Key>>;
+
+    template <class Key, class Compare = less<Key>>
+      using multiset = std::multiset<Key, Compare,
+                                     polymorphic_allocator<Key>>;
+  }
 }
 \end{codeblock}
 
@@ -5535,9 +5564,6 @@ namespace std {
       Compare comp;
       value_compare(Compare c) : comp(c) {}
     public:
-      typedef bool result_type;
-      typedef value_type first_argument_type;
-      typedef value_type second_argument_type;
       bool operator()(const value_type& x, const value_type& y) const {
         return comp(x.first, y.first);
       }
@@ -5634,7 +5660,7 @@ namespace std {
     iterator  erase(const_iterator first, const_iterator last);
     void      swap(map&)
       noexcept(allocator_traits<Allocator>::is_always_equal::value &&
-               noexcept(swap(declval<Compare&>(), declval<Compare&>())));
+               is_nothrow_swappable_v<Compare>);
     void      clear() noexcept;
 
     // observers:
@@ -5753,7 +5779,7 @@ T& operator[](const key_type& x);
 \begin{itemdescr}
 \pnum
 \effects
-Equivalent to \tcode{return try_emplace(x).first->second;}
+Equivalent to: \tcode{return try_emplace(x).first->second;}
 \end{itemdescr}
 
 \indexlibrary{\idxcode{operator[]}!\idxcode{map}}%
@@ -5764,7 +5790,7 @@ T& operator[](key_type&& x);
 \begin{itemdescr}
 \pnum
 \effects
-Equivalent to \tcode{return try_emplace(move(x)).first->second;}
+Equivalent to: \tcode{return try_emplace(move(x)).first->second;}
 \end{itemdescr}
 
 \indexlibrary{\idxcode{at}!\idxcode{map}}%
@@ -5794,8 +5820,6 @@ no such element is present.
 \begin{itemdecl}
 template <class P> pair<iterator, bool> insert(P&& x);
 template <class P> iterator insert(const_iterator position, P&& x);
-template <class InputIterator>
-  void insert(InputIterator first, InputIterator last);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -5972,9 +5996,7 @@ template <class Key, class T, class Compare, class Allocator>
 \begin{itemdescr}
 \pnum
 \effects
-\begin{codeblock}
-x.swap(y);
-\end{codeblock}
+As if by \tcode{x.swap(y)}.
 \end{itemdescr}
 
 \rSec2[multimap]{Class template \tcode{multimap}}
@@ -6056,9 +6078,6 @@ namespace std {
       Compare comp;
       value_compare(Compare c) : comp(c) { }
     public:
-      typedef bool result_type;
-      typedef value_type first_argument_type;
-      typedef value_type second_argument_type;
       bool operator()(const value_type& x, const value_type& y) const {
         return comp(x.first, y.first);
       }
@@ -6132,7 +6151,7 @@ namespace std {
     iterator  erase(const_iterator first, const_iterator last);
     void      swap(multimap&)
       noexcept(allocator_traits<Allocator>::is_always_equal::value &&
-               noexcept(swap(declval<Compare&>(), declval<Compare&>())));
+               is_nothrow_swappable_v<Compare>);
     void      clear() noexcept;
 
     // observers:
@@ -6280,9 +6299,7 @@ template <class Key, class T, class Compare, class Allocator>
 \begin{itemdescr}
 \pnum
 \effects
-\begin{codeblock}
-x.swap(y);
-\end{codeblock}
+As if by \tcode{x.swap(y)}.
 \end{itemdescr}
 
 \rSec2[set]{Class template \tcode{set}}
@@ -6416,7 +6433,7 @@ namespace std {
     iterator  erase(const_iterator first, const_iterator last);
     void      swap(set&)
       noexcept(allocator_traits<Allocator>::is_always_equal::value &&
-               noexcept(swap(declval<Compare&>(), declval<Compare&>())));
+               is_nothrow_swappable_v<Compare>);
     void      clear() noexcept;
 
     // observers:
@@ -6538,9 +6555,7 @@ template <class Key, class Compare, class Allocator>
 \begin{itemdescr}
 \pnum
 \effects
-\begin{codeblock}
-x.swap(y);
-\end{codeblock}
+As if by \tcode{x.swap(y)}.
 \end{itemdescr}
 
 \rSec2[multiset]{Class template \tcode{multiset}}
@@ -6673,7 +6688,7 @@ namespace std {
     iterator  erase(const_iterator first, const_iterator last);
     void      swap(multiset&)
       noexcept(allocator_traits<Allocator>::is_always_equal::value &&
-               noexcept(swap(declval<Compare&>(), declval<Compare&>())));
+               is_nothrow_swappable_v<Compare>);
     void      clear() noexcept;
 
     // observers:
@@ -6795,9 +6810,7 @@ template <class Key, class Compare, class Allocator>
 \begin{itemdescr}
 \pnum
 \effects
-\begin{codeblock}
-x.swap(y);
-\end{codeblock}
+As if by \tcode{x.swap(y)}.
 \end{itemdescr}
 
 \rSec1[unord]{Unordered associative containers}
@@ -6856,6 +6869,24 @@ namespace std {
   template <class Key, class T, class Hash, class Pred, class Alloc>
     bool operator!=(const unordered_multimap<Key, T, Hash, Pred, Alloc>& a,
                     const unordered_multimap<Key, T, Hash, Pred, Alloc>& b);
+
+  namespace pmr {
+    template <class Key,
+              class T,
+              class Hash = hash<Key>,
+              class Pred = equal_to<Key>>
+      using unordered_map =
+        std::unordered_map<Key, T, Hash, Pred,
+                           polymorphic_allocator<pair<const Key, T>>>;
+    template <class Key,
+              class T,
+              class Hash = hash<Key>,
+              class Pred = equal_to<Key>>
+      using unordered_multimap =
+        std::unordered_multimap<Key, T, Hash, Pred,
+                                polymorphic_allocator<pair<const Key, T>>>;
+
+  }
 }
 \end{codeblock}
 
@@ -6903,6 +6934,20 @@ namespace std {
   template <class Key, class Hash, class Pred, class Alloc>
     bool operator!=(const unordered_multiset<Key, Hash, Pred, Alloc>& a,
                     const unordered_multiset<Key, Hash, Pred, Alloc>& b);
+
+  namespace pmr {
+    template <class Key,
+              class Hash = hash<Key>,
+              class Pred = equal_to<Key>>
+      using unordered_set = std::unordered_set<Key, Hash, Pred,
+                                               polymorphic_allocator<Key>>;
+
+    template <class Key,
+              class Hash = hash<Key>,
+              class Pred = equal_to<Key>>
+      using unordered_multiset = std::unordered_multiset<Key, Hash, Pred,
+                                                         polymorphic_allocator<Key>>;
+  }
 }
 \end{codeblock}
 
@@ -7053,8 +7098,8 @@ namespace std {
     iterator  erase(const_iterator first, const_iterator last);
     void      swap(unordered_map&)
       noexcept(allocator_traits<Allocator>::is_always_equal::value &&
-               noexcept(swap(declval<Hash&>(), declval<Hash&>())) &&
-               noexcept(swap(declval<Pred&>(), declval<Pred&>())));
+               is_nothrow_swappable_v<Hash> &&
+               is_nothrow_swappable_v<Pred>);
     void      clear() noexcept;
 
     // observers:
@@ -7127,7 +7172,7 @@ specified hash function, key equality function, and allocator, and
 using at least \tcode{n} buckets.  For the default constructor,
 the number of buckets is \impldef{default number of buckets in
 \tcode{unordered_map}}.
-\tcode{max_load_factor()} returns 1.0.
+\tcode{max_load_factor()} returns \tcode{1.0}.
 
 \pnum
 \complexity Constant.
@@ -7158,7 +7203,7 @@ provided, the number of buckets is \impldef{default number of buckets in
 inserts elements from the range \range{f}{l}
 for the first form, or from the range
 \range{il.begin()}{il.end()} for the second form.
-\tcode{max_load_factor()} returns 1.0.
+\tcode{max_load_factor()} returns \tcode{1.0}.
 
 \pnum
 \complexity Average case linear, worst case quadratic.
@@ -7175,7 +7220,7 @@ mapped_type& operator[](const key_type& k);
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to \tcode{return try_emplace(k).first->second;}
+\effects Equivalent to: \tcode{return try_emplace(k).first->second;}
 \end{itemdescr}
 
 \indexlibrary{\idxcode{unordered_map}!\idxcode{operator[]}}%
@@ -7187,7 +7232,7 @@ mapped_type& operator[](key_type&& k);
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to \tcode{return try_emplace(move(k)).first->second;}
+\effects Equivalent to: \tcode{return try_emplace(move(k)).first->second;}
 \end{itemdescr}
 
 \indexlibrary{\idxcode{unordered_map}!\idxcode{at}}%
@@ -7217,7 +7262,7 @@ template <class P>
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to \tcode{return emplace(std::forward<P>(obj))}. 
+\effects Equivalent to: \tcode{return emplace(std::forward<P>(obj));}
 
 \pnum
 \remarks This signature shall not participate in overload resolution
@@ -7233,8 +7278,8 @@ template <class P>
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to 
-\tcode{return emplace_hint(hint, std::forward<P>(obj))}.
+\effects Equivalent to:
+\tcode{return emplace_hint(hint, std::forward<P>(obj));}
 
 \pnum
 \remarks This signature shall not participate in overload resolution
@@ -7399,7 +7444,7 @@ template <class Key, class T, class Hash, class Pred, class Alloc>
 \end{itemdecl}
 
 \begin{itemdescr}
-\pnum\effects \tcode{x.swap(y)}.
+\pnum\effects As if by \tcode{x.swap(y)}.
 \end{itemdescr}
 
 \rSec2[unord.multimap]{Class template \tcode{unordered_multimap}}%
@@ -7538,8 +7583,8 @@ namespace std {
     iterator  erase(const_iterator first, const_iterator last);
     void      swap(unordered_multimap&)
       noexcept(allocator_traits<Allocator>::is_always_equal::value &&
-               noexcept(swap(declval<Hash&>(), declval<Hash&>())) &&
-               noexcept(swap(declval<Pred&>(), declval<Pred&>())));
+               is_nothrow_swappable_v<Hash> &&
+               is_nothrow_swappable_v<Pred>);
     void      clear() noexcept;
 
     // observers:
@@ -7607,7 +7652,7 @@ specified hash function, key equality function, and allocator, and
 using at least \tcode{n} buckets.  For the default constructor,
 the number of buckets is \impldef{default number of buckets in
 \tcode{unordered_multimap}}.
-\tcode{max_load_factor()} returns 1.0.
+\tcode{max_load_factor()} returns \tcode{1.0}.
 
 \pnum
 \complexity Constant.
@@ -7638,7 +7683,7 @@ provided, the number of buckets is \impldef{default number of buckets in
 inserts elements from the range \range{f}{l}
 for the first form, or from the range 
 \range{il.begin()}{il.end()} for the second form.
-\tcode{max_load_factor()} returns 1.0.
+\tcode{max_load_factor()} returns \tcode{1.0}.
 
 \pnum
 \complexity Average case linear, worst case quadratic.
@@ -7655,7 +7700,7 @@ template <class P>
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to \tcode{return emplace(std::forward<P>(obj))}. 
+\effects Equivalent to: \tcode{return emplace(std::forward<P>(obj));}
 
 \pnum
 \remarks This signature shall not participate in overload resolution
@@ -7671,8 +7716,8 @@ template <class P>
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to 
-\tcode{return emplace_hint(hint, std::forward<P>(obj))}.
+\effects Equivalent to:
+\tcode{return emplace_hint(hint, std::forward<P>(obj));}
 
 \pnum
 \remarks This signature shall not participate in overload resolution
@@ -7692,7 +7737,7 @@ template <class Key, class T, class Hash, class Pred, class Alloc>
 
 
 \begin{itemdescr}
-\pnum\effects \tcode{x.swap(y)}.
+\pnum\effects As if by \tcode{x.swap(y)}.
 \end{itemdescr}
 
 \rSec2[unord.set]{Class template \tcode{unordered_set}}%
@@ -7821,8 +7866,8 @@ namespace std {
     iterator  erase(const_iterator first, const_iterator last);
     void      swap(unordered_set&)
       noexcept(allocator_traits<Allocator>::is_always_equal::value &&
-               noexcept(swap(declval<Hash&>(), declval<Hash&>())) &&
-               noexcept(swap(declval<Pred&>(), declval<Pred&>())));
+               is_nothrow_swappable_v<Hash> &&
+               is_nothrow_swappable_v<Pred>);
     void      clear() noexcept;
 
     // observers:
@@ -7888,7 +7933,8 @@ explicit unordered_set(size_type n,
 specified hash function, key equality function, and allocator, and
 using at least \tcode{n} buckets.  For the default constructor,
 the number of buckets is \impldef{default number of buckets in
-\tcode{unordered_set}}.  \tcode{max_load_factor()} returns 1.0.
+\tcode{unordered_set}}.
+\tcode{max_load_factor()} returns \tcode{1.0}.
 
 \pnum
 \complexity Constant.
@@ -7919,7 +7965,7 @@ provided, the number of buckets is \impldef{default number of buckets in
 inserts elements from the range \range{f}{l}
 for the first form, or from the range 
 \range{il.begin()}{il.end()} for the second form.
-\tcode{max_load_factor()} returns 1.0.
+\tcode{max_load_factor()} returns \tcode{1.0}.
 
 \pnum
 \complexity Average case linear, worst case quadratic.
@@ -7937,7 +7983,7 @@ template <class Key, class Hash, class Pred, class Alloc>
 \end{itemdecl}
 
 \begin{itemdescr}
-\pnum\effects \tcode{x.swap(y)}.
+\pnum\effects As if by \tcode{x.swap(y)}.
 \end{itemdescr}
 
 \rSec2[unord.multiset]{Class template \tcode{unordered_multiset}}%
@@ -8073,8 +8119,8 @@ namespace std {
     iterator  erase(const_iterator first, const_iterator last);
     void      swap(unordered_multiset&)
       noexcept(allocator_traits<Allocator>::is_always_equal::value &&
-               noexcept(swap(declval<Hash&>(), declval<Hash&>())) &&
-               noexcept(swap(declval<Pred&>(), declval<Pred&>())));
+               is_nothrow_swappable_v<Hash> &&
+               is_nothrow_swappable_v<Pred>);
     void      clear() noexcept;
 
     // observers:
@@ -8141,7 +8187,7 @@ specified hash function, key equality function, and allocator, and
 using at least \tcode{n} buckets.  For the default constructor,
 the number of buckets is \impldef{default number of buckets in
 \tcode{unordered_multiset}}.
-\tcode{max_load_factor()} returns 1.0.
+\tcode{max_load_factor()} returns \tcode{1.0}.
 
 \pnum
 \complexity Constant.
@@ -8172,7 +8218,7 @@ provided, the number of buckets is \impldef{default number of buckets in
 inserts elements from the range \range{f}{l}
 for the first form, or from the range
 \range{il.begin()}{il.end()} for the second form.
-\tcode{max_load_factor()} returns 1.0.
+\tcode{max_load_factor()} returns \tcode{1.0}.
 
 \pnum\complexity Average case linear, worst case quadratic.
 \end{itemdescr}
@@ -8189,7 +8235,7 @@ template <class Key, class Hash, class Pred, class Alloc>
 \end{itemdecl}
 
 \begin{itemdescr}
-\pnum\effects \tcode{x.swap(y);}
+\pnum\effects As if by \tcode{x.swap(y)}.
 \end{itemdescr}
 
 \indextext{unordered associative containers|)}
@@ -8208,6 +8254,8 @@ a \tcode{Container} reference argument. This container is copied into the \tcode
 of each adaptor. If the container takes an allocator, then a compatible allocator may be passed in
 to the adaptor's constructor. Otherwise, normal copy or move construction is used for the container
 argument.
+The first template parameter \tcode{T} of the container adaptors
+shall denote the same type as \tcode{Container::value_type}.
 
 \pnum
 For container adaptors, no \tcode{swap} function throws an exception unless that
@@ -8326,7 +8374,7 @@ namespace std {
     template <class... Args>
       void emplace(Args&&... args)      { c.emplace_back(std::forward<Args>(args)...); }
     void pop()                          { c.pop_front(); }
-    void swap(queue& q) noexcept(noexcept(swap(c, q.c)))
+    void swap(queue& q) noexcept(is_nothrow_swappable_v<Container>)
       { using std::swap; swap(c, q.c); }
   };
 
@@ -8513,7 +8561,12 @@ template <class T, class Container>
 
 \begin{itemdescr}
 \pnum
-\effects \tcode{x.swap(y)}.
+\remarks
+This function shall not participate in overload resolution
+unless \tcode{is_swappable_v<Container>} is \tcode{true}.
+
+\pnum
+\effects As if by \tcode{x.swap(y)}.
 \end{itemdescr}
 
 \rSec2[priority.queue]{Class template \tcode{priority_queue}}
@@ -8577,8 +8630,8 @@ namespace std {
     void push(value_type&& x);
     template <class... Args> void emplace(Args&&... args);
     void pop();
-    void swap(priority_queue& q) noexcept(noexcept(swap(c, q.c)) &&
-                                          noexcept(swap(comp, q.comp)))
+    void swap(priority_queue& q) noexcept(is_nothrow_swappable_v<Container> &&
+                                          is_nothrow_swappable_v<Compare>)
       { using std::swap; swap(c, q.c); swap(comp, q.comp); }
   };
 
@@ -8680,7 +8733,8 @@ template <class Alloc>
 \begin{itemdescr}
 \pnum
 \effects\ Initializes \tcode{c} with \tcode{cont} as the first argument and \tcode{a} as the second
-argument, and initializes \tcode{comp} with \tcode{compare}.
+argument, and initializes \tcode{comp} with \tcode{compare};
+calls \tcode{make_heap(c.begin(), c.end(), comp)}.
 \end{itemdescr}
 
 \begin{itemdecl}
@@ -8691,7 +8745,8 @@ template <class Alloc>
 \begin{itemdescr}
 \pnum
 \effects\ Initializes \tcode{c} with \tcode{std::move(cont)} as the first argument and \tcode{a}
-as the second argument, and initializes \tcode{comp} with \tcode{compare}.
+as the second argument, and initializes \tcode{comp} with \tcode{compare};
+calls \tcode{make_heap(c.begin(), c.end(), comp)}.
 \end{itemdescr}
 
 \begin{itemdecl}
@@ -8724,6 +8779,7 @@ void push(const value_type& x);
 \begin{itemdescr}
 \pnum
 \effects
+As if by:
 \begin{codeblock}
 c.push_back(x);
 push_heap(c.begin(), c.end(), comp);
@@ -8738,6 +8794,7 @@ void push(value_type&& x);
 \begin{itemdescr}
 \pnum
 \effects
+As if by:
 \begin{codeblock}
 c.push_back(std::move(x));
 push_heap(c.begin(), c.end(), comp);
@@ -8753,6 +8810,7 @@ template <class... Args> void emplace(Args&&... args)
 \begin{itemdescr}
 \pnum
 \effects
+As if by:
 \begin{codeblock}
 c.emplace_back(std::forward<Args>(args)...);
 push_heap(c.begin(), c.end(), comp);
@@ -8768,6 +8826,7 @@ void pop();
 \begin{itemdescr}
 \pnum
 \effects
+As if by:
 \begin{codeblock}
 pop_heap(c.begin(), c.end(), comp);
 c.pop_back();
@@ -8786,7 +8845,13 @@ template <class T, class Container, class Compare>
 
 \begin{itemdescr}
 \pnum
-\effects \tcode{x.swap(y)}.
+\remarks
+This function shall not participate in overload resolution
+unless \tcode{is_swappable_v<Container>} is \tcode{true} and
+\tcode{is_swappable_v<Compare>} is \tcode{true}.
+
+\pnum
+\effects As if by \tcode{x.swap(y)}.
 \end{itemdescr}
 
 \rSec2[stack]{Class template \tcode{stack}}
@@ -8841,7 +8906,7 @@ namespace std {
     template <class... Args>
       void emplace(Args&&... args)      { c.emplace_back(std::forward<Args>(args)...); }
     void pop()                          { c.pop_back(); }
-    void swap(stack& s) noexcept(noexcept(swap(c, s.c)))
+    void swap(stack& s) noexcept(is_nothrow_swappable_v<Container>)
       { using std::swap; swap(c, s.c); }
   };
 
@@ -9026,5 +9091,10 @@ template <class T, class Container>
 
 \begin{itemdescr}
 \pnum
-\effects \tcode{x.swap(y)}.
+\remarks
+This function shall not participate in overload resolution
+unless \tcode{is_swappable_v<Container>} is \tcode{true}.
+
+\pnum
+\effects As if by \tcode{x.swap(y)}.
 \end{itemdescr}

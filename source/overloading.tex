@@ -74,11 +74,11 @@ cannot be overloaded.
 \item
 \indextext{\idxcode{static}!overloading~and}%
 Member function declarations with the same name and the same
-\grammarterm{parameter-type-list} cannot be overloaded if any of them is a
+parameter-type-list~(\ref{dcl.fct}) cannot be overloaded if any of them is a
 \tcode{static}
 member function declaration~(\ref{class.static}).
 Likewise, member function template declarations with the same name,
-the same \grammarterm{parameter-type-list}, and the same template parameter lists cannot be
+the same parameter-type-list, and the same template parameter lists cannot be
 overloaded if any of them is a
 \tcode{static}
 member function template declaration.
@@ -109,8 +109,8 @@ class X {
 \exitexample
 
 \item Member function declarations with the same name and the same
-\grammarterm{parameter-type-list} as well as member function template
-declarations with the same name, the same \grammarterm{parameter-type-list}, and
+parameter-type-list~(\ref{dcl.fct}) as well as member function template
+declarations with the same name, the same parameter-type-list, and
 the same template parameter lists cannot be overloaded if any of them, but not
 all, have a \grammarterm{ref-qualifier}~(\ref{dcl.fct}). \enterexample
 
@@ -659,7 +659,7 @@ contexts.
 In a function call~(\ref{expr.call})
 
 \begin{ncsimplebnf}
-postfix-expression \terminal{(} expression-list\opt \terminal{)}
+postfix-expression \terminal{(} expression-list\opt{} \terminal{)}
 \end{ncsimplebnf}
 
 if the \grammarterm{postfix-expression} denotes a set of overloaded functions and/or
@@ -830,7 +830,7 @@ In addition, for each non-explicit conversion function declared in \tcode{T} of 
 form
 
 \begin{ncsimplebnf}
-\terminal{operator} conversion-type-id \terminal{(\,)} cv-qualifier ref-qualifier\opt exception-specification\opt attribute-specifier-seq\opt \terminal{;}
+\terminal{operator} conversion-type-id \terminal{(\,)} cv-qualifier ref-qualifier\opt exception-specification\opt attribute-specifier-seq\opt{} \terminal{;}
 \end{ncsimplebnf}
 
 where
@@ -3061,7 +3061,7 @@ It can have default arguments.
 It implements the function call syntax
 
 \begin{ncsimplebnf}
-postfix-expression \terminal{(} expression-list\opt \terminal{)}
+postfix-expression \terminal{(} expression-list\opt{} \terminal{)}
 \end{ncsimplebnf}
 
 where the

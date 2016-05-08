@@ -51,7 +51,7 @@ program~(\ref{basic.link}). \exitnote%
 \rSec1[lex.phases]{Phases of translation}%
 
 \pnum
-\indextext{translation!phases|(}
+\indextext{translation!phases|(}%
 The precedence among the syntax rules of translation is specified by the
 following phases.\footnote{Implementations must behave as if these separate phases
 occur, although in practice different phases might be folded together.}
@@ -306,7 +306,7 @@ parenthesis is identified. The raw string literal is defined as the shortest seq
 of characters that matches the raw-string pattern
 
 \begin{ncbnf}
-encoding-prefix\opt \terminal{R} raw-string
+encoding-prefix\opt{} \terminal{R} raw-string
 \end{ncbnf}
 
 \item Otherwise, if the next three characters are \tcode{<::} and the subsequent character
@@ -497,6 +497,8 @@ have a completely different meaning, depending on the implementation.}%
     pp-number \terminal{'} nondigit\br
     pp-number \terminal{e} sign\br
     pp-number \terminal{E} sign\br
+    pp-number \terminal{p} sign\br
+    pp-number \terminal{P} sign\br
     pp-number \terminal{.}
 \end{bnf}
 
@@ -803,9 +805,7 @@ ISO C. }
 
 \begin{bnf}
 \nontermdef{hexadecimal-literal}\br
-    \terminal{0x} hexadecimal-digit\br
-    \terminal{0X} hexadecimal-digit\br
-    hexadecimal-literal \terminal{'}\opt hexadecimal-digit
+    hexadecimal-prefix hexadecimal-digit-sequence
 \end{bnf}
 
 \begin{bnf}
@@ -822,6 +822,17 @@ ISO C. }
 \begin{bnf}
 \nontermdef{nonzero-digit} \textnormal{one of}\br
     \terminal{1  2  3  4  5  6  7  8  9}
+\end{bnf}
+
+\begin{bnf}
+\nontermdef{hexadecimal-prefix} \textnormal{one of}\br
+    \terminal{0x  0X}
+\end{bnf}
+
+\begin{bnf}
+\nontermdef{hexadecimal-digit-sequence}\br
+    hexadecimal-digit\br
+    hexadecimal-digit-sequence \terminal{'}\opt hexadecimal-digit
 \end{bnf}
 
 \begin{bnf}
@@ -983,7 +994,7 @@ that cannot be represented by any of the allowed types.
 \indextext{literal!character}%
 \begin{bnf}
 \nontermdef{character-literal}\br
-    encoding-prefix\opt \terminal{'} c-char-sequence \terminal{'}
+    encoding-prefix\opt{} \terminal{'} c-char-sequence \terminal{'}
 \end{bnf}
 
 \begin{bnf}
@@ -1202,20 +1213,44 @@ so long as the same results are obtained. \exitnote
 \indextext{literal!floating}%
 \begin{bnf}
 \nontermdef{floating-literal}\br
+    decimal-floating-literal\br
+    hexadecimal-floating-literal
+\end{bnf}
+
+\begin{bnf}
+\nontermdef{decimal-floating-literal}\br
     fractional-constant exponent-part\opt floating-suffix\opt\br
     digit-sequence exponent-part floating-suffix\opt
 \end{bnf}
 
 \begin{bnf}
+\nontermdef{hexadecimal-floating-literal}\br
+    hexadecimal-prefix hexadecimal-fractional-constant binary-exponent-part floating-suffix\opt\br
+    hexadecimal-prefix hexadecimal-digit-sequence binary-exponent-part floating-suffix\opt
+\end{bnf}
+
+\begin{bnf}
 \nontermdef{fractional-constant}\br
-    digit-sequence\opt \terminal{.} digit-sequence\br
+    digit-sequence\opt{} \terminal{.} digit-sequence\br
     digit-sequence \terminal{.}
+\end{bnf}
+
+\begin{bnf}
+\nontermdef{hexadecimal-fractional-constant}\br
+    hexadecimal-digit-sequence\opt{} \terminal{.} hexadecimal-digit-sequence\br
+    hexadecimal-digit-sequence \terminal{.}
 \end{bnf}
 
 \begin{bnf}
 \nontermdef{exponent-part}\br
     \terminal{e} sign\opt digit-sequence\br
     \terminal{E} sign\opt digit-sequence
+\end{bnf}
+
+\begin{bnf}
+\nontermdef{binary-exponent-part}\br
+    \terminal{p} sign\opt digit-sequence\br
+    \terminal{P} sign\opt digit-sequence
 \end{bnf}
 
 \begin{bnf}
@@ -1236,23 +1271,45 @@ so long as the same results are obtained. \exitnote
 
 \pnum
 \indextext{literal!floating}%
-A floating literal consists of an integer part, a decimal point, a
-fraction part, an
+A floating literal consists of
+an optional prefix specifying a base,
+an integer part,
+a radix point,
+a fraction part,
 \indextext{suffix!\idxcode{e}}%
 \indextext{suffix!\idxcode{E}}%
-\tcode{e} or \tcode{E}, an optionally signed integer exponent, and an
-optional type suffix. The integer and fraction parts both consist of a
-sequence of decimal (base ten) digits. Optional separating single quotes in a
-\grammarterm{digit-sequence} are ignored when determining its value.
+\indextext{suffix!\idxcode{p}}%
+\indextext{suffix!\idxcode{P}}%
+an \tcode{e}, \tcode{E}, \tcode{p} or \tcode{P},
+an optionally signed integer exponent, and
+an optional type suffix.
+The integer and fraction parts both consist of
+a sequence of decimal (base ten) digits if there is no prefix, or
+hexadecimal (base sixteen) digits if the prefix is \tcode{0x} or \tcode{0X}.
+\indextext{literal!decimal floating}%
+The literal is a \term{decimal floating literal} in the former case and
+\indextext{literal!hexadecimal floating}%
+a \term{hexadecimal floating literal} in the latter case.
+Optional separating single quotes in
+a \grammarterm{digit-sequence} or \grammarterm{hexadecimal-digit-sequence}
+are ignored when determining its value.
 \enterexample The literals \tcode{1.602'176'565e-19} and \tcode{1.602176565e-19}
 have the same value. \exitexample
-Either the integer part or the
-fraction part (not both) can be omitted; either the decimal point or the
-letter \tcode{e} (or \tcode{E} ) and the exponent (not both) can be
-omitted. The integer part, the optional decimal point and the optional
-fraction part form the \term{significant part} of the
-floating literal. The exponent, if present, indicates the power of 10 by
-which the significant part is to be scaled. If the scaled value is in
+Either the integer part or the fraction part (not both) can be omitted.
+Either the radix point or the letter \tcode{e} or \tcode{E} and
+the exponent (not both) can be omitted from a decimal floating literal.
+The radix point (but not the exponent) can be omitted
+from a hexadecimal floating literal.
+The integer part, the optional radix point, and the optional fraction part,
+form the \defn{significand} of the floating literal.
+In a decimal floating literal, the exponent, if present,
+indicates the power of 10 by which the significand is to be scaled.
+In a hexadecimal floating literal, the exponent
+indicates the power of 2 by which the significand is to be scaled.
+\enterexample
+The literals \tcode{49.625} and \tcode{0xC.68p+2} have the same value.
+\exitexample
+If the scaled value is in
 the range of representable values for its type, the result is the scaled
 value if representable, else the larger or smaller representable value
 nearest the scaled value, chosen in an \impldef{choice of larger or smaller value of
@@ -1277,8 +1334,8 @@ values for its type, the program is ill-formed.
 \indextext{literal!string}%
 \begin{bnf}
 \nontermdef{string-literal}\br
-    encoding-prefix\opt \terminal{"} s-char-sequence\opt \terminal{"}\br
-    encoding-prefix\opt \terminal{R} raw-string
+    encoding-prefix\opt{} \terminal{"} s-char-sequence\opt{} \terminal{"}\br
+    encoding-prefix\opt{} \terminal{R} raw-string
 \end{bnf}
 
 \begin{bnf}
@@ -1297,7 +1354,7 @@ values for its type, the program is ill-formed.
 
 \begin{bnf}
 \nontermdef{raw-string}\br
-    \terminal{"} d-char-sequence\opt \terminal{(} r-char-sequence\opt \terminal{)} d-char-sequence\opt \terminal{"}
+    \terminal{"} d-char-sequence\opt{} \terminal{(} r-char-sequence\opt{} \terminal{)} d-char-sequence\opt{} \terminal{"}
 \end{bnf}
 
 \begin{bnf}
@@ -1372,7 +1429,7 @@ shall consist of at most 16 characters.
 
 \pnum
 \enternote A source-file new-line in a raw string literal results in a new-line in the
-resulting execution \term{string-literal}. Assuming no
+resulting execution string literal. Assuming no
 whitespace at the beginning of lines in the following example, the assert will succeed:
 
 \begin{codeblock}
@@ -1615,7 +1672,9 @@ and~\ref{conv.mem}.
 \begin{bnf}
 \nontermdef{user-defined-floating-literal}\br
     fractional-constant exponent-part\opt ud-suffix\br
-    digit-sequence exponent-part ud-suffix
+    digit-sequence exponent-part ud-suffix\br
+    hexadecimal-prefix hexadecimal-fractional-constant binary-exponent-part ud-suffix\br
+    hexadecimal-prefix hexadecimal-digit-sequence binary-exponent-part ud-suffix
 \end{bnf}
 
 \begin{bnf}

@@ -30,7 +30,7 @@ make \grammarterm{class-name}{s}. An object of a class consists of a
 
 \begin{bnf}
 \nontermdef{class-specifier}\br
-    class-head \terminal{\{} member-specification\opt \terminal{\}}
+    class-head \terminal{\{} member-specification\opt{} \terminal{\}}
 \end{bnf}
 
 \begin{bnf}
@@ -124,19 +124,23 @@ Aggregates of class type are described in~\ref{dcl.init.aggr}.
 
 \indextext{class!trivial}%
 \indextext{trivial~class}%
+\indextext{class!trivially copyable}%
 \pnum
-A \defn{trivially copyable class} is a class that:
+A \defn{trivially copyable class} is a class:
 
 \begin{itemize}
-\item has no non-trivial copy constructors~(\ref{class.copy}),
-\item has no non-trivial move constructors~(\ref{class.copy}),
-\item has no non-trivial copy assignment operators~(\ref{over.ass},~\ref{class.copy}),
-\item has no non-trivial move assignment operators~(\ref{over.ass},~\ref{class.copy}), and
-\item has a trivial destructor~(\ref{class.dtor}).
+\item where each copy constructor, move constructor, copy assignment operator,
+and move assignment operator~(\ref{class.copy}, \ref{over.ass})
+is either deleted or trivial,
+\item that has at least one non-deleted copy constructor, move constructor,
+copy assignment operator, or move assignment operator, and
+\item that has a trivial, non-deleted destructor~(\ref{class.dtor}).
 \end{itemize}
 
-A \term{trivial class} is a class that has a default
-constructor~(\ref{class.ctor}), has no non-trivial default constructors, and is trivially copyable.
+A \term{trivial class} is a class that is trivially copyable and
+has one or more default constructors~(\ref{class.ctor}),
+all of which are either trivial or deleted and
+at least one of which is not deleted.
 \enternote In particular, a trivially copyable or trivial class does not have
 virtual functions or virtual base classes.\exitnote
 
@@ -453,7 +457,7 @@ ignored. A \grammarterm{typedef-name} shall not be used as the
 
 \begin{bnf}
 \nontermdef{member-declaration}\br
-    attribute-specifier-seq\opt decl-specifier-seq\opt member-declarator-list\opt \terminal{;}\br
+    attribute-specifier-seq\opt decl-specifier-seq\opt member-declarator-list\opt{} \terminal{;}\br
     function-definition\br
     using-declaration\br
     static_assert-declaration\br
@@ -472,7 +476,7 @@ ignored. A \grammarterm{typedef-name} shall not be used as the
 \nontermdef{member-declarator}\br
     declarator virt-specifier-seq\opt pure-specifier\opt\br
     declarator brace-or-equal-initializer\opt\br
-    identifier\opt attribute-specifier-seq\opt \terminal{:} constant-expression
+    identifier\opt attribute-specifier-seq\opt{} \terminal{:} constant-expression
 \end{bnf}
 
 \begin{bnf}
@@ -497,26 +501,73 @@ ignored. A \grammarterm{typedef-name} shall not be used as the
 The \grammarterm{member-specification} in a class definition declares the
 full set of members of the class; no member can be added elsewhere.
 Members of a class are data members, member
-functions~(\ref{class.mfct}), nested types, and enumerators. Data
-members and member functions are static or non-static;
-see~\ref{class.static}. Nested types are
-classes~(\ref{class.name},~\ref{class.nest}) and
-enumerations~(\ref{dcl.enum}) defined in the class, and arbitrary types
-declared as members by use of a typedef declaration~(\ref{dcl.typedef}).
+functions~(\ref{class.mfct}), nested types, enumerators,
+and member templates~(\ref{temp.mem}) and specializations thereof.
+\enternote
+A specialization of a static data member template is a static data member.
+A specialization of a member function template is a member function.
+A specialization of a member class template is a nested class.
+\exitnote
+
+\pnum
+A \grammarterm{member-declaration} does not declare new members of the class
+if it is
+\begin{itemize}
+\item a friend declaration~(\ref{class.friend}),
+\item a \grammarterm{static_assert-declaration},
+\item a \grammarterm{using-declaration}~(\ref{namespace.udecl}), or
+\item an \grammarterm{empty-declaration}.
+\end{itemize}
+For any other \grammarterm{member-declaration},
+each declared entity
+that is not an unnamed bit-field~(\ref{class.bit})
+is a member of the class,
+and each such \grammarterm{member-declaration}
+shall either
+declare at least one member name of the class
+or declare at least one unnamed bit-field.
+
+\pnum
+A \defn{data member} is a non-function member introduced by a
+\grammarterm{member-declarator}.
+A \defn{member function} is a member that is a function.
+Nested types are classes~(\ref{class.name},~\ref{class.nest}) and
+enumerations~(\ref{dcl.enum}) declared in the class and arbitrary types
+declared as members by use of a typedef declaration~(\ref{dcl.typedef})
+or \grammarterm{alias-declaration}.
 The enumerators of an unscoped enumeration~(\ref{dcl.enum}) defined in the class
-are members of the class. Except when used to declare
-friends~(\ref{class.friend}), to declare an unnamed bit-field~(\ref{class.bit}),
-or to introduce the name of a member of a
-base class into a derived
-class~(\ref{namespace.udecl}), or when the declaration is an
-\grammarterm{empty-declaration},
-\grammarterm{member-declaration}{s} declare members of the class, and each
-such \grammarterm{member-declaration} shall declare at least one member
-name of the class. A member shall not be declared twice in the
-\grammarterm{member-specification}, except that a nested class or member
-class template can be declared and then later defined, and except that an
+are members of the class.
+
+\indextext{member!static}%
+\indextext{member function!static}%
+\indextext{data member!static}%
+\pnum
+A data member or member function
+may be declared \tcode{static} in its \grammarterm{member-declaration},
+in which case it is a \defn{static member} (see~\ref{class.static})
+(a \defn{static data member}~(\ref{class.static.data}) or
+\defn{static member function}~(\ref{class.static.mfct}), respectively)
+of the class.
+Any other data member or member function is a \defn{non-static member}
+(a \defn{non-static data member} or
+\defn{non-static member function}~(\ref{class.mfct.non-static}), respectively).
+\enternote A non-static data member of non-reference
+type is a member subobject of a class object~(\ref{intro.object}).\exitnote
+
+\pnum
+A member shall not be declared twice in the
+\grammarterm{member-specification}, except that
+\begin{itemize}
+\item a nested class or member
+class template can be declared and then later defined, and
+\item an
 enumeration can be introduced with an \grammarterm{opaque-enum-declaration} and later
 redeclared with an \grammarterm{enum-specifier}{}.
+\end{itemize}
+\enternote
+A single name can denote several member functions provided their types
+are sufficiently different (Clause~\ref{over}).
+\exitnote
 
 \pnum
 \indextext{completely~defined}%
@@ -533,10 +584,21 @@ Otherwise it is regarded as incomplete within its own class
 \grammarterm{member-specification}.
 
 \pnum
-\enternote
-A single name can denote several function members provided their types
-are sufficiently different (Clause~\ref{over}).
-\exitnote
+In a \grammarterm{member-declarator},
+an \tcode{=} immediately following the \grammarterm{declarator}
+is interpreted as introducing a \grammarterm{pure-specifier}
+if the \grammarterm{declarator-id} has function type,
+otherwise it is interpreted as introducing
+a \grammarterm{brace-or-equal-initializer}.
+\enterexample
+\begin{codeblock}
+struct S {
+  using T = void();
+  T * p = 0;        // OK: \grammarterm{brace-or-equal-initializer}
+  virtual T f = 0;  // OK: \grammarterm{pure-specifier}
+};
+\end{codeblock}
+\exitexample
 
 \pnum
 A \grammarterm{brace-or-equal-initializer} shall appear only in the
@@ -564,7 +626,8 @@ The
 \grammarterm{class-specifier} or an \grammarterm{enum-specifier} or in a
 \tcode{friend} declaration~(\ref{class.friend}). A
 \grammarterm{pure-specifier} shall be used only in the declaration of a
-virtual function~(\ref{class.virtual}).
+virtual function~(\ref{class.virtual})
+that is not a \tcode{friend} declaration.
 
 \pnum
 The optional \grammarterm{attribute-specifier-seq} in a \grammarterm{member-declaration}
@@ -580,7 +643,7 @@ function~(\ref{class.virtual}).
 
 \pnum
 \indextext{class~object!member}%
-Non-\tcode{static}~(\ref{class.static}) data members shall not have
+Non-static data members shall not have
 incomplete types. In particular, a class \tcode{C} shall not contain a
 non-static member of class \tcode{C}, but it can contain a pointer or
 reference to an object of class \tcode{C}.
@@ -630,7 +693,7 @@ of the \tcode{tword} member of the \tcode{right} subtree of \tcode{s}.
 
 \pnum
 \indextext{layout!class~object}%
-Nonstatic data members of a (non-union) class
+Non-static data members of a (non-union) class
 with the same access control (Clause~\ref{class.access})
 are allocated so that later
 members have higher addresses within a class object.
@@ -723,17 +786,8 @@ There might therefore be unnamed padding within a standard-layout struct object,
 not at its beginning, as necessary to achieve appropriate alignment.
 \exitnote
 
-\rSec1[class.mfct]{Member functions}%
+\rSec2[class.mfct]{Member functions}%
 \indextext{member function!class}
-
-\pnum
-Functions declared in the definition of a class, excluding those
-declared with a \tcode{friend} specifier~(\ref{class.friend}), are
-called member functions of that class. A member function may be declared
-\tcode{static} in which case it is a \term{static} member function
-of its class~(\ref{class.static}); otherwise it is a
-\grammarterm{non-static} member function of its
-class~(\ref{class.mfct.non-static},~\ref{class.this}).
 
 \pnum
 \indextext{member function!inline}%
@@ -751,10 +805,10 @@ templates~(\ref{temp.spec}) appearing outside of the class definition, a
 member function shall not be redeclared.
 
 \pnum
-An \tcode{inline} member function (whether static or non-static) may
+An inline member function (whether static or non-static) may
 also be defined outside of its class definition provided either its
 declaration in the class definition or its definition outside of the
-class definition declares the function as \tcode{inline}.
+class definition declares the function as \tcode{inline} or \tcode{constexpr}.
 \enternote
 Member functions of a class in namespace scope have the linkage of that class.
 Member functions of a local class~(\ref{class.local}) have no linkage.
@@ -762,10 +816,12 @@ See~\ref{basic.link}.
 \exitnote
 
 \pnum
-There shall be at most one definition of a non-inline member function in
-a program; no diagnostic is required. There may be more than one
+\enternote
+There can be at most one definition of a non-inline member function in
+a program. There may be more than one
 \tcode{inline} member function definition in a program.
 See~\ref{basic.def.odr} and~\ref{dcl.fct.spec}.
+\exitnote
 
 \pnum
 \indextext{operator!scope~resolution}%
@@ -799,8 +855,10 @@ declared in class \tcode{X}.
 \exitexample
 
 \pnum
-A \tcode{static} local variable in a member function always refers to
-the same object, whether or not the member function is \tcode{inline}.
+\enternote
+A \tcode{static} local variable or local type in a member function always refers to
+the same entity, whether or not the member function is \tcode{inline}.
+\exitnote
 
 \pnum
 Previously declared member functions may be mentioned in \tcode{friend} declarations.
@@ -833,11 +891,11 @@ fvc S::* pmfv3 = &S::memfunc3;
 Also see~\ref{temp.arg}.
 \exitnote
 
-\rSec2[class.mfct.non-static]{Nonstatic member functions}%
-\indextext{member function!nonstatic}
+\rSec2[class.mfct.non-static]{Non-static member functions}%
+\indextext{member function!non-static}
 
 \pnum
-A \grammarterm{non-static} member function may be called for an object of
+A non-static member function may be called for an object of
 its class type, or for an object of a class derived
 (Clause~\ref{class.derived}) from its class type, using the class member
 access syntax~(\ref{expr.ref},~\ref{over.match.call}). A non-static
@@ -857,7 +915,7 @@ When an \grammarterm{id-expression}~(\ref{expr.prim}) that is not part of a
 class member access syntax~(\ref{expr.ref}) and not used to form a
 pointer to member~(\ref{expr.unary.op}) is used in
 a member of class \tcode{X} in a context where \tcode{this} can be
-used~(\ref{expr.prim.general}),
+used~(\ref{expr.prim.this}),
 if name
 lookup~(\ref{basic.lookup}) resolves the name in the
 \grammarterm{id-expression} to a non-static non-type member of some class
@@ -874,7 +932,7 @@ member access expression is ill-formed.
 \exitnote
 Similarly during name lookup, when an
 \grammarterm{unqualified-id}~(\ref{expr.prim}) used in the definition of a
-member function for class \tcode{X} resolves to a \tcode{static} member,
+member function for class \tcode{X} resolves to a static member,
 an enumerator or a nested type of class \tcode{X} or of a base class of
 \tcode{X}, the \grammarterm{unqualified-id} is transformed into a
 \grammarterm{qualified-id}~(\ref{expr.prim}) in which the
@@ -948,7 +1006,7 @@ A non-static member function may be declared with a \grammarterm{ref-qualifier}~
 A non-static member function may be declared
 \term{virtual}~(\ref{class.virtual}) or \term{pure virtual}~(\ref{class.abstract}).
 
-\rSec2[class.this]{The \tcode{this} pointer}%
+\rSec3[class.this]{The \tcode{this} pointer}%
 \indextext{\idxcode{this}}
 \indextext{member function!\idxcode{this}}
 
@@ -1028,19 +1086,14 @@ create and destroy objects with cv-qualified types,
 see~(\ref{class.ctor}) and~(\ref{class.dtor}).
 \exitnote
 
-\rSec1[class.static]{Static members}%
+\rSec2[class.static]{Static members}%
 \indextext{member!static}%
-\indextext{member function!static}%
 
 \pnum
-A data or function member of a class may be declared \tcode{static} in a
-class definition, in which case it is a \term{static member} of the class.
-
-\pnum
-A \tcode{static} member \tcode{s} of class \tcode{X} may be referred to
+A static member \tcode{s} of class \tcode{X} may be referred to
 using the \grammarterm{qualified-id} expression \tcode{X::s}; it is not
 necessary to use the class member access syntax~(\ref{expr.ref}) to
-refer to a \tcode{static} member. A \tcode{static} member may be
+refer to a static member. A static member may be
 referred to using the class member access syntax, in which case the
 object expression is evaluated.
 \enterexample
@@ -1059,9 +1112,9 @@ void f() {
 \exitexample
 
 \pnum
-A \tcode{static} member may be referred to directly in the scope of its
+A static member may be referred to directly in the scope of its
 class or in the scope of a class derived (Clause~\ref{class.derived})
-from its class; in this case, the \tcode{static} member is referred to
+from its class; in this case, the static member is referred to
 as if a \grammarterm{qualified-id} expression was used, with the
 \grammarterm{nested-name-specifier} of the \grammarterm{qualified-id} naming
 the class scope from which the static member is referenced.
@@ -1081,9 +1134,9 @@ int Y::i = g();                 // equivalent to \tcode{Y::g();}
 
 \pnum
 If an \grammarterm{unqualified-id}~(\ref{expr.prim}) is used in the
-definition of a \tcode{static} member following the member's
+definition of a static member following the member's
 \grammarterm{declarator-id}, and name lookup~(\ref{basic.lookup.unqual})
-finds that the \grammarterm{unqualified-id} refers to a \tcode{static}
+finds that the \grammarterm{unqualified-id} refers to a static
 member, enumerator, or nested type of the member's class (or of a base
 class of the member's class), the \grammarterm{unqualified-id} is
 transformed into a \grammarterm{qualified-id} expression in which the
@@ -1105,51 +1158,51 @@ the class definition.
 It cannot be specified in member declarations that appear in namespace scope.
 \exitnote
 
-\rSec2[class.static.mfct]{Static member functions}
+\rSec3[class.static.mfct]{Static member functions}
 \indextext{member function!static}%
 
 \pnum
 \enternote
-The rules described in~\ref{class.mfct} apply to \tcode{static} member
+The rules described in~\ref{class.mfct} apply to static member
 functions.
 \exitnote
 
 \pnum
 \enternote
-A \tcode{static} member function does not have a \tcode{this}
+A static member function does not have a \tcode{this}
 pointer~(\ref{class.this}).
 \exitnote
-A \tcode{static} member function shall not be \tcode{virtual}. There
-shall not be a \tcode{static} and a non-static member function with the
+A static member function shall not be \tcode{virtual}. There
+shall not be a static and a non-static member function with the
 same name and the same parameter types~(\ref{over.load}). A
-\tcode{static} member function shall not be declared \tcode{const},
+static member function shall not be declared \tcode{const},
 \tcode{volatile}, or \tcode{const volatile}.
 
-\rSec2[class.static.data]{Static data members}
+\rSec3[class.static.data]{Static data members}
 \indextext{member~data!static}%
 
 \pnum
-A \tcode{static} data member is not part of the subobjects of a class. If a
-\tcode{static} data member is declared \tcode{thread_local} there is one copy of
-the member per thread. If a \tcode{static} data member is not declared
+A static data member is not part of the subobjects of a class. If a
+static data member is declared \tcode{thread_local} there is one copy of
+the member per thread. If a static data member is not declared
 \tcode{thread_local} there is one copy of the data member that is shared by all
 the objects of the class.
 
 \pnum
 \indextext{initialization!static member}%
 \indextext{definition!static member}%
-The declaration of a \tcode{static} data member in its class definition
+The declaration of a static data member in its class definition
 is not a definition and may be of an incomplete type other than
-\cv\ \tcode{void}. The definition for a \tcode{static} data
+\cv{} \tcode{void}. The definition for a static data
 member shall appear in a namespace scope enclosing the member's class
 definition.
 \indextext{operator~use!scope~resolution}%
-In the definition at namespace scope, the name of the \tcode{static}
+In the definition at namespace scope, the name of the static
 data member shall be qualified by its class name using the \tcode{::}
 operator. The \grammarterm{initializer} expression in the definition of a
-\tcode{static} data member is in the scope of its
+static data member is in the scope of its
 class~(\ref{basic.scope.class}).
-\indextext{example!static@\tcode{static} member}%
+\indextext{example!static member}%
 \enterexample
 
 \begin{codeblock}
@@ -1162,17 +1215,17 @@ process* process::running = get_main();
 process* process::run_chain = running;
 \end{codeblock}
 
-The \tcode{static} data member \tcode{run_chain} of class
+The static data member \tcode{run_chain} of class
 \tcode{process} is defined in global scope; the notation
 \tcode{process\colcol{}run_chain} specifies that the member \tcode{run_chain}
 is a member of class \tcode{process} and in the scope of class
-\tcode{process}. In the \tcode{static} data member definition, the
-\grammarterm{initializer} expression refers to the \tcode{static} data
+\tcode{process}. In the static data member definition, the
+\grammarterm{initializer} expression refers to the static data
 member \tcode{running} of class \tcode{process}.
 \exitexample
 
 \enternote
-Once the \tcode{static} data member has been defined, it exists even if
+Once the static data member has been defined, it exists even if
 no objects of its class have been created.
 \enterexample
 in the example above, \tcode{run_chain} and \tcode{running} exist even
@@ -1181,12 +1234,12 @@ if no objects of class \tcode{process} are created by the program.
 \exitnote
 
 \pnum
-If a non-volatile \tcode{const} \tcode{static} data member is
+If a non-volatile \tcode{const} static data member is
 of integral or enumeration type,
 its declaration in the class definition can specify a
 \grammarterm{brace-or-equal-initializer} in which every
 \grammarterm{initializer-clause} that is an \grammarterm{assignment-expression}
-is a constant expression~(\ref{expr.const}). A \tcode{static} data member of
+is a constant expression~(\ref{expr.const}). A static data member of
 literal type can be declared in the class definition with the
 \tcode{constexpr} specifier; if so, its declaration shall specify a
 \grammarterm{brace-or-equal-initializer} in which every
@@ -1199,27 +1252,241 @@ namespace scope definition shall not contain an \grammarterm{initializer}.
 
 \pnum
 \enternote
-There shall be exactly one definition of a \tcode{static} data member
+There shall be exactly one definition of a static data member
 that is odr-used~(\ref{basic.def.odr}) in a program; no diagnostic is required.
 \exitnote
 Unnamed classes and classes contained directly
-or indirectly within unnamed classes shall not contain \tcode{static}
+or indirectly within unnamed classes shall not contain static
 data members.
 
 \pnum
-\indextext{restriction!static@\tcode{static} member local~class}%
-\tcode{Static} data members of a class in namespace scope have
-the linkage of that class~(\ref{basic.link}). A local class shall not have \tcode{static}
-data members.
+\enternote
+Static data members of a class in namespace scope have the linkage of that class~(\ref{basic.link}). A local class cannot have static data members~(\ref{class.local}).
+\exitnote
 
 \pnum
-\tcode{Static} data members are initialized and destroyed exactly like
+Static data members are initialized and destroyed exactly like
 non-local variables~(\ref{basic.start.static}, \ref{basic.start.dynamic},
 \ref{basic.start.term}).
 
 \pnum
-A \tcode{static} data member shall not be
+A static data member shall not be
 \tcode{mutable}~(\ref{dcl.stc}).
+
+\rSec2[class.bit]{Bit-fields}%
+\indextext{bit-field}
+
+\pnum
+A \grammarterm{member-declarator} of the form
+
+\begin{ncbnftab}
+identifier\opt  attribute-specifier-seq\opt{} \terminal{:} constant-expression
+\end{ncbnftab}
+
+\indextext{\idxcode{:}!field declaration}%
+\indextext{declaration!bit-field}%
+specifies a bit-field;
+its length is set off from the bit-field name by a colon. The optional \grammarterm{attribute-specifier-seq} appertains to the entity being declared. The bit-field
+attribute is not part of the type of the class member. The
+\grammarterm{constant-expression} shall be an integral constant expression
+with a value greater than or equal to zero. The
+value of the integral constant expression may
+be larger than the number of bits in the object
+representation~(\ref{basic.types}) of the bit-field's type; in such
+cases the extra bits are used as padding bits and do not participate in
+the value representation~(\ref{basic.types}) of the bit-field.
+\indextext{allocation!implementation~defined bit-field}%
+Allocation of bit-fields within a class object is
+\impldef{allocation of bit-fields within a class object}.
+\indextext{bit-field!implementation~defined alignment~of}%
+Alignment of bit-fields is \impldef{alignment of bit-fields within a class object}.
+\indextext{layout!bit-field}%
+Bit-fields are packed into some addressable allocation unit.
+\enternote
+Bit-fields straddle allocation units on some machines and not on others.
+Bit-fields are assigned right-to-left on some machines, left-to-right on
+others.
+\exitnote
+
+\pnum
+\indextext{bit-field!unnamed}%
+A declaration for a bit-field that omits the \grammarterm{identifier}
+declares an \grammarterm{unnamed} bit-field. Unnamed bit-fields are not
+members and cannot be initialized.
+\enternote
+An unnamed bit-field is useful for padding to conform to
+externally-imposed layouts.
+\exitnote
+\indextext{bit-field!zero~width~of}%
+\indextext{bit-field!alignment~of}%
+As a special case, an unnamed bit-field with a width of zero specifies
+alignment of the next bit-field at an allocation unit boundary. Only
+when declaring an unnamed bit-field may the value of the
+\grammarterm{constant-expression} be equal to zero.
+
+\pnum
+\indextext{bit-field!type~of}%
+A bit-field shall not be a static member. A bit-field shall have
+integral or enumeration type~(\ref{basic.fundamental}).
+\indextext{Boolean}%
+A \tcode{bool} value can successfully be stored in a bit-field of any
+nonzero size.
+\indextext{bit-field!address~of}%
+The address-of operator \tcode{\&} shall not be applied to a bit-field,
+so there are no pointers to bit-fields.
+\indextext{restriction!bit-field}%
+\indextext{restriction!address~of bit-field}%
+\indextext{restriction!pointer~to bit-field}%
+A non-const reference shall not be bound to a
+bit-field~(\ref{dcl.init.ref}).
+\enternote
+If the initializer for a reference of type \tcode{const} \tcode{T\&} is
+an lvalue that refers to a bit-field, the reference is bound to a
+temporary initialized to hold the value of the bit-field; the reference
+is not bound to the bit-field directly. See~\ref{dcl.init.ref}.
+\exitnote
+
+\pnum
+If the value \tcode{true} or \tcode{false} is stored into a bit-field of
+type \tcode{bool} of any size (including a one bit bit-field), the
+original \tcode{bool} value and the value of the bit-field shall compare
+equal. If the value of an enumerator is stored into a bit-field of the
+same enumeration type and the number of bits in the bit-field is large
+enough to hold all the values of that enumeration type~(\ref{dcl.enum}),
+the original enumerator value and the value of the bit-field shall
+compare equal.
+\enterexample
+
+\begin{codeblock}
+enum BOOL { FALSE=0, TRUE=1 };
+struct A {
+  BOOL b:1;
+};
+A a;
+void f() {
+  a.b = TRUE;
+  if (a.b == TRUE)              // yields \tcode{true}
+    { /* ... */ }
+}
+\end{codeblock}
+\exitexample
+
+\rSec2[class.nest]{Nested class declarations}%
+\indextext{definition!nested~class}%
+\indextext{class~local|see{local~class}}%
+\indextext{class~nested|see{nested~class}}
+
+\pnum
+A class can be declared within another class. A class declared within
+another is called a \grammarterm{nested} class. The name of a nested class
+is local to its enclosing class.
+\indextext{nested~class!scope~of}%
+The nested class is in the scope of its enclosing class.
+\enternote
+See~\ref{expr.prim} for restrictions on the use of non-static data
+members and non-static member functions.
+\exitnote
+
+\indextext{example!nested~class}%
+\enterexample
+
+\begin{codeblock}
+int x;
+int y;
+
+struct enclose {
+  int x;
+  static int s;
+
+  struct inner {
+    void f(int i) {
+      int a = sizeof(x);        // OK: operand of sizeof is an unevaluated operand
+      x = i;                    // error: assign to \tcode{enclose::x}
+      s = i;                    // OK: assign to \tcode{enclose::s}
+      ::x = i;                  // OK: assign to global \tcode{x}
+      y = i;                    // OK: assign to global \tcode{y}
+    }
+    void g(enclose* p, int i) {
+      p->x = i;                 // OK: assign to \tcode{enclose::x}
+    }
+  };
+};
+
+inner* p = 0;                   // error: \tcode{inner} not in scope
+\end{codeblock}
+\exitexample
+
+\pnum
+Member functions and static data members of a nested class can be
+defined in a namespace scope enclosing the definition of their class.
+\indextext{example!nested~class definition}%
+\enterexample
+
+\begin{codeblock}
+struct enclose {
+  struct inner {
+    static int x;
+    void f(int i);
+  };
+};
+
+int enclose::inner::x = 1;
+
+void enclose::inner::f(int i) { /* ... */ }
+\end{codeblock}
+\exitexample
+
+\pnum
+If class \tcode{X} is defined in a namespace scope, a nested class
+\tcode{Y} may be declared in class \tcode{X} and later defined in the
+definition of class \tcode{X} or be later defined in a namespace scope
+enclosing the definition of class \tcode{X}.
+\indextext{example!nested~class forward~declaration}%
+\enterexample
+
+\begin{codeblock}
+class E {
+  class I1;                     // forward declaration of nested class
+  class I2;
+  class I1 { };                 // definition of nested class
+};
+class E::I2 { };                // definition of nested class
+\end{codeblock}
+\exitexample
+
+\pnum
+\indextext{friend~function!nested~class}%
+Like a member function, a friend function~(\ref{class.friend}) defined
+within a nested class is in the lexical scope of that class; it obeys
+the same rules for name binding as a static member function of that
+class~(\ref{class.static}), but it has no special access rights to
+members of an enclosing class.
+
+\rSec2[class.nested.type]{Nested type names}
+\indextext{type~name!nested}%
+\indextext{type~name!nested!scope of}%
+
+\pnum
+Type names obey exactly the same scope rules as other names. In
+particular, type names defined within a class definition cannot be used
+outside their class without qualification.
+\enterexample
+
+\indextext{example!nested type~name}%
+\begin{codeblock}
+struct X {
+  typedef int I;
+  class Y { /* ... */ };
+  I a;
+};
+
+I b;                            // error
+Y c;                            // error
+X::Y d;                         // OK
+X::I e;                         // OK
+\end{codeblock}
+\exitexample%
+\indextext{class|)}
 
 \rSec1[class.union]{Unions}%
 \indextext{\idxcode{union}}
@@ -1342,7 +1609,7 @@ allowed in a declaration of an anonymous union in a class scope.
 \indextext{restriction!anonymous \tcode{union}}%
 An anonymous union shall not have \tcode{private} or \tcode{protected}
 members (Clause~\ref{class.access}). An anonymous union shall not have
-function members.
+member functions.
 
 \pnum
 A union for which objects, pointers, or references are declared is not an anonymous union.
@@ -1390,195 +1657,6 @@ union U {
 \end{codeblock}
 
 \exitexample
-
-\rSec1[class.bit]{Bit-fields}%
-\indextext{bit-field}
-
-\pnum
-A \grammarterm{member-declarator} of the form
-
-\begin{ncbnftab}
-identifier\opt  attribute-specifier-seq\opt \terminal{:} constant-expression
-\end{ncbnftab}
-
-\indextext{\idxcode{:}!field declaration}%
-\indextext{declaration!bit-field}%
-specifies a bit-field;
-its length is set off from the bit-field name by a colon. The optional \grammarterm{attribute-specifier-seq} appertains to the entity being declared. The bit-field
-attribute is not part of the type of the class member. The
-\grammarterm{constant-expression} shall be an integral constant expression
-with a value greater than or equal to zero. The
-value of the integral constant expression may
-be larger than the number of bits in the object
-representation~(\ref{basic.types}) of the bit-field's type; in such
-cases the extra bits are used as padding bits and do not participate in
-the value representation~(\ref{basic.types}) of the bit-field.
-\indextext{allocation!implementation~defined bit-field}%
-Allocation of bit-fields within a class object is
-\impldef{allocation of bit-fields within a class object}.
-\indextext{bit-field!implementation~defined alignment~of}%
-Alignment of bit-fields is \impldef{alignment of bit-fields within a class object}.
-\indextext{layout!bit-field}%
-Bit-fields are packed into some addressable allocation unit.
-\enternote
-Bit-fields straddle allocation units on some machines and not on others.
-Bit-fields are assigned right-to-left on some machines, left-to-right on
-others.
-\exitnote
-
-\pnum
-\indextext{bit-field!unnamed}%
-A declaration for a bit-field that omits the \grammarterm{identifier}
-declares an \grammarterm{unnamed} bit-field. Unnamed bit-fields are not
-members and cannot be initialized.
-\enternote
-An unnamed bit-field is useful for padding to conform to
-externally-imposed layouts.
-\exitnote
-\indextext{bit-field!zero~width~of}%
-\indextext{bit-field!alignment~of}%
-As a special case, an unnamed bit-field with a width of zero specifies
-alignment of the next bit-field at an allocation unit boundary. Only
-when declaring an unnamed bit-field may the value of the
-\grammarterm{constant-expression} be equal to zero.
-
-\pnum
-\indextext{bit-field!type~of}%
-A bit-field shall not be a static member. A bit-field shall have
-integral or enumeration type~(\ref{basic.fundamental}).
-\indextext{Boolean}%
-A \tcode{bool} value can successfully be stored in a bit-field of any
-nonzero size.
-\indextext{bit-field!address~of}%
-The address-of operator \tcode{\&} shall not be applied to a bit-field,
-so there are no pointers to bit-fields.
-\indextext{restriction!bit-field}%
-\indextext{restriction!address~of bit-field}%
-\indextext{restriction!pointer~to bit-field}%
-A non-const reference shall not be bound to a
-bit-field~(\ref{dcl.init.ref}).
-\enternote
-If the initializer for a reference of type \tcode{const} \tcode{T\&} is
-an lvalue that refers to a bit-field, the reference is bound to a
-temporary initialized to hold the value of the bit-field; the reference
-is not bound to the bit-field directly. See~\ref{dcl.init.ref}.
-\exitnote
-
-\pnum
-If the value \tcode{true} or \tcode{false} is stored into a bit-field of
-type \tcode{bool} of any size (including a one bit bit-field), the
-original \tcode{bool} value and the value of the bit-field shall compare
-equal. If the value of an enumerator is stored into a bit-field of the
-same enumeration type and the number of bits in the bit-field is large
-enough to hold all the values of that enumeration type~(\ref{dcl.enum}),
-the original enumerator value and the value of the bit-field shall
-compare equal.
-\enterexample
-
-\begin{codeblock}
-enum BOOL { FALSE=0, TRUE=1 };
-struct A {
-  BOOL b:1;
-};
-A a;
-void f() {
-  a.b = TRUE;
-  if (a.b == TRUE)              // yields \tcode{true}
-    { /* ... */ }
-}
-\end{codeblock}
-\exitexample
-
-\rSec1[class.nest]{Nested class declarations}%
-\indextext{definition!nested~class}%
-\indextext{class~local|see{local~class}}%
-\indextext{class~nested|see{nested~class}}
-
-\pnum
-A class can be declared within another class. A class declared within
-another is called a \grammarterm{nested} class. The name of a nested class
-is local to its enclosing class.
-\indextext{nested~class!scope~of}%
-The nested class is in the scope of its enclosing class.
-\enternote
-See~\ref{expr.prim} for restrictions on the use of non-static data
-members and non-static member functions.
-\exitnote
-
-\indextext{example!nested~class}%
-\enterexample
-
-\begin{codeblock}
-int x;
-int y;
-
-struct enclose {
-  int x;
-  static int s;
-
-  struct inner {
-    void f(int i) {
-      int a = sizeof(x);        // OK: operand of sizeof is an unevaluated operand
-      x = i;                    // error: assign to \tcode{enclose::x}
-      s = i;                    // OK: assign to \tcode{enclose::s}
-      ::x = i;                  // OK: assign to global \tcode{x}
-      y = i;                    // OK: assign to global \tcode{y}
-    }
-    void g(enclose* p, int i) {
-      p->x = i;                 // OK: assign to \tcode{enclose::x}
-    }
-  };
-};
-
-inner* p = 0;                   // error: \tcode{inner} not in scope
-\end{codeblock}
-\exitexample
-
-\pnum
-Member functions and static data members of a nested class can be
-defined in a namespace scope enclosing the definition of their class.
-\indextext{example!nested~class definition}%
-\enterexample
-
-\begin{codeblock}
-struct enclose {
-  struct inner {
-    static int x;
-    void f(int i);
-  };
-};
-
-int enclose::inner::x = 1;
-
-void enclose::inner::f(int i) { /* ... */ }
-\end{codeblock}
-\exitexample
-
-\pnum
-If class \tcode{X} is defined in a namespace scope, a nested class
-\tcode{Y} may be declared in class \tcode{X} and later defined in the
-definition of class \tcode{X} or be later defined in a namespace scope
-enclosing the definition of class \tcode{X}.
-\indextext{example!nested~class forward~declaration}%
-\enterexample
-
-\begin{codeblock}
-class E {
-  class I1;                     // forward declaration of nested class
-  class I2;
-  class I1 { };                 // definition of nested class
-};
-class E::I2 { };                // definition of nested class
-\end{codeblock}
-\exitexample
-
-\pnum
-\indextext{friend~function!nested~class}%
-Like a member function, a friend function~(\ref{class.friend}) defined
-within a nested class is in the lexical scope of that class; it obeys
-the same rules for name binding as a static member function of that
-class~(\ref{class.static}), but it has no special access rights to
-members of an enclosing class.
 
 \rSec1[class.local]{Local class declarations}
 \indextext{declaration!local~class}%
@@ -1637,30 +1715,5 @@ A class nested within
 a local class is a local class.
 
 \pnum
+\indextext{restriction!static member local~class}%
 A local class shall not have static data members.
-
-\rSec1[class.nested.type]{Nested type names}
-\indextext{type~name!nested}%
-\indextext{type~name!nested!scope of}%
-
-\pnum
-Type names obey exactly the same scope rules as other names. In
-particular, type names defined within a class definition cannot be used
-outside their class without qualification.
-\enterexample
-
-\indextext{example!nested type~name}%
-\begin{codeblock}
-struct X {
-  typedef int I;
-  class Y { /* ... */ };
-  I a;
-};
-
-I b;                            // error
-Y c;                            // error
-X::Y d;                         // OK
-X::I e;                         // OK
-\end{codeblock}
-\exitexample%
-\indextext{class|)}
